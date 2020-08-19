@@ -3,4 +3,4 @@ project(terrapi)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(terrapi src/main.cpp)
+add_executable(terrapi src/main.cpp src/pch.cpp)

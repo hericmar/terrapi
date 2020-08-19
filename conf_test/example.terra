@@ -1,0 +1,9 @@
+[sensor]
+id = 0
+wp_gpio = 7
+physical_quantity = humidity
+active_interval = 75.0, 95.0
+
+[switch]
+wp_gpio = 0
+sensor_id = 0

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <wiringPi.h>
-
+#include "pch.h"
 #include "terra.h"
 
 namespace Terra

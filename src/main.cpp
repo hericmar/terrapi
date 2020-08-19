@@ -1,3 +1,4 @@
+#include "conf_parser.hpp"
 #include "sensor.hpp"
 #include "switch.hpp"
 
@@ -16,6 +17,8 @@ int main(int argc, char** argv)
     Switch aSwitch(0);
     dht11.SetSwitch(&aSwitch);
     dht11.SetActiveInterval(75.0, 95.0);
+
+    ConfigurationParser::ReadFile("conf_test/example.terra");
 
     while (true)
     {

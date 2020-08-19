@@ -1,13 +1,6 @@
 #pragma once
 
-#include <float.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <wiringPi.h>
-
-#include <array>
-#include <vector>
+#include "pch.h"
 
 #include "switch.hpp"
 
@@ -22,27 +15,29 @@ namespace Terra
         COUNT
     };
 
-    /*
-     * Represents a interval in which a switch should be active.
-     */
+    /// Represents a interval in which a switch should be active.
     struct ActiveInterval
     {
         float m_from = FLT_MIN;
         float m_to = FLT_MAX;
     };
 
-    /*
-     * Each sensor must have its own physical quantity.
-     */
+    /// Each sensor must have its own physical quantity.
     class Sensor
     {
     public:
-        Sensor()
+        ///
+        /// \param id nonzero id.
+        explicit Sensor(int id = -1)
         {
             for (auto& value : m_values)
                 value = FLT_MIN; // Set value to default value.
+
+            m_id = id;
         }
+
         virtual void Measure() = 0;
+
         float GetValue(EPhysicalQuantityType type)
         {
             return m_values[(unsigned)type];
@@ -55,6 +50,9 @@ namespace Terra
         {
             m_values[(unsigned) type] = value;
         }
+
+    private:
+        unsigned m_id{};
     };
 
     /*
@@ -83,9 +81,7 @@ namespace Terra
             m_switches.push_back(aSwitch);
         }
 
-        /*
-         * Perform measurement and update switches.
-         */
+        /// Perform measurement and update switches.
         void Update()
         {
             m_sensor->Measure();
