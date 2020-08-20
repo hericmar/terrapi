@@ -5,49 +5,69 @@
 #include "sensor.hpp"
 #include "switch.hpp"
 
+#include <cctype>
+
 namespace Terra
 {
-    /*
-     * Configuration file is very simple.
-     * It contains sensor definitions at the top and switches definition
-     * at the bottom of the file.
-     */
+    /// Split string.
+    /// \param s
+    /// \param delimiter
+    /// \return
+    inline std::vector<std::string> SplitString(std::string s, std::string delimiter)
+    {
+        size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+        std::string token;
+        std::vector<std::string> res;
+
+        while ((pos_end = s.find (delimiter, pos_start)) != std::string::npos) {
+            token = s.substr (pos_start, pos_end - pos_start);
+            pos_start = pos_end + delim_len;
+            res.push_back (token);
+        }
+        res.push_back (s.substr (pos_start));
+
+        return res;
+    }
+
+    inline std::string Sanitize(std::string str)
+    {
+        // printf("sanitizing, ");
+        str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+        str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+        str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
+
+        return str;
+    }
+
+    /// Get another line.
+    /// \param stream conf file.
+    /// \return configuration line without whitespaces.
+    inline std::string GetLine(std::ifstream& stream)
+    {
+        std::string line = "";
+        if (std::getline(stream, line))
+        {
+            // printf("got line, ");
+            line = Sanitize(line);
+        }
+
+        return line;
+    }
+
+    /// Configuration file is very simple.
+    /// It contains sensor definitions at the top and switches definition
+    /// at the bottom of the file.
     class ConfigurationParser
     {
     public:
         ///
         /// \param filename absolute filename location.
-        inline static void ReadFile(const char* filename)
-        {
-            struct stat buffer;
-            if (stat (filename, &buffer) != 0)
-            {
-                LOG_ERROR("Configuration file '%s' not found!\n", filename)
-            }
+        static void ReadFile(const char* filename);
 
-            std::ifstream confFile(filename);
+        /// Sensors are parsed first.
+        static void ReadSensor(std::ifstream& stream);
 
-            std::string line;
-            while (std::getline(confFile, line))
-            {
-                printf("%s\n", line.c_str());
-            }
-        }
-
-        /*
-         * Sensors are parsed first.
-         */
-        inline static void ReadSensor()
-        {
-
-        }
-
-        /*
-         * Switches are parsed at the end.
-         */
-        inline static void ReadSwitch()
-        {
-
-        }
+        /// Switches are parsed at the end.
+        static void ReadSwitch(std::ifstream& stream);
     };
 }

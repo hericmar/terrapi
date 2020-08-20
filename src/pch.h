@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <iostream>
 #include <stdio.h>
 #include <float.h>
 #include <stdint.h>

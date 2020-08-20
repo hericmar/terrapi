@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pch.h"
-
+#include "terra.h"
 #include "switch.hpp"
 
 #define DHT_MAX_TIMINGS    85
@@ -14,6 +14,20 @@ namespace Terra
         Humidity,
         COUNT
     };
+    constexpr std::array<const char*, (unsigned) EPhysicalQuantityType::COUNT> physicalQuantities {
+            "temperature",
+            "humidity"
+    };
+
+    enum class ESensorType
+    {
+        DHT11 = 0,
+        COUNT
+    };
+    constexpr std::array<const char*, (unsigned) ESensorType::COUNT> sensors {
+        "DHT11"
+    };
+
 
     /// Represents a interval in which a switch should be active.
     struct ActiveInterval
@@ -23,25 +37,26 @@ namespace Terra
     };
 
     /// Each sensor must have its own physical quantity.
-    class Sensor
-    {
+    class PhysicalSensor {
     public:
         ///
         /// \param id nonzero id.
-        explicit Sensor(int id = -1)
+        explicit PhysicalSensor(int id = -1)
         {
             for (auto& value : m_values)
                 value = FLT_MIN; // Set value to default value.
 
-            m_id = id;
+            m_gpio = id;
         }
 
         virtual void Measure() = 0;
 
         float GetValue(EPhysicalQuantityType type)
         {
-            return m_values[(unsigned)type];
+            return m_values[(unsigned) type];
         }
+
+        unsigned GetGPIO() { return m_gpio; };
 
     protected:
         std::array<float, (unsigned) EPhysicalQuantityType::COUNT> m_values{};
@@ -52,7 +67,7 @@ namespace Terra
         }
 
     private:
-        unsigned m_id{};
+        unsigned m_gpio{};
     };
 
     /*
@@ -61,13 +76,13 @@ namespace Terra
      * It stores reference to a "physical" sensor and measure one value
      * only.
      */
-    class SensorWrapper
-    {
+    class Sensor {
     public:
-        explicit SensorWrapper(EPhysicalQuantityType physicalQuantity, class Sensor* sensor)
+        explicit Sensor(EPhysicalQuantityType physicalQuantity, class PhysicalSensor* sensor, unsigned id)
         {
-            m_sensor = sensor;
+            m_physicalSensor = sensor;
             m_physicalQuantity = physicalQuantity;
+            m_id = id;
         }
 
         void SetActiveInterval(float from, float to)
@@ -84,23 +99,38 @@ namespace Terra
         /// Perform measurement and update switches.
         void Update()
         {
-            m_sensor->Measure();
+            if (m_physicalSensor == nullptr)
+                printf("Debil\n");
 
-            float measuredValue = m_sensor->GetValue(m_physicalQuantity);
+            m_physicalSensor->Measure();
+
+            float measuredValue = m_physicalSensor->GetValue(m_physicalQuantity);
 
             if (m_activeInterval.m_from < measuredValue && measuredValue < m_activeInterval.m_to)
+            {
                 for (auto aSwitch : m_switches)
+                {
+                    LOG_DEBUG("Switching on.");
                     aSwitch->On();
-
+                }
+            }
             else
+            {
                 for (auto aSwitch : m_switches)
+                {
                     aSwitch->Off();
+                }
+            }
         }
+
+        unsigned GetId() const { return m_id; };
 
         float GetValue()
         {
-            return m_sensor->GetValue(m_physicalQuantity);
+            return m_physicalSensor->GetValue(m_physicalQuantity);
         }
+
+        EPhysicalQuantityType GetPhysQuantity() { return m_physicalQuantity; }
 
     private:
         // Watched physical quantity.
@@ -109,14 +139,16 @@ namespace Terra
         // Interval for switch a switch on.
         ActiveInterval m_activeInterval;
 
-        // Sensor reference.
-        class Sensor* m_sensor;
+        // PhysicalSensor reference.
+        class PhysicalSensor* m_physicalSensor;
+
+        unsigned m_id{};
 
         // Switches which depends on the sensor.
         std::vector<class Switch*> m_switches;
     };
 
-    class DHT11 : public Sensor
+    class DHT11 : public PhysicalSensor
     {
     public:
         explicit DHT11(unsigned GPIOPin)

@@ -4,10 +4,10 @@ ifndef config
   config=debug
 endif
 
-
 ifndef verbose
   SILENT = @
 endif
+
 
 .PHONY: clean prebuild prelink
 
@@ -70,8 +70,10 @@ all: prebuild prelink $(TARGET)
 endif
 
 OBJECTS := \
+	$(OBJDIR)/conf_parser.o \
 	$(OBJDIR)/main.o \
 	$(OBJDIR)/pch.o \
+	$(OBJDIR)/terra.o \
 
 RESOURCES := \
 
@@ -130,10 +132,16 @@ else
 $(OBJECTS): | $(OBJDIR)
 endif
 
+$(OBJDIR)/conf_parser.o: conf_parser.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/main.o: main.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/pch.o: pch.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/terra.o: terra.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 

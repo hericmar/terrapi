@@ -1,0 +1,213 @@
+#include "conf_parser.hpp"
+
+using namespace Terra;
+
+void ConfigurationParser::ReadSensor(std::ifstream &stream)
+{
+    printf("Read sensor.\n");
+
+    int id = -1;
+    int type = -1;
+    int gpio = -1;
+    int physicalQuantity = -1;
+    float activeFrom = FLT_MIN, activeTo = FLT_MAX;
+
+    auto line = GetLine(stream);
+
+    while (!line.empty())
+    {
+        auto splittedLine = SplitString(line, "=");
+
+        // printf("%s\n", splittedLine[0].c_str());
+        // printf("%s\n", splittedLine[1].c_str());
+
+        if (splittedLine.size() != 2)
+            continue;
+
+        if (splittedLine[0] == "id")
+        {
+            id = std::stoi(splittedLine[1]);
+        }
+        else if (splittedLine[0] == "type")
+        {
+            bool found = false;
+            int i = 0;
+            for (const auto& sensorType : sensors)
+            {
+                if (sensorType == splittedLine[1])
+                {
+                    type = i;
+                    break;
+                }
+
+                i++;
+            }
+        }
+        else if (splittedLine[0] == "wp_gpio")
+        {
+            gpio = std::stoi(splittedLine[1]);
+        }
+        else if (splittedLine[0] == "physical_quantity")
+        {
+            bool found = false;
+            int i = 0;
+            for (const auto& pq : physicalQuantities)
+            {
+                if (pq == splittedLine[1])
+                {
+                    physicalQuantity = i;
+                    break;
+                }
+
+                i++;
+            }
+        }
+        else if (splittedLine[0] == "active_interval") {
+            auto rawInterval = splittedLine[1];
+            Sanitize(rawInterval);
+            auto interval = SplitString(rawInterval, ",");
+
+            if (interval.size() == 2)
+            {
+                activeFrom = std::stof(interval[0]);
+                activeTo = std::stof(interval[1]);
+            }
+            else
+            {
+                LOG_ERROR("Active interval must has two values!");
+            }
+        }
+        else
+        {
+            LOG_ERROR("Unknown symbol %s.\n", line.c_str());
+        }
+
+        line = GetLine(stream);
+    }
+
+    std::cout << id << ":" << type << ":" << gpio << ":" << physicalQuantity <<
+              ":" << activeFrom << ":" << activeTo << "\n";
+
+    if (id != -1 && type != -1 && gpio != -1 && physicalQuantity != -1)
+    {
+        // Create PhysicalSensor, if does not exists
+        printf("Instantiating a sensor!\n");
+
+        // Check if sensor is already parsed.
+        auto physSens = App::Get().GetSensorByGPIO(gpio);
+        if (physSens == nullptr) // Phys. sensor is not assigned.
+        {
+            // Get type and create one.
+            switch (ESensorType(type))
+            {
+                case ESensorType::DHT11:
+                {
+                    LOG_DEBUG("Creating DHT11.\n");
+                    physSens = new DHT11(gpio);
+                };
+                default:
+                {
+                    break;
+                }
+            }
+
+            App::Get().m_physicalSensors.push_back(physSens);
+        }
+
+        // Now create a Sensor.
+        auto sensor = new Sensor(EPhysicalQuantityType(physicalQuantity), physSens, id);
+        sensor->SetActiveInterval(activeFrom, activeTo);
+
+        printf("New sensor assigned.\n");
+        App::Get().m_sensors.push_back(sensor);
+    }
+    else
+    {
+        LOG_ERROR("Not enough arguments for a sensor.\n");
+    }
+}
+
+void ConfigurationParser::ReadSwitch(std::ifstream &stream)
+{
+    printf("Read switch.\n");
+
+    int gpio = -1;
+    int sensorId = -1;
+
+    auto rawLine = GetLine(stream);
+    while (!rawLine.empty())
+    {
+        auto line = SplitString(rawLine, "=");
+
+        if (line.size() != 2)
+        {
+            LOG_ERROR("Conf. entry must has a 'key = value' pair.\n");
+            continue;
+        }
+
+        if (line[0] == "wp_gpio")
+        {
+            gpio = std::stoi(line[1]);
+        }
+        else if (line[0] == "sensor_id")
+        {
+            sensorId = std::stoi(line[1]);
+        }
+        else
+        {
+            LOG_ERROR("Unknown argument %s.\n", line[0].c_str());
+        }
+
+        rawLine = GetLine(stream);
+    }
+
+    if (gpio != -1 && sensorId != -1)
+    {
+        printf("Instantiating a switch.\n");
+
+        auto sensor = App::Get().GetSensorById(sensorId);
+        if (sensor == nullptr)
+        {
+            LOG_ERROR("A sensor for switch does not exists!\n");
+            return;
+        }
+
+        auto aSwitch = new Switch(gpio);
+        App::Get().m_switches.push_back(
+                aSwitch
+        );
+
+        sensor->SetSwitch(aSwitch);
+    }
+    else
+    {
+        LOG_ERROR("Not enough arguments for switch!\n");
+    }
+}
+
+void ConfigurationParser::ReadFile(const char *filename)
+{
+    struct stat buffer;
+    if (stat(filename, &buffer) != 0)
+    {
+        LOG_ERROR("Configuration file '%s' not found!\n", filename)
+    }
+
+    std::ifstream confFile(filename);
+
+    std::string line;
+
+    while (!confFile.eof())
+    {
+        line = GetLine(confFile);
+
+        if (line == "[sensor]")
+        {
+            ReadSensor(confFile);
+        }
+        else if (line == "[switch]")
+        {
+            ReadSwitch(confFile);
+        }
+    }
+}
