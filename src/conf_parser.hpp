@@ -31,12 +31,20 @@ namespace Terra
 
     inline std::string Sanitize(std::string str)
     {
-        // printf("sanitizing, ");
         str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
         str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
         str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
 
-        return str;
+        std::string result;
+        for (const char c : str)
+        {
+            if (c == '#')
+                break;
+
+            result += c;
+        }
+
+        return result;
     }
 
     /// Get another line.
@@ -44,10 +52,9 @@ namespace Terra
     /// \return configuration line without whitespaces.
     inline std::string GetLine(std::ifstream& stream)
     {
-        std::string line = "";
+        std::string line;
         if (std::getline(stream, line))
         {
-            // printf("got line, ");
             line = Sanitize(line);
         }
 
@@ -69,5 +76,7 @@ namespace Terra
 
         /// Switches are parsed at the end.
         static void ReadSwitch(std::ifstream& stream);
+
+        static void ReadTimer(std::ifstream& stream);
     };
 }

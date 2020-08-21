@@ -4,7 +4,11 @@
 #include "terra.h"
 #include "switch.hpp"
 
+#include <ctime>
+
 #define DHT_MAX_TIMINGS    85
+
+#define GPIO_TIMER 9999
 
 namespace Terra
 {
@@ -12,11 +16,13 @@ namespace Terra
     {
         Temperature = 0,
         Humidity,
+        Time,
         COUNT
     };
     constexpr std::array<const char*, (unsigned) EPhysicalQuantityType::COUNT> physicalQuantities {
             "temperature",
-            "humidity"
+            "humidity",
+            "time"
     };
 
     enum class ESensorType
@@ -25,7 +31,7 @@ namespace Terra
         COUNT
     };
     constexpr std::array<const char*, (unsigned) ESensorType::COUNT> sensors {
-        "DHT11"
+            "DHT11"
     };
 
 
@@ -39,18 +45,20 @@ namespace Terra
     /// Each sensor must have its own physical quantity.
     class PhysicalSensor {
     public:
-        ///
-        /// \param id nonzero id.
-        explicit PhysicalSensor(int id = -1)
+        /// \param gpio wiring pi pin ID.
+        explicit PhysicalSensor(int gpio)
         {
             for (auto& value : m_values)
                 value = FLT_MIN; // Set value to default value.
 
-            m_gpio = id;
+            m_gpio = gpio;
         }
 
+        /// Each sensor has its own way how to perform measurement.
         virtual void Measure() = 0;
 
+        /// Get desired value.
+        /// \param type physical quantity.
         float GetValue(EPhysicalQuantityType type)
         {
             return m_values[(unsigned) type];
@@ -59,25 +67,32 @@ namespace Terra
         unsigned GetGPIO() { return m_gpio; };
 
     protected:
+        /// Measured values. Each sensor has by default all values measured.
+        /// If any value is not supported by the sensor, its value is FLT_MIN.
         std::array<float, (unsigned) EPhysicalQuantityType::COUNT> m_values{};
 
+        /// Set measured value (used in measuring proccess).
+        /// \param type value type.
+        /// \param value measured value.
         void SetValue(EPhysicalQuantityType type, float value)
         {
             m_values[(unsigned) type] = value;
         }
 
-    private:
+        /// Data GPIO (WiringPi numbering).
         unsigned m_gpio{};
     };
 
-    /*
-     * Wrapper for a sensor.
-     * It is used for generic sensor definition.
-     * It stores reference to a "physical" sensor and measure one value
-     * only.
-     */
+    /// Logical sensor.
+    /// It is used for generic sensor definition.
+    /// It stores reference to a "physical" sensor and measure one value
+    /// only.
     class Sensor {
     public:
+        /// Create a logical representation of the one measured value.
+        /// \param physicalQuantity watched value.
+        /// \param sensor physical sensor.
+        /// \param id unique id!
         explicit Sensor(EPhysicalQuantityType physicalQuantity, class PhysicalSensor* sensor, unsigned id)
         {
             m_physicalSensor = sensor;
@@ -85,12 +100,17 @@ namespace Terra
             m_id = id;
         }
 
+        /// Set interval in which assigned switches should be active.
+        /// \param from min value.
+        /// \param to max value.
         void SetActiveInterval(float from, float to)
         {
             m_activeInterval.m_from = from;
             m_activeInterval.m_to = to;
         }
 
+        /// Add new switch dependent to measured phys. quantity.
+        /// \param aSwitch
         void SetSwitch(class Switch* aSwitch)
         {
             m_switches.push_back(aSwitch);
@@ -99,9 +119,6 @@ namespace Terra
         /// Perform measurement and update switches.
         void Update()
         {
-            if (m_physicalSensor == nullptr)
-                printf("Debil\n");
-
             m_physicalSensor->Measure();
 
             float measuredValue = m_physicalSensor->GetValue(m_physicalQuantity);
@@ -120,11 +137,13 @@ namespace Terra
                 {
                     aSwitch->Off();
                 }
+                printf("\n\n");
             }
         }
 
-        unsigned GetId() const { return m_id; };
+        [[nodiscard]] unsigned GetId() const { return m_id; };
 
+        /// Sensor has only one measured value!
         float GetValue()
         {
             return m_physicalSensor->GetValue(m_physicalQuantity);
@@ -133,28 +152,27 @@ namespace Terra
         EPhysicalQuantityType GetPhysQuantity() { return m_physicalQuantity; }
 
     private:
-        // Watched physical quantity.
+        friend class App;
+
+        /// Watched physical quantity.
         EPhysicalQuantityType m_physicalQuantity;
 
-        // Interval for switch a switch on.
+        /// Interval for switch a switch on.
         ActiveInterval m_activeInterval;
 
-        // PhysicalSensor reference.
+        /// PhysicalSensor reference.
         class PhysicalSensor* m_physicalSensor;
 
         unsigned m_id{};
 
-        // Switches which depends on the sensor.
+        /// Switches which depends on the sensor.
         std::vector<class Switch*> m_switches;
     };
 
     class DHT11 : public PhysicalSensor
     {
     public:
-        explicit DHT11(unsigned GPIOPin)
-        {
-            this->GPIOPin = GPIOPin;
-        }
+        explicit DHT11(int gpio) : PhysicalSensor(gpio) {};
 
         void Measure() override
         {
@@ -165,18 +183,18 @@ namespace Terra
             data[0] = data[1] = data[2] = data[3] = data[4] = 0;
 
             /* pull pin down for 18 milliseconds */
-            pinMode(GPIOPin, OUTPUT);
-            digitalWrite(GPIOPin, LOW);
+            pinMode(m_gpio, OUTPUT);
+            digitalWrite(m_gpio, LOW);
             delay(18);
 
             /* prepare to read the pin */
-            pinMode(GPIOPin, INPUT);
+            pinMode(m_gpio, INPUT);
 
             /* detect change and read data */
             for (i = 0; i < DHT_MAX_TIMINGS; i++)
             {
                 counter = 0;
-                while (digitalRead(GPIOPin) == laststate) {
+                while (digitalRead(m_gpio) == laststate) {
                     counter++;
                     delayMicroseconds(1);
                     if (counter == 255)
@@ -184,7 +202,7 @@ namespace Terra
                         break;
                     }
                 }
-                laststate = digitalRead(GPIOPin);
+                laststate = digitalRead(m_gpio);
 
                 if (counter == 255)
                     break;
@@ -232,7 +250,32 @@ namespace Terra
         };
 
     private:
-        unsigned GPIOPin;
         int data[5] = {0, 0, 0, 0, 0};
+    };
+
+    class Timer : public PhysicalSensor
+    {
+    public:
+        Timer(int gpio) : PhysicalSensor(gpio) {};
+
+        inline static float TimeToFloat(std::tm& time)
+        {
+            return (float) time.tm_hour / 24.0f + (1.0f/24.0f) * ((float) time.tm_min / 60.0f);
+        };
+
+        /// Timer measure time ratio.
+        void Measure() override
+        {
+            std::time_t t = std::time(0);
+            std::tm* now = std::localtime(&t);
+
+            printf("%d\n", now->tm_hour);
+
+            float result = TimeToFloat(*now);
+
+            SetValue(EPhysicalQuantityType::Time, result);
+        }
+
+    private:
     };
 }

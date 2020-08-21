@@ -17,24 +17,28 @@ namespace Terra
 
         void On()
         {
-            if (!swithed)
+            if (!switched)
             {
                 digitalWrite(GPIO, GPIO_ON);
-                swithed = true;
+                switched = true;
             }
         }
 
         void Off()
         {
-            if (swithed)
+            if (switched)
             {
                 digitalWrite(GPIO, GPIO_OFF);
-                swithed = false;
+                switched = false;
             }
         }
 
+        [[nodiscard]] unsigned GetGPIO() const { return GPIO; };
+
+        [[nodiscard]] bool IsSwitched() const { return switched; };
+
     private:
-        bool swithed = false;
+        bool switched = false;
         unsigned GPIO;
     };
 }

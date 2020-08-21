@@ -16,6 +16,11 @@ void App::PrintSensors()
     {
         printf("ID %d:\t", sensor->GetId());
         printf("%s %f\n", physicalQuantities[(unsigned) sensor->GetPhysQuantity()], sensor->GetValue());
+
+        for (const auto& aSwitch : sensor->m_switches)
+        {
+            printf("\tGPIO: %d - %d\n", aSwitch->GetGPIO(), aSwitch->IsSwitched());
+        }
     }
     printf("====================\n\n");
 }

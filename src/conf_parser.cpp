@@ -1,5 +1,9 @@
 #include "conf_parser.hpp"
 
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
 using namespace Terra;
 
 void ConfigurationParser::ReadSensor(std::ifstream &stream)
@@ -17,9 +21,6 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
     while (!line.empty())
     {
         auto splittedLine = SplitString(line, "=");
-
-        // printf("%s\n", splittedLine[0].c_str());
-        // printf("%s\n", splittedLine[1].c_str());
 
         if (splittedLine.size() != 2)
             continue;
@@ -209,5 +210,84 @@ void ConfigurationParser::ReadFile(const char *filename)
         {
             ReadSwitch(confFile);
         }
+        else if (line == "[timer]")
+        {
+            ReadTimer(confFile);
+        }
+    }
+}
+
+void ConfigurationParser::ReadTimer(std::ifstream& stream)
+{
+    std::string activeFrom;
+    std::string activeTo;
+    int id = -1;
+
+    auto rawLine = GetLine(stream);
+    while (!rawLine.empty())
+    {
+        auto line = SplitString(rawLine, "=");
+
+        if (line.size() != 2)
+        {
+            LOG_ERROR("Conf. entry must has a 'key = value' pair.\n");
+            continue;
+        }
+
+        if (line[0] == "id")
+        {
+            id = std::stoi(line[1]);
+        }
+        else if (line[0] == "active_interval")
+        {
+            auto rawInterval = line[1];
+            Sanitize(rawInterval);
+            auto interval = SplitString(rawInterval, ",");
+
+            if (interval.size() == 2)
+            {
+                activeFrom = interval[0];
+                activeTo = interval[1];
+            }
+            else
+            {
+                LOG_ERROR("Active interval must has two values!");
+            }
+        }
+        else
+        {
+            LOG_ERROR("Unknown argument %s.\n", line[0].c_str());
+        }
+
+        rawLine = GetLine(stream);
+    }
+
+    // Check values.
+    if (id != -1 && !activeFrom.empty() && !activeTo.empty())
+    {
+        struct tm from;
+        struct tm to;
+
+        memset(&from, 0, sizeof(struct tm));
+        memset(&to, 0, sizeof(struct tm));
+
+        strptime(activeFrom.c_str(), "%H:%M", &from);
+        strptime(activeTo.c_str(), "%H:%M", &to);
+
+        // TODO -> rename timer to clock?
+        auto globalTimer = App::Get().GetSensorByGPIO(GPIO_TIMER);
+        if (globalTimer == nullptr)
+        {
+            globalTimer = new Timer(GPIO_TIMER);
+            App::Get().m_physicalSensors.push_back(globalTimer);
+        }
+
+        printf("%d\n", from.tm_hour);
+
+        auto timer = new Sensor(EPhysicalQuantityType::Time, globalTimer, id);
+
+        printf("%f--%f.\n", Timer::TimeToFloat(from), Timer::TimeToFloat(to));
+        timer->SetActiveInterval(Timer::TimeToFloat(from), Timer::TimeToFloat(to));
+        App::Get().m_sensors.push_back(timer);
     }
 }
