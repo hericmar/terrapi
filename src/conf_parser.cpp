@@ -6,6 +6,37 @@
 
 using namespace Terra;
 
+void ConfigurationParser::ReadFile(const char *filename)
+{
+    struct stat buffer;
+    if (stat(filename, &buffer) != 0)
+    {
+        LOG_ERROR("Configuration file '%s' not found!\n", filename)
+    }
+
+    std::ifstream confFile(filename);
+
+    std::string line;
+
+    while (!confFile.eof())
+    {
+        line = GetLine(confFile);
+
+        if (line == "[sensor]")
+        {
+            ReadSensor(confFile);
+        }
+        else if (line == "[switch]")
+        {
+            ReadSwitch(confFile);
+        }
+        else if (line == "[timer]")
+        {
+            ReadTimer(confFile);
+        }
+    }
+}
+
 void ConfigurationParser::ReadSensor(std::ifstream &stream)
 {
     printf("Read sensor.\n");
@@ -134,6 +165,7 @@ void ConfigurationParser::ReadSwitch(std::ifstream &stream)
 
     int gpio = -1;
     int sensorId = -1;
+    int oscilationStep = -1;
 
     auto rawLine = GetLine(stream);
     while (!rawLine.empty())
@@ -153,6 +185,10 @@ void ConfigurationParser::ReadSwitch(std::ifstream &stream)
         else if (line[0] == "sensor_id")
         {
             sensorId = std::stoi(line[1]);
+        }
+        else if (line[0] == "oscillation_step")
+        {
+            oscilationStep = std::stoi(line[1]);
         }
         else
         {
@@ -179,41 +215,14 @@ void ConfigurationParser::ReadSwitch(std::ifstream &stream)
         );
 
         sensor->SetSwitch(aSwitch);
+        if (oscilationStep != -1)
+        {
+            aSwitch->Oscille((unsigned) oscilationStep);
+        }
     }
     else
     {
         LOG_ERROR("Not enough arguments for switch!\n");
-    }
-}
-
-void ConfigurationParser::ReadFile(const char *filename)
-{
-    struct stat buffer;
-    if (stat(filename, &buffer) != 0)
-    {
-        LOG_ERROR("Configuration file '%s' not found!\n", filename)
-    }
-
-    std::ifstream confFile(filename);
-
-    std::string line;
-
-    while (!confFile.eof())
-    {
-        line = GetLine(confFile);
-
-        if (line == "[sensor]")
-        {
-            ReadSensor(confFile);
-        }
-        else if (line == "[switch]")
-        {
-            ReadSwitch(confFile);
-        }
-        else if (line == "[timer]")
-        {
-            ReadTimer(confFile);
-        }
     }
 }
 

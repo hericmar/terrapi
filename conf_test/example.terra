@@ -6,11 +6,11 @@ id = 0
 type = DHT11
 wp_gpio = 7
 physical_quantity = humidity
-active_interval = 75.0, 95.0
+active_interval = 75.0, 100.0
 
 [timer]
 id = 1
-active_interval = 8:00, 20:00
+active_interval = 10:59, 20:57
 
 [switch]
 wp_gpio = 0
@@ -19,3 +19,4 @@ sensor_id = 0
 [switch]
 wp_gpio = 2
 sensor_id = 1
+oscillation_step = 2000

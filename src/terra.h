@@ -6,6 +6,8 @@
 #define LOG_ERROR(...) fprintf(stderr, __VA_ARGS__);
 #define LOG_DEBUG(...) printf(__VA_ARGS__);
 
+#define MEASURE_STEP 2000 /// Measure step in milliseconds.
+
 #include "pch.h"
 #include "sensor.hpp"
 #include "switch.hpp"

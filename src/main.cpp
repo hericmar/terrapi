@@ -22,7 +22,7 @@ int main(int argc, char** argv)
         for (const auto& sensor : App::Get().GetSensors())
         {
             sensor->Update();
-            delay(2000);
+            delay(MEASURE_STEP);
         }
 
         App::Get().PrintSensors();

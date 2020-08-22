@@ -127,7 +127,6 @@ namespace Terra
             {
                 for (auto aSwitch : m_switches)
                 {
-                    LOG_DEBUG("Switching on.");
                     aSwitch->On();
                 }
             }
@@ -137,7 +136,6 @@ namespace Terra
                 {
                     aSwitch->Off();
                 }
-                printf("\n\n");
             }
         }
 
@@ -245,7 +243,7 @@ namespace Terra
             }
             else
             {
-                printf("Data not good, skip\n");
+                // printf("Data not good, skip\n");
             }
         };
 
@@ -268,8 +266,6 @@ namespace Terra
         {
             std::time_t t = std::time(0);
             std::tm* now = std::localtime(&t);
-
-            printf("%d\n", now->tm_hour);
 
             float result = TimeToFloat(*now);
 
