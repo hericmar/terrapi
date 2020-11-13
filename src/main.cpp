@@ -9,13 +9,13 @@ using namespace Terra;
 
 int main(int argc, char** argv)
 {
-    printf("Raspberry Pi DHT11/DHT22 temperature/humidity test\n");
+    printf("=== TerraPi simple terrarium automation. ===\n");
 
     if (wiringPiSetup() == -1)
         exit(1);
 
-    ConfigurationParser::ReadFile("conf_test/example.terra");
-    printf("Configuration parsing completed!\n");
+    ConfigurationParser::ReadFile("/etc/terrapi/configuration.terra");
+    printf("=== Configuration parsing completed! ===\n");
 
     while (true)
     {

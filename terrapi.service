@@ -1,0 +1,11 @@
+[Unit]
+Description=TerraPi daemon
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/home/pi/terrapi/
+ExecStart=/home/pi/terrapi/bin/TerraPi
+
+[Install]
+WantedBy=multi-user.target

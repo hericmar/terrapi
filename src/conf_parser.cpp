@@ -12,6 +12,7 @@ void ConfigurationParser::ReadFile(const char *filename)
     if (stat(filename, &buffer) != 0)
     {
         LOG_ERROR("Configuration file '%s' not found!\n", filename)
+        return;
     }
 
     std::ifstream confFile(filename);
@@ -39,8 +40,6 @@ void ConfigurationParser::ReadFile(const char *filename)
 
 void ConfigurationParser::ReadSensor(std::ifstream &stream)
 {
-    printf("Read sensor.\n");
-
     int id = -1;
     int type = -1;
     int gpio = -1;
@@ -117,13 +116,12 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
         line = GetLine(stream);
     }
 
-    std::cout << id << ":" << type << ":" << gpio << ":" << physicalQuantity <<
-              ":" << activeFrom << ":" << activeTo << "\n";
-
     if (id != -1 && type != -1 && gpio != -1 && physicalQuantity != -1)
     {
         // Create PhysicalSensor, if does not exists
-        printf("Instantiating a sensor!\n");
+        printf("Instantiating a sensor id:%d!\n", id);
+        std::cout << "\t" << sensors[type] << " connected to GPIO " << gpio << " for measuring " << physicalQuantities[physicalQuantity] <<
+                  "\n\t associated switches will be active from " << activeFrom << " to " << activeTo << ".\n";
 
         // Check if sensor is already parsed.
         auto physSens = App::Get().GetSensorByGPIO(gpio);
@@ -134,7 +132,6 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
             {
                 case ESensorType::DHT11:
                 {
-                    LOG_DEBUG("Creating DHT11.\n");
                     physSens = new DHT11(gpio);
                 };
                 default:
@@ -150,7 +147,6 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
         auto sensor = new Sensor(EPhysicalQuantityType(physicalQuantity), physSens, id);
         sensor->SetActiveInterval(activeFrom, activeTo);
 
-        printf("New sensor assigned.\n");
         App::Get().m_sensors.push_back(sensor);
     }
     else
@@ -161,8 +157,6 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
 
 void ConfigurationParser::ReadSwitch(std::ifstream &stream)
 {
-    printf("Read switch.\n");
-
     int gpio = -1;
     int sensorId = -1;
     int oscilationStep = -1;
@@ -200,7 +194,7 @@ void ConfigurationParser::ReadSwitch(std::ifstream &stream)
 
     if (gpio != -1 && sensorId != -1)
     {
-        printf("Instantiating a switch.\n");
+        printf("Instantiating switch (GPIO %d) for sensor id:%d.\n", gpio, sensorId);
 
         auto sensor = App::Get().GetSensorById(sensorId);
         if (sensor == nullptr)
@@ -291,11 +285,8 @@ void ConfigurationParser::ReadTimer(std::ifstream& stream)
             App::Get().m_physicalSensors.push_back(globalTimer);
         }
 
-        printf("%d\n", from.tm_hour);
-
         auto timer = new Sensor(EPhysicalQuantityType::Time, globalTimer, id);
 
-        printf("%f--%f.\n", Timer::TimeToFloat(from), Timer::TimeToFloat(to));
         timer->SetActiveInterval(Timer::TimeToFloat(from), Timer::TimeToFloat(to));
         App::Get().m_sensors.push_back(timer);
     }
