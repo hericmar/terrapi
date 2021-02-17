@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.13)
+
 project(terrapi)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
-set(SOURCE_FILES src/*)
-add_executable(terrapi src/main.cpp src/pch.cpp src/conf_parser.cpp src/terra.cpp src/switch.hpp src/sensor.hpp)
+add_executable(${PROJECT_NAME} src/conf_parser.cpp src/main.cpp src/pch.cpp src/terra.cpp src/sensor.cpp)
+
+target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-lwiringPi>)

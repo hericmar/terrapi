@@ -1,5 +1,6 @@
 cmake-build-*/
 .idea/
-*.out
+.vs/
+out/
 terapi
 /premake5.exe

@@ -1,16 +1,16 @@
 #pragma once
 
 #include <algorithm>
-#include <iostream>
-#include <stdio.h>
-#include <float.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <wiringPi.h>
-#include <sys/stat.h>
-#include <fstream>
-#include <sstream>
 #include <ctime>
+#include <float.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <wiringPi.h>
 
 #include <array>
 #include <vector>

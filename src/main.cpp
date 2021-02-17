@@ -1,7 +1,7 @@
-#include "terra.h"
-#include "conf_parser.hpp"
+#include "conf_parser.h"
 #include "sensor.hpp"
 #include "switch.hpp"
+#include "terra.h"
 
 #include <wiringPi.h>
 
@@ -9,12 +9,11 @@ using namespace Terra;
 
 int main(int argc, char** argv)
 {
-    printf("=== TerraPi simple terrarium automation. ===\n");
+    printf("=== TerraPi - simple terrarium automation ===\n");
 
-    if (wiringPiSetup() == -1)
-        exit(1);
+    if (wiringPiSetup() == -1) exit(1);
 
-    ConfigurationParser::ReadFile("/etc/terrapi/configuration.terra");
+    ConfigurationParser::ReadFile("/etc/terrapi/configuration.ini");
     printf("=== Configuration parsing completed! ===\n");
 
     while (true)

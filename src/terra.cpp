@@ -1,13 +1,10 @@
 #include "terra.h"
 
- using namespace Terra;
+using namespace Terra;
 
 App App::s_ref;
 
-App& App::Get()
-{
-    return s_ref;
-}
+App& App::Get() { return s_ref; }
 
 void App::PrintSensors()
 {

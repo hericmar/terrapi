@@ -1,7 +1,7 @@
 #pragma once
 
-#define GPIO_ON     HIGH
-#define GPIO_OFF    LOW
+#define GPIO_ON HIGH
+#define GPIO_OFF LOW
 
 #define LOG_ERROR(...) fprintf(stderr, __VA_ARGS__);
 #define LOG_DEBUG(...) printf(__VA_ARGS__);
@@ -14,47 +14,40 @@
 
 namespace Terra
 {
-    /// Appliction.
-    class App
+/// Appliction.
+class App
+{
+public:
+    App() = default;
+
+    static App& Get();
+
+    PhysicalSensor* GetSensorByGPIO(unsigned gpio)
     {
-    public:
-        App()
-        {
-        };
+        for (const auto& sensor : m_physicalSensors)
+            if (sensor->GetGPIO() == gpio) return sensor;
 
-        static App& Get();
+        return nullptr;
+    }
 
-        PhysicalSensor* GetSensorByGPIO(unsigned gpio)
-        {
-            for (const auto& sensor : m_physicalSensors)
-                if (sensor->GetGPIO() == gpio)
-                    return sensor;
+    Sensor* GetSensorById(unsigned id)
+    {
+        for (const auto& sensor : m_sensors)
+            if (sensor->GetId() == id) return sensor;
 
-            return nullptr;
-        }
+        return nullptr;
+    }
 
-        Sensor* GetSensorById(unsigned id)
-        {
-            for (const auto& sensor : m_sensors)
-                if (sensor->GetId() == id)
-                    return sensor;
+    std::vector<Sensor*>& GetSensors() { return m_sensors; }
+    std::vector<Switch*>& GetSwitches() { return m_switches; }
 
-            return nullptr;
-        }
+    void PrintSensors();
 
-        std::vector<Sensor*>& GetSensors()
-        {
-            return m_sensors;
-        }
+private:
+    static App s_ref;
 
-        void PrintSensors();
-
-    private:
-        friend class ConfigurationParser;
-
-        static App s_ref;
-        std::vector<PhysicalSensor*> m_physicalSensors;
-        std::vector<Switch*> m_switches;
-        std::vector<Sensor*> m_sensors;
-    };
-}
+    std::vector<PhysicalSensor*> m_physicalSensors;
+    std::vector<Switch*> m_switches;
+    std::vector<Sensor*> m_sensors;
+};
+} // namespace Terra

@@ -1,4 +1,4 @@
-#include "conf_parser.hpp"
+#include "conf_parser.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +6,7 @@
 
 using namespace Terra;
 
-void ConfigurationParser::ReadFile(const char *filename)
+void ConfigurationParser::ReadFile(const char* filename)
 {
     struct stat buffer;
     if (stat(filename, &buffer) != 0)
@@ -23,10 +23,7 @@ void ConfigurationParser::ReadFile(const char *filename)
     {
         line = GetLine(confFile);
 
-        if (line == "[sensor]")
-        {
-            ReadSensor(confFile);
-        }
+        if (line == "[sensor]") { ReadSensor(confFile); }
         else if (line == "[switch]")
         {
             ReadSwitch(confFile);
@@ -38,11 +35,11 @@ void ConfigurationParser::ReadFile(const char *filename)
     }
 }
 
-void ConfigurationParser::ReadSensor(std::ifstream &stream)
+void ConfigurationParser::ReadSensor(std::ifstream& stream)
 {
-    int id = -1;
-    int type = -1;
-    int gpio = -1;
+    int id               = -1;
+    int type             = -1;
+    int gpio             = -1;
     int physicalQuantity = -1;
     float activeFrom = FLT_MIN, activeTo = FLT_MAX;
 
@@ -52,17 +49,13 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
     {
         auto splittedLine = SplitString(line, "=");
 
-        if (splittedLine.size() != 2)
-            continue;
+        if (splittedLine.size() != 2) continue;
 
-        if (splittedLine[0] == "id")
-        {
-            id = std::stoi(splittedLine[1]);
-        }
+        if (splittedLine[0] == "id") { id = std::stoi(splittedLine[1]); }
         else if (splittedLine[0] == "type")
         {
             bool found = false;
-            int i = 0;
+            int i      = 0;
             for (const auto& sensorType : sensors)
             {
                 if (sensorType == splittedLine[1])
@@ -81,7 +74,7 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
         else if (splittedLine[0] == "physical_quantity")
         {
             bool found = false;
-            int i = 0;
+            int i      = 0;
             for (const auto& pq : physicalQuantities)
             {
                 if (pq == splittedLine[1])
@@ -93,7 +86,8 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
                 i++;
             }
         }
-        else if (splittedLine[0] == "active_interval") {
+        else if (splittedLine[0] == "active_interval")
+        {
             auto rawInterval = splittedLine[1];
             Sanitize(rawInterval);
             auto interval = SplitString(rawInterval, ",");
@@ -101,7 +95,7 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
             if (interval.size() == 2)
             {
                 activeFrom = std::stof(interval[0]);
-                activeTo = std::stof(interval[1]);
+                activeTo   = std::stof(interval[1]);
             }
             else
             {
@@ -120,8 +114,9 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
     {
         // Create PhysicalSensor, if does not exists
         printf("Instantiating a sensor id:%d!\n", id);
-        std::cout << "\t" << sensors[type] << " connected to GPIO " << gpio << " for measuring " << physicalQuantities[physicalQuantity] <<
-                  "\n\t associated switches will be active from " << activeFrom << " to " << activeTo << ".\n";
+        std::cout << "\t" << sensors[type] << " connected to GPIO " << gpio << " for measuring "
+                  << physicalQuantities[physicalQuantity] << "\n\t associated switches will be active from "
+                  << activeFrom << " to " << activeTo << ".\n";
 
         // Check if sensor is already parsed.
         auto physSens = App::Get().GetSensorByGPIO(gpio);
@@ -130,14 +125,14 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
             // Get type and create one.
             switch (ESensorType(type))
             {
-                case ESensorType::DHT11:
-                {
-                    physSens = new DHT11(gpio);
-                };
-                default:
-                {
-                    break;
-                }
+            case ESensorType::DHT11:
+            {
+                physSens = new DHT11(gpio);
+            };
+            default:
+            {
+                break;
+            }
             }
 
             App::Get().m_physicalSensors.push_back(physSens);
@@ -147,7 +142,7 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
         auto sensor = new Sensor(EPhysicalQuantityType(physicalQuantity), physSens, id);
         sensor->SetActiveInterval(activeFrom, activeTo);
 
-        App::Get().m_sensors.push_back(sensor);
+        App::Get().GetSensors().push_back(sensor);
     }
     else
     {
@@ -155,10 +150,10 @@ void ConfigurationParser::ReadSensor(std::ifstream &stream)
     }
 }
 
-void ConfigurationParser::ReadSwitch(std::ifstream &stream)
+void ConfigurationParser::ReadSwitch(std::ifstream& stream)
 {
-    int gpio = -1;
-    int sensorId = -1;
+    int gpio           = -1;
+    int sensorId       = -1;
     int oscilationStep = -1;
 
     auto rawLine = GetLine(stream);
@@ -172,10 +167,7 @@ void ConfigurationParser::ReadSwitch(std::ifstream &stream)
             continue;
         }
 
-        if (line[0] == "wp_gpio")
-        {
-            gpio = std::stoi(line[1]);
-        }
+        if (line[0] == "wp_gpio") { gpio = std::stoi(line[1]); }
         else if (line[0] == "sensor_id")
         {
             sensorId = std::stoi(line[1]);
@@ -204,15 +196,10 @@ void ConfigurationParser::ReadSwitch(std::ifstream &stream)
         }
 
         auto aSwitch = new Switch(gpio);
-        App::Get().m_switches.push_back(
-                aSwitch
-        );
+        App::Get().GetSwitches().push_back(aSwitch);
 
         sensor->SetSwitch(aSwitch);
-        if (oscilationStep != -1)
-        {
-            aSwitch->Oscille((unsigned) oscilationStep);
-        }
+        if (oscilationStep != -1) { aSwitch->Oscille((unsigned) oscilationStep); }
     }
     else
     {
@@ -237,10 +224,7 @@ void ConfigurationParser::ReadTimer(std::ifstream& stream)
             continue;
         }
 
-        if (line[0] == "id")
-        {
-            id = std::stoi(line[1]);
-        }
+        if (line[0] == "id") { id = std::stoi(line[1]); }
         else if (line[0] == "active_interval")
         {
             auto rawInterval = line[1];
@@ -250,7 +234,7 @@ void ConfigurationParser::ReadTimer(std::ifstream& stream)
             if (interval.size() == 2)
             {
                 activeFrom = interval[0];
-                activeTo = interval[1];
+                activeTo   = interval[1];
             }
             else
             {
@@ -288,6 +272,6 @@ void ConfigurationParser::ReadTimer(std::ifstream& stream)
         auto timer = new Sensor(EPhysicalQuantityType::Time, globalTimer, id);
 
         timer->SetActiveInterval(Timer::TimeToFloat(from), Timer::TimeToFloat(to));
-        App::Get().m_sensors.push_back(timer);
+        App::Get().GetSensors().push_back(timer);
     }
 }
