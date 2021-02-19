@@ -1,9 +1,9 @@
+#include <wiringPi.h>
+
 #include "conf_parser.h"
 #include "sensor.hpp"
 #include "switch.hpp"
 #include "terra.h"
-
-#include <wiringPi.h>
 
 using namespace Terra;
 

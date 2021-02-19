@@ -3,16 +3,19 @@
 #include "pch.h"
 
 #include <cctype>
+#include <map>
 
 #include "terra.h"
 
 namespace Terra
 {
+typedef std::map<std::string, std::string> ConfSection;
+
 /// Split string.
 /// \param s
 /// \param delimiter
 /// \return
-inline std::vector<std::string> SplitString(std::string s, std::string delimiter)
+inline std::vector<std::string> SplitString(const std::string& s, const std::string& delimiter)
 {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
@@ -46,32 +49,126 @@ inline std::string Sanitize(std::string str)
     return result;
 }
 
-/// Get another line.
+/// Get another non empty line.
 /// \param stream conf file.
 /// \return configuration line without whitespaces.
 inline std::string GetLine(std::ifstream& stream)
 {
     std::string line;
-    if (std::getline(stream, line)) { line = Sanitize(line); }
+    while (line.empty() || !stream.eof())
+    {
+        if (std::getline(stream, line))
+        {
+            line = Sanitize(line);
+        }
+    }
 
     return line;
 }
+
 
 /// Configuration file is very simple.
 /// It contains sensor definitions at the top and switches definition
 /// at the bottom of the file.
 namespace ConfigurationParser
 {
-///
+static int g_currentLine = -1;
+static const std::array<std::string, 4> g_sectionTags = {
+    "[environment]",
+    "[sensor]",
+    "[switch]",
+    "[timer]"
+};
+
 /// \param filename absolute filename location.
 void ReadFile(const char* filename);
+}
 
-/// Sensors are parsed first.
-void ReadSensor(std::ifstream& stream);
 
-/// Switches are parsed at the end.
-void ReadSwitch(std::ifstream& stream);
+inline bool HasBeginOfSection(const std::string& sanitizedLine)
+{
+    for (const auto& section : ConfigurationParser::g_sectionTags)
+    {
+        if (section == sanitizedLine) return true;
+    }
 
-void ReadTimer(std::ifstream& stream);
-};
+    return false;
+}
+
+inline bool DoesSectionContains(ConfSection& section, const std::vector<std::string>& keys)
+{
+    bool result = true;
+
+    for (const auto& key : keys)
+    {
+        if (section.count(key) == 0)
+        {
+            Log::Error("Expected record '{}'.", key);
+            result = false;
+        }
+    }
+
+    return result;
+}
+
+inline std::map<std::string, std::string> GetSection(std::ifstream& stream)
+{
+    std::map<std::string, std::string> result;
+
+    std::string line;
+
+    // If we are at the end of the stream, return empty result.
+    if (stream.eof())
+        return result;
+
+    // Try to get title.
+    if (std::getline(stream, line))
+    {
+        line = Sanitize(line);
+    }
+
+    if (!HasBeginOfSection(line))
+    {
+        Log::Error("{}: Expected begin of section tag (such as [sensor], ...)", ConfigurationParser::g_currentLine);
+        return result;
+    }
+
+    result.insert(std::make_pair("section", line));
+
+    while (!stream.eof())
+    {
+        auto pos = stream.tellg();
+
+        if (std::getline(stream, line))
+        {
+            line = Sanitize(line);
+            ConfigurationParser::g_currentLine++;
+
+            if (HasBeginOfSection(line))
+            {
+                // Rollback to the beginning of a line.
+                stream.seekg(pos);
+                break;
+            }
+            else
+            {
+                if (!line.empty() && line[0] != '#')
+                {
+                    auto parsedLine = SplitString(line, "=");
+
+                    if (parsedLine.size() != 2)
+                    {
+                        Log::Error("{}: Expected key–value pair, got '{}'.", ConfigurationParser::g_currentLine, line);
+                    }
+                    else
+                    {
+                        result.insert(std::make_pair(parsedLine[0], parsedLine[1]));
+                    }
+                }
+            }
+        }
+    }
+
+    return result;
+}
 } // namespace Terra

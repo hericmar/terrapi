@@ -1,41 +1,91 @@
 #include "conf_parser.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include "sensor.hpp"
+#include "time_utils.h"
 
 using namespace Terra;
 
+void ReadEnvironmentProperties(ConfSection&);
+void ReadSensor(ConfSection&);
+void ReadSwitch(ConfSection&);
+void ReadTimer(ConfSection&);
+
+void ReadFileEx(std::ifstream& confFile)
+{
+    ConfigurationParser::g_currentLine = 1;
+    std::string line;
+
+    ConfSection section;
+    while (!(section = GetSection(confFile)).empty())
+    {
+        auto sectionName = section["section"];
+        if (sectionName == "[environment]")
+        {
+            Log::Info("Reading environment properties");
+            ReadEnvironmentProperties(section);
+        }
+        else if (sectionName == "[sensor]")
+        {
+            Log::Info("Reading a sensor settings");
+            //ReadSensor(section);
+        }
+        else if (sectionName == "[switch]")
+        {
+            Log::Info("Reading a switch configuration");
+            //ReadSwitch(section);
+        }
+        else if (sectionName == "[timer]")
+        {
+            Log::Info("Reading a timer");
+            //ReadTimer(section);
+        }
+    }
+
+    /*
+    while (!(line = GetLine(confFile)).empty())
+    {
+        if (line == "[environment]")
+        {
+            Log::Info("Reading environment properties");
+            ReadEnvironmentProperties(confFile);
+        }
+        else if (line == "[sensor]")
+        {
+            Log::Info("Reading a sensor settings");
+            ReadSensor(confFile);
+        }
+        else if (line == "[switch]")
+        {
+            Log::Info("Reading a switch configuration");
+            ReadSwitch(confFile);
+        }
+        else if (line == "[timer]")
+        {
+            Log::Info("Reading a timer");
+            ReadTimer(confFile);
+        }
+    }
+     */
+}
+
 void ConfigurationParser::ReadFile(const char* filename)
 {
-    struct stat buffer;
+    // Check path to the conf. file.
+    struct stat buffer{};
     if (stat(filename, &buffer) != 0)
     {
         LOG_ERROR("Configuration file '%s' not found!\n", filename)
         return;
     }
+    Log::Info("Reading configuration file '{}'", filename);
 
     std::ifstream confFile(filename);
 
-    std::string line;
-
-    while (!confFile.eof())
-    {
-        line = GetLine(confFile);
-
-        if (line == "[sensor]") { ReadSensor(confFile); }
-        else if (line == "[switch]")
-        {
-            ReadSwitch(confFile);
-        }
-        else if (line == "[timer]")
-        {
-            ReadTimer(confFile);
-        }
-    }
+    ReadFileEx(confFile);
 }
 
-void ConfigurationParser::ReadSensor(std::ifstream& stream)
+/// Sensors are parsed first.
+void ReadSensor(std::ifstream& stream)
 {
     int id               = -1;
     int type             = -1;
@@ -135,7 +185,7 @@ void ConfigurationParser::ReadSensor(std::ifstream& stream)
             }
             }
 
-            App::Get().m_physicalSensors.push_back(physSens);
+            App::Get().GetPhysSensors().push_back(physSens);
         }
 
         // Now create a Sensor.
@@ -150,7 +200,8 @@ void ConfigurationParser::ReadSensor(std::ifstream& stream)
     }
 }
 
-void ConfigurationParser::ReadSwitch(std::ifstream& stream)
+/// Switches are parsed at the end.
+void ReadSwitch(std::ifstream& stream)
 {
     int gpio           = -1;
     int sensorId       = -1;
@@ -207,7 +258,7 @@ void ConfigurationParser::ReadSwitch(std::ifstream& stream)
     }
 }
 
-void ConfigurationParser::ReadTimer(std::ifstream& stream)
+void ReadTimer(std::ifstream& stream)
 {
     std::string activeFrom;
     std::string activeTo;
@@ -252,26 +303,39 @@ void ConfigurationParser::ReadTimer(std::ifstream& stream)
     // Check values.
     if (id != -1 && !activeFrom.empty() && !activeTo.empty())
     {
-        struct tm from;
-        struct tm to;
-
-        memset(&from, 0, sizeof(struct tm));
-        memset(&to, 0, sizeof(struct tm));
-
-        strptime(activeFrom.c_str(), "%H:%M", &from);
-        strptime(activeTo.c_str(), "%H:%M", &to);
+        auto from = StringToTime(activeFrom, "%H:%M");
+        auto to = StringToTime(activeTo, "%H:%M");
 
         // TODO -> rename timer to clock?
         auto globalTimer = App::Get().GetSensorByGPIO(GPIO_TIMER);
         if (globalTimer == nullptr)
         {
             globalTimer = new Timer(GPIO_TIMER);
-            App::Get().m_physicalSensors.push_back(globalTimer);
+            App::Get().GetPhysSensors().push_back(globalTimer);
         }
 
         auto timer = new Sensor(EPhysicalQuantityType::Time, globalTimer, id);
 
-        timer->SetActiveInterval(Timer::TimeToFloat(from), Timer::TimeToFloat(to));
+        timer->SetActiveInterval(from, to);
         App::Get().GetSensors().push_back(timer);
     }
+}
+
+void ReadEnvironmentProperties(ConfSection& section)
+{
+    auto& dayTo = App::Get().GetEnvironment().m_dayTo;
+    auto& dayFrom = App::Get().GetEnvironment().m_dayFrom;
+    auto& dayDuration = App::Get().GetEnvironment().m_dayDuration;
+    auto& nightDuration = App::Get().GetEnvironment().m_nightDuration;
+
+    if (!DoesSectionContains(section, { "day_from", "day_to" }))
+    {
+        Log::Error("{}: section [environment] does not contain listed properties.", ConfigurationParser::g_currentLine);
+        exit(2);
+    }
+
+    dayTo = StringToTime(section["day_to"]);
+    dayFrom = StringToTime(section["day_from"]);
+    dayDuration = dayTo - dayFrom;
+    nightDuration = 1.0f - dayDuration;
 }

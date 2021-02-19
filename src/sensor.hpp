@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "switch.hpp"
 #include "terra.h"
+#include "time_utils.h"
 
 #include <ctime>
 
@@ -56,7 +57,7 @@ public:
     /// \param type physical quantity.
     float GetValue(EPhysicalQuantityType type) { return m_values[(unsigned) type]; }
 
-    unsigned GetGPIO() const { return m_gpio; };
+    [[nodiscard]] int GetGPIO() const { return m_gpio; };
 
 protected:
     /// Measured values. Each sensor has by default all values measured.
@@ -69,7 +70,7 @@ protected:
     void SetValue(EPhysicalQuantityType type, float value) { m_values[(unsigned) type] = value; }
 
     /// Data GPIO (WiringPi numbering).
-    unsigned m_gpio{};
+    int m_gpio{};
 };
 
 /// Logical sensor.
@@ -109,9 +110,9 @@ public:
     [[nodiscard]] unsigned GetId() const { return m_id; };
 
     /// Sensor has only one measured value!
-    float GetValue() const { return m_physicalSensor->GetValue(m_physicalQuantity); }
+    [[nodiscard]] float GetValue() const { return m_physicalSensor->GetValue(m_physicalQuantity); }
 
-    EPhysicalQuantityType GetPhysQuantity() const { return m_physicalQuantity; }
+    [[nodiscard]] EPhysicalQuantityType GetPhysQuantity() const { return m_physicalQuantity; }
 
 private:
     friend class App;
@@ -131,77 +132,13 @@ private:
     std::vector<class Switch*> m_switches;
 };
 
+
 class DHT11 : public PhysicalSensor
 {
 public:
     explicit DHT11(int gpio) : PhysicalSensor(gpio){};
 
-    void Measure() override
-    {
-        uint8_t laststate = HIGH;
-        uint8_t counter   = 0;
-        uint8_t j         = 0, i;
-
-        data[0] = data[1] = data[2] = data[3] = data[4] = 0;
-
-        /* pull pin down for 18 milliseconds */
-        pinMode(m_gpio, OUTPUT);
-        digitalWrite(m_gpio, LOW);
-        delay(18);
-
-        /* prepare to read the pin */
-        pinMode(m_gpio, INPUT);
-
-        /* detect change and read data */
-        for (i = 0; i < DHT_MAX_TIMINGS; i++)
-        {
-            counter = 0;
-            while (digitalRead(m_gpio) == laststate)
-            {
-                counter++;
-                delayMicroseconds(1);
-                if (counter == 255) { break; }
-            }
-            laststate = digitalRead(m_gpio);
-
-            if (counter == 255) break;
-
-            /* ignore first 3 transitions */
-            if ((i >= 4) && (i % 2 == 0))
-            {
-                /* shove each bit into the storage bytes */
-                data[j / 8] <<= 1;
-                if (counter > 16) data[j / 8] |= 1;
-                j++;
-            }
-        }
-
-        /*
-             * check we read 40 bits (8bit x 5 ) + verify checksum in the last byte
-             * print it out if data is good
-             */
-        if ((j >= 40) && (data[4] == ((data[0] + data[1] + data[2] + data[3]) & 0xFF)))
-        {
-            float h = (float) ((data[0] << 8) + data[1]) / 10;
-            if (h > 100)
-            {
-                h = data[0]; // for DHT11
-            }
-            float c = (float) (((data[2] & 0x7F) << 8) + data[3]) / 10;
-            if (c > 125)
-            {
-                c = data[2]; // for DHT11
-            }
-            if (data[2] & 0x80) { c = -c; }
-
-            SetValue(EPhysicalQuantityType::Temperature, c);
-            SetValue(EPhysicalQuantityType::Humidity, h);
-        }
-        else
-        {
-            // printf("Data not good, skip\n");
-        }
-    };
+    void Measure() override;;
 
 private:
     int data[5] = {0, 0, 0, 0, 0};
@@ -210,24 +147,17 @@ private:
 class Timer : public PhysicalSensor
 {
 public:
-    Timer(int gpio) : PhysicalSensor(gpio){};
-
-    inline static float TimeToFloat(std::tm& time)
-    {
-        return (float) time.tm_hour / 24.0f + (1.0f / 24.0f) * ((float) time.tm_min / 60.0f);
-    };
+    explicit Timer(int gpio) : PhysicalSensor(gpio){};
 
     /// Timer measure time ratio.
     void Measure() override
     {
-        std::time_t t = std::time(0);
+        std::time_t t = std::time(nullptr);
         std::tm* now  = std::localtime(&t);
 
         float result = TimeToFloat(*now);
 
         SetValue(EPhysicalQuantityType::Time, result);
     }
-
-private:
 };
 } // namespace Terra

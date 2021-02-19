@@ -10,13 +10,7 @@ namespace Terra
 class Switch
 {
 public:
-    Switch(unsigned GPIO)
-    {
-        this->GPIO = GPIO;
-
-        pinMode(GPIO, OUTPUT);
-        Off();
-    }
+    explicit Switch(int GPIO);
 
     void On()
     {
@@ -59,7 +53,7 @@ public:
 
 private:
     bool switched = false;
-    unsigned GPIO;
+    int GPIO;
     std::clock_t m_switchedAt = 0;
 
     /// By default switch should not be oscilating.
@@ -67,20 +61,8 @@ private:
     /// (MEASURE_STEP)!
     int m_oscilationStep = -1;
 
-    void _SwitchOn()
-    {
-        m_switchedAt = std::clock();
+    void _SwitchOn();
 
-        LOG_DEBUG("Switching ON GPIO %d.\n", GPIO);
-        digitalWrite(GPIO, GPIO_ON);
-        switched = true;
-    }
-
-    void _SwitchOff()
-    {
-        LOG_DEBUG("Switching OFF GPIO %d.\n", GPIO);
-        digitalWrite(GPIO, GPIO_OFF);
-        switched = false;
-    }
+    void _SwitchOff();
 };
 } // namespace Terra
