@@ -4,12 +4,53 @@
 
 #include <cctype>
 #include <map>
+#include <utility>
 
 #include "terra.h"
 
 namespace Terra
 {
-typedef std::map<std::string, std::string> ConfSection;
+class ConfSection
+{
+    std::map<std::string, std::string> m_data;
+
+public:
+    const std::string& operator[](const std::string&& keyVal)
+    {
+        return m_data[keyVal];
+    }
+
+    void Insert(std::pair<std::string, std::string>&& keyVal)
+    {
+        m_data.insert(keyVal);
+    }
+
+    bool Contains(const std::string& key)
+    {
+        return m_data.count(key) != 0;
+    }
+
+    bool ContainsAll(const std::vector<std::string>& keys)
+    {
+        bool result = true;
+
+        for (const auto& key : keys)
+        {
+            if (!Contains(key))
+            {
+                Log::Error("Expected record '{}'.", key);
+                result = false;
+            }
+        }
+
+        return result;
+    }
+
+    [[nodiscard]] bool Empty() const noexcept
+    {
+        return m_data.empty();
+    }
+};
 
 /// Split string.
 /// \param s
@@ -95,25 +136,9 @@ inline bool HasBeginOfSection(const std::string& sanitizedLine)
     return false;
 }
 
-inline bool DoesSectionContains(ConfSection& section, const std::vector<std::string>& keys)
+inline ConfSection GetSection(std::ifstream& stream)
 {
-    bool result = true;
-
-    for (const auto& key : keys)
-    {
-        if (section.count(key) == 0)
-        {
-            Log::Error("Expected record '{}'.", key);
-            result = false;
-        }
-    }
-
-    return result;
-}
-
-inline std::map<std::string, std::string> GetSection(std::ifstream& stream)
-{
-    std::map<std::string, std::string> result;
+    ConfSection result;
 
     std::string line;
 
@@ -133,7 +158,7 @@ inline std::map<std::string, std::string> GetSection(std::ifstream& stream)
         return result;
     }
 
-    result.insert(std::make_pair("section", line));
+    result.Insert(std::make_pair("section", line));
 
     while (!stream.eof())
     {
@@ -162,7 +187,7 @@ inline std::map<std::string, std::string> GetSection(std::ifstream& stream)
                     }
                     else
                     {
-                        result.insert(std::make_pair(parsedLine[0], parsedLine[1]));
+                        result.Insert(std::make_pair(parsedLine[0], parsedLine[1]));
                     }
                 }
             }

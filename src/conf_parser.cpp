@@ -2,6 +2,7 @@
 
 #include "sensor.hpp"
 #include "time_utils.h"
+#include "utils.h"
 
 using namespace Terra;
 
@@ -16,7 +17,7 @@ void ReadFileEx(std::ifstream& confFile)
     std::string line;
 
     ConfSection section;
-    while (!(section = GetSection(confFile)).empty())
+    while (!(section = GetSection(confFile)).Empty())
     {
         auto sectionName = section["section"];
         if (sectionName == "[environment]")
@@ -27,45 +28,19 @@ void ReadFileEx(std::ifstream& confFile)
         else if (sectionName == "[sensor]")
         {
             Log::Info("Reading a sensor settings");
-            //ReadSensor(section);
+            ReadSensor(section);
         }
         else if (sectionName == "[switch]")
         {
             Log::Info("Reading a switch configuration");
-            //ReadSwitch(section);
+            ReadSwitch(section);
         }
         else if (sectionName == "[timer]")
         {
             Log::Info("Reading a timer");
-            //ReadTimer(section);
+            ReadTimer(section);
         }
     }
-
-    /*
-    while (!(line = GetLine(confFile)).empty())
-    {
-        if (line == "[environment]")
-        {
-            Log::Info("Reading environment properties");
-            ReadEnvironmentProperties(confFile);
-        }
-        else if (line == "[sensor]")
-        {
-            Log::Info("Reading a sensor settings");
-            ReadSensor(confFile);
-        }
-        else if (line == "[switch]")
-        {
-            Log::Info("Reading a switch configuration");
-            ReadSwitch(confFile);
-        }
-        else if (line == "[timer]")
-        {
-            Log::Info("Reading a timer");
-            ReadTimer(confFile);
-        }
-    }
-     */
 }
 
 void ConfigurationParser::ReadFile(const char* filename)
@@ -85,7 +60,7 @@ void ConfigurationParser::ReadFile(const char* filename)
 }
 
 /// Sensors are parsed first.
-void ReadSensor(std::ifstream& stream)
+void ReadSensor(ConfSection& section)
 {
     int id               = -1;
     int type             = -1;
@@ -93,76 +68,49 @@ void ReadSensor(std::ifstream& stream)
     int physicalQuantity = -1;
     float activeFrom = FLT_MIN, activeTo = FLT_MAX;
 
-    auto line = GetLine(stream);
-
-    while (!line.empty())
+    if (!section.ContainsAll({"id", "type", "wp_gpio", "physical_quantity", "active_interval"}))
     {
-        auto splittedLine = SplitString(line, "=");
+        Log::Error("{}: Sensor could not be instantiated, not enough arguments.", ConfigurationParser::g_currentLine);
+    }
 
-        if (splittedLine.size() != 2) continue;
+    id = std::stoi(section["id"]);
 
-        if (splittedLine[0] == "id") { id = std::stoi(splittedLine[1]); }
-        else if (splittedLine[0] == "type")
+    gpio = std::stoi(section["wp_gpio"]);
+
+    type = GetElementIndex(sensors, section["type"].c_str());
+    if (type == -1)
+    {
+        Log::Error("Unknown sensor type – {}.", section["type"]);
+        return;
+    }
+
+    physicalQuantity = GetElementIndex(physicalQuantities, section["physical_quantity"].c_str());
+    if (physicalQuantity == -1)
+    {
+        Log::Error("Unknown physical quantity – {}", section["physical_quantity"]);
+        return;
+    }
+
+    {
+        auto rawInterval = section["active_interval"];
+        Sanitize(rawInterval);
+        auto interval = SplitString(rawInterval, ",");
+
+        if (interval.size() == 2)
         {
-            bool found = false;
-            int i      = 0;
-            for (const auto& sensorType : sensors)
-            {
-                if (sensorType == splittedLine[1])
-                {
-                    type = i;
-                    break;
-                }
-
-                i++;
-            }
-        }
-        else if (splittedLine[0] == "wp_gpio")
-        {
-            gpio = std::stoi(splittedLine[1]);
-        }
-        else if (splittedLine[0] == "physical_quantity")
-        {
-            bool found = false;
-            int i      = 0;
-            for (const auto& pq : physicalQuantities)
-            {
-                if (pq == splittedLine[1])
-                {
-                    physicalQuantity = i;
-                    break;
-                }
-
-                i++;
-            }
-        }
-        else if (splittedLine[0] == "active_interval")
-        {
-            auto rawInterval = splittedLine[1];
-            Sanitize(rawInterval);
-            auto interval = SplitString(rawInterval, ",");
-
-            if (interval.size() == 2)
-            {
-                activeFrom = std::stof(interval[0]);
-                activeTo   = std::stof(interval[1]);
-            }
-            else
-            {
-                LOG_ERROR("Active interval must has two values!");
-            }
+            activeFrom = std::stof(interval[0]);
+            activeTo   = std::stof(interval[1]);
         }
         else
         {
-            LOG_ERROR("Unknown symbol %s.\n", line.c_str());
+            Log::Error("{}: Active interval must has two values!", ConfigurationParser::g_currentLine);
         }
-
-        line = GetLine(stream);
     }
 
-    if (id != -1 && type != -1 && gpio != -1 && physicalQuantity != -1)
+    // Validate values.
+    if (id != -1 && gpio != -1 )
     {
-        // Create PhysicalSensor, if does not exists
+        // Create PhysicalSensor, if does not exists.
         printf("Instantiating a sensor id:%d!\n", id);
         std::cout << "\t" << sensors[type] << " connected to GPIO " << gpio << " for measuring "
                   << physicalQuantities[physicalQuantity] << "\n\t associated switches will be active from "
@@ -196,43 +144,29 @@ void ReadSensor(std::ifstream& stream)
     }
     else
     {
-        LOG_ERROR("Not enough arguments for a sensor.\n");
+        Log::Error("Not enough arguments for a sensor.");
     }
 }
 
 /// Switches are parsed at the end.
-void ReadSwitch(std::ifstream& stream)
+void ReadSwitch(ConfSection& section)
 {
     int gpio           = -1;
     int sensorId       = -1;
     int oscilationStep = -1;
 
-    auto rawLine = GetLine(stream);
-    while (!rawLine.empty())
+    if (!section.ContainsAll({"wp_gpio", "sensor_id"}))
     {
-        auto line = SplitString(rawLine, "=");
+        Log::Error("{}: section [switch] is not complete!", ConfigurationParser::g_currentLine);
+        return;
+    }
 
-        if (line.size() != 2)
-        {
-            LOG_ERROR("Conf. entry must has a 'key = value' pair.\n");
-            continue;
-        }
+    gpio = std::stoi(section["wp_gpio"]);
+    sensorId = std::stoi(section["sensor_id"]);
 
-        if (line[0] == "wp_gpio") { gpio = std::stoi(line[1]); }
-        else if (line[0] == "sensor_id")
-        {
-            sensorId = std::stoi(line[1]);
-        }
-        else if (line[0] == "oscillation_step")
-        {
-            oscilationStep = std::stoi(line[1]);
-        }
-        else
-        {
-            LOG_ERROR("Unknown argument %s.\n", line[0].c_str());
-        }
-
-        rawLine = GetLine(stream);
+    if (section.Contains("oscillation_step"))
+    {
+        oscilationStep = std::stoi(section["oscillation_step"]);
     }
 
     if (gpio != -1 && sensorId != -1)
@@ -242,7 +176,7 @@ void ReadSwitch(std::ifstream& stream)
         auto sensor = App::Get().GetSensorById(sensorId);
         if (sensor == nullptr)
         {
-            LOG_ERROR("A sensor for switch does not exists!\n");
+            Log::Error("A sensor for switch does not exists!\n");
             return;
         }
 
@@ -254,71 +188,57 @@ void ReadSwitch(std::ifstream& stream)
     }
     else
     {
-        LOG_ERROR("Not enough arguments for switch!\n");
+        Log::Error("Not enough arguments for switch!\n");
     }
 }
 
-void ReadTimer(std::ifstream& stream)
+void ReadTimer(ConfSection& section)
 {
     std::string activeFrom;
     std::string activeTo;
     int id = -1;
 
-    auto rawLine = GetLine(stream);
-    while (!rawLine.empty())
+    if (!section.ContainsAll({"id", "active_interval"}))
     {
-        auto line = SplitString(rawLine, "=");
+        Log::Error("{}: section [timer] does not contain 'id' or 'active_interval' keys.", ConfigurationParser::g_currentLine);
+        Log::Error("Skipping this timer.");
 
-        if (line.size() != 2)
-        {
-            LOG_ERROR("Conf. entry must has a 'key = value' pair.\n");
-            continue;
-        }
-
-        if (line[0] == "id") { id = std::stoi(line[1]); }
-        else if (line[0] == "active_interval")
-        {
-            auto rawInterval = line[1];
-            Sanitize(rawInterval);
-            auto interval = SplitString(rawInterval, ",");
-
-            if (interval.size() == 2)
-            {
-                activeFrom = interval[0];
-                activeTo   = interval[1];
-            }
-            else
-            {
-                LOG_ERROR("Active interval must has two values!");
-            }
-        }
-        else
-        {
-            LOG_ERROR("Unknown argument %s.\n", line[0].c_str());
-        }
-
-        rawLine = GetLine(stream);
+        return;
     }
 
-    // Check values.
-    if (id != -1 && !activeFrom.empty() && !activeTo.empty())
+    id = std::stoi(section["id"]);
+
+    auto rawInterval = section["active_interval"];
+    Sanitize(rawInterval);
+    auto interval = SplitString(rawInterval, ",");
+
+    if (interval.size() == 2)
     {
-        auto from = StringToTime(activeFrom, "%H:%M");
-        auto to = StringToTime(activeTo, "%H:%M");
-
-        // TODO -> rename timer to clock?
-        auto globalTimer = App::Get().GetSensorByGPIO(GPIO_TIMER);
-        if (globalTimer == nullptr)
-        {
-            globalTimer = new Timer(GPIO_TIMER);
-            App::Get().GetPhysSensors().push_back(globalTimer);
-        }
-
-        auto timer = new Sensor(EPhysicalQuantityType::Time, globalTimer, id);
-
-        timer->SetActiveInterval(from, to);
-        App::Get().GetSensors().push_back(timer);
+        activeFrom = interval[0];
+        activeTo   = interval[1];
     }
+    else
+    {
+        Log::Error("{}: Active interval must has two values!", ConfigurationParser::g_currentLine);
+        return;
+    }
+
+    auto from = StringToTime(activeFrom, "%H:%M");
+    auto to = StringToTime(activeTo, "%H:%M");
+
+    // TODO -> rename timer to clock?
+    // TODO -> GlobalTimer???
+    auto globalTimer = App::Get().GetSensorByGPIO(GPIO_TIMER);
+    if (globalTimer == nullptr)
+    {
+        globalTimer = new Timer(GPIO_TIMER);
+        App::Get().GetPhysSensors().push_back(globalTimer);
+    }
+
+    auto timer = new Sensor(EPhysicalQuantityType::Time, globalTimer, id);
+
+    timer->SetActiveInterval(from, to);
+    App::Get().GetSensors().push_back(timer);
 }
 
 void ReadEnvironmentProperties(ConfSection& section)
@@ -328,7 +248,7 @@ void ReadEnvironmentProperties(ConfSection& section)
     auto& dayDuration = App::Get().GetEnvironment().m_dayDuration;
     auto& nightDuration = App::Get().GetEnvironment().m_nightDuration;
 
-    if (!DoesSectionContains(section, { "day_from", "day_to" }))
+    if (!section.ContainsAll({ "day_from", "day_to" }))
     {
         Log::Error("{}: section [environment] does not contain listed properties.", ConfigurationParser::g_currentLine);
         exit(2);

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(terrapi)
+project(terrapi VERSION 0.2.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -17,7 +17,8 @@ add_executable(${PROJECT_NAME}
         src/sensor.cpp
         src/environment.h
         src/time_utils.h
-        src/switch.cpp)
+        src/switch.cpp
+        src/utils.h)
 
 target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-lwiringPi>)
 target_link_libraries(${PROJECT_NAME} PUBLIC fmt)
@@ -32,6 +33,7 @@ add_executable(terrapi_test
         src/switch.cpp
         src/terra.h
         src/terra.cpp
+        src/utils.h
         test/dummy/wiringPi.c
         test/terrapi/conf_parser_test.hpp
         test/terrapi/main.cpp)
