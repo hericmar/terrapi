@@ -34,8 +34,8 @@ constexpr std::array<const char*, static_cast<unsigned>(ESensorType::COUNT)> sen
 /// Represents a interval in which a switch should be active.
 struct ActiveInterval
 {
-    float m_from = FLT_MIN;
-    float m_to   = FLT_MAX;
+    float m_from = FLT_MAX;
+    float m_to   = FLT_MIN;
 };
 
 /// Each sensor must have its own physical quantity.
@@ -84,21 +84,18 @@ public:
     /// \param physicalQuantity watched value.
     /// \param sensor physical sensor.
     /// \param id unique id!
-    explicit SensorController(EPhysicalQuantityType physicalQuantity, class PhysicalSensor* sensor, unsigned id);
+    explicit SensorController(EPhysicalQuantityType physicalQuantity, class PhysicalSensor* sensor, int id);
 
-    /// Set interval within assigned switches should be active.
-    /// \param from min value.
-    /// \param to max value.
-    void SetActiveInterval(float from, float to)
+    SensorController* SetActiveInterval(ActiveInterval interval)
     {
-        m_activeInterval.m_from = from;
-        m_activeInterval.m_to   = to;
+        m_activeInterval = interval;
+        return this;
     }
 
-    void SetActiveNightInterval(float from, float to)
+    SensorController* SetActiveNightInterval(ActiveInterval interval)
     {
-        m_activeNightInterval.m_from = from;
-        m_activeNightInterval.m_to   = to;
+        m_activeNightInterval = interval;
+        return this;
     }
 
     /// Add new switch dependent to measured phys. quantity.
@@ -125,7 +122,7 @@ private:
     ActiveInterval m_activeInterval;
     ActiveInterval m_activeNightInterval;
 
-    std::function<bool(float)> m_strategy;
+    static std::function<bool(float)> m_strategy;
 
     /// PhysicalSensor reference.
     class PhysicalSensor* m_physicalSensor;

@@ -7,8 +7,10 @@ using namespace Terra;
 static std::function<bool(float)> g_dayStrategy;
 static std::function<bool(float)> g_nightStrategy;
 
+std::function<bool(float)> SensorController::m_strategy;
+
 SensorController::SensorController(EPhysicalQuantityType physicalQuantity, PhysicalSensor* sensor,
-                                   unsigned int id)
+                                   int id)
 {
     m_physicalSensor   = sensor;
     m_physicalQuantity = physicalQuantity;
@@ -93,12 +95,12 @@ void DHT11::Measure()
         float h = (float) ((data[0] << 8) + data[1]) / 10;
         if (h > 100)
         {
-            h = data[0]; // for DHT11
+            h = (float) data[0]; // for DHT11
         }
         float c = (float) (((data[2] & 0x7F) << 8) + data[3]) / 10;
         if (c > 125)
         {
-            c = data[2]; // for DHT11
+            c = (float) data[2]; // for DHT11
         }
         if (data[2] & 0x80) { c = -c; }
 

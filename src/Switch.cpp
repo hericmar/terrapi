@@ -5,7 +5,7 @@
 
 using namespace Terra;
 
-Switch::Switch(int GPIO)
+Switch::Switch(int GPIO, SensorController* sensorController, int oscillationStep)
 {
     this->GPIO = GPIO;
 

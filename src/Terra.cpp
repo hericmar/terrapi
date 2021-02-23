@@ -1,6 +1,8 @@
 #include "Terra.h"
 
 #include "ConfParser.h"
+#include "Defs.h"
+#include "Sensor.hpp"
 
 using namespace Terra;
 
@@ -33,6 +35,51 @@ void App::PrintSensors()
     printf("========================\n\n");
 }
 
+Switch* App::CreateSwitch(int gpio, SensorController* sensorController, int oscillationStep)
+{
+    auto aSwitch = new Switch(gpio, sensorController, oscillationStep);
+    App::Get().GetSwitches().push_back(aSwitch);
+
+    return aSwitch;
+}
+
+SensorController* App::CreateTimer(int id, ActiveInterval activeInterval)
+{
+    auto* timer = new SensorController(EPhysicalQuantityType::Time, &s_ref.m_clock, id);
+    timer->SetActiveInterval(activeInterval);
+    s_ref.m_sensors.push_back(timer);
+
+    return timer;
+}
+
+SensorController* App::CreateSensorController(int id, EPhysicalQuantityType physicalQuantity,
+                                              PhysicalSensor* physSens)
+{
+    auto* sensor = new SensorController(physicalQuantity, physSens, id);
+    s_ref.m_sensors.push_back(sensor);
+
+    return sensor;
+}
+
+PhysicalSensor* App::CreateSensor(ESensorType type, int gpio)
+{
+    PhysicalSensor* physSens = nullptr;
+
+    switch (type)
+    {
+    case ESensorType::DHT11:
+    {
+        physSens = new DHT11(gpio);
+        break;
+    }
+    default:
+        return nullptr;
+    }
+    s_ref.m_physicalSensors.push_back(physSens);
+
+    return physSens;
+}
+
 PhysicalSensor* App::GetSensorByGPIO(unsigned int gpio)
 {
     for (const auto& sensor : m_physicalSensors)
@@ -40,6 +87,7 @@ PhysicalSensor* App::GetSensorByGPIO(unsigned int gpio)
 
     return nullptr;
 }
+
 SensorController* App::GetSensorById(unsigned int id)
 {
     for (const auto& sensor : m_sensors)
@@ -47,6 +95,7 @@ SensorController* App::GetSensorById(unsigned int id)
 
     return nullptr;
 }
+
 Time App::GetTime() { return m_clock.GetValue(EPhysicalQuantityType::Time); }
 
 void App::Run()

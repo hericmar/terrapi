@@ -18,6 +18,15 @@ void Error(const std::string& fmt, Args&&... args)
 }
 
 template <typename... Args>
+void Warning(const std::string& fmt, Args&&... args)
+{
+    printf(fmt::format(fmt, std::forward<Args>(args)...).c_str());
+    printf("\n");
+
+    std::cout << std::flush;
+}
+
+template <typename... Args>
 void Info(const std::string& fmt, Args&&... args)
 {
     printf(fmt::format(fmt, std::forward<Args>(args)...).c_str());

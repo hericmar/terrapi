@@ -4,12 +4,14 @@
 
 namespace Terra
 {
+class SensorController;
+
 /// Switch is GPIO pin which is "switched" on with high voltage
 /// and "switched" off with low voltage.
 class Switch
 {
 public:
-    explicit Switch(int GPIO);
+    explicit Switch(int GPIO, SensorController* sensorController, int oscillationStep);
 
     void On()
     {

@@ -1,5 +1,7 @@
 #include "ConfParser.h"
 
+#include <optional>
+
 #include "Sensor.hpp"
 #include "Terra.h"
 #include "TimeUtils.h"
@@ -11,6 +13,59 @@ void ReadEnvironmentProperties(ConfSection&);
 void ReadSensor(ConfSection&);
 void ReadSwitch(ConfSection&);
 void ReadTimer(ConfSection&);
+
+static constexpr int g_lowestWPGPIO = 0;
+static constexpr int g_highestWPGPIO = 16;
+
+std::optional<ActiveInterval> GetIntervalFromString(const std::string& rawInterval)
+{
+    auto interval = SplitString(rawInterval, ",");
+
+    if (rawInterval == "none")
+    {
+        return {};
+    }
+
+    if (interval.size() != 2)
+    {
+        Log::Error("{}: Active interval must has two values!", ConfigurationParser::g_currentLine);
+        return {};
+    }
+
+    return ActiveInterval{std::stof(interval[0]), std::stof(interval[1])};
+}
+
+std::optional<int> GetInt(const std::string& str)
+{
+    try
+    {
+        auto result = std::stoi(str);
+        return result;
+    }
+    catch (std::invalid_argument& e)
+    {
+        return {};
+    }
+}
+
+std::optional<int> GetInt(const std::string& str, int from, int to)
+{
+    auto result = std::stoi(str);
+    if (from <= result && result <= to)
+        return result;
+    return {};
+}
+
+template <std::size_t Size>
+std::optional<int> GetInt(const std::string& str, const std::array<int, Size>& validValues)
+{
+    auto result = std::stoi(str);
+    for (const int i : validValues)
+        if (result == i)
+            return result;
+
+    return {};
+}
 
 void ReadFileEx(std::ifstream& confFile)
 {
@@ -67,17 +122,28 @@ void ReadSensor(ConfSection& section)
     int type             = -1;
     int gpio             = -1;
     int physicalQuantity = -1;
-    float activeFrom = FLT_MIN, activeTo = FLT_MAX;
-    float nightActiveFrom = FLT_MIN, nightActiveTo = FLT_MAX;
+    ActiveInterval activeInterval;
+    ActiveInterval activeNightInterval;
 
     if (!section.ContainsAll({"id", "type", "wp_gpio", "physical_quantity", "active_interval"}))
     {
-        Log::Error("{}: Sensor could not be instantiated, not enough arguments.", ConfigurationParser::g_currentLine);
+        Log::Error("{}: Sensor cannot not be instantiated, not enough arguments.", ConfigurationParser::g_currentLine);
     }
 
-    id = std::stoi(section["id"]);
+    if (auto parsedID = GetInt(section["id"]))
+        id = parsedID.value();
+    else
+    {
+        Log::Error("Sensor ID must have numeric value!");
+    }
 
-    gpio = std::stoi(section["wp_gpio"]);
+    if (auto parsedGPIO = GetInt(section["wp_gpio"], g_lowestWPGPIO, g_highestWPGPIO))
+        gpio = parsedGPIO.value();
+    else
+    {
+        Log::Error("Wrong WiringPI GPIO number!");
+        return;
+    }
 
     type = GetElementIndex(sensors, section["type"].c_str());
     if (type == -1)
@@ -93,73 +159,28 @@ void ReadSensor(ConfSection& section)
         return;
     }
 
-    {
-        auto rawInterval = section["active_interval"];
-        auto interval = SplitString(rawInterval, ",");
-
-        if (interval.size() != 2)
-        {
-            Log::Error("{}: Active interval must has two values!", ConfigurationParser::g_currentLine);
-            return;
-        }
-        activeFrom = std::stof(interval[0]);
-        activeTo   = std::stof(interval[1]);
-
-        if (section.Contains("night_active_interval"))
-        {
-            rawInterval = section["night_active_interval"];
-            interval = SplitString(rawInterval, ",");
-
-            if (interval.size() != 2)
-            {
-                Log::Error("{}: Active night interval must has two values!", ConfigurationParser::g_currentLine);
-                return;
-            }
-            activeFrom = std::stof(interval[0]);
-            activeTo   = std::stof(interval[1]);
-        }
-    }
-
-    // Validate values.
-    if (id != -1 && gpio != -1)
-    {
-        // Create PhysicalSensor, if does not exists.
-        printf("Instantiating a sensor id:%d!\n", id);
-        std::cout << "\t" << sensors[type] << " connected to GPIO " << gpio << " for measuring "
-                  << physicalQuantities[physicalQuantity] << "\n\t associated switches will be active from "
-                  << activeFrom << " to " << activeTo << ".\n";
-
-        // Check if sensor is already parsed.
-        auto physSens = App::Get().GetSensorByGPIO(gpio);
-        if (physSens == nullptr) // Phys. sensor is not assigned.
-        {
-            // Get type and create one.
-            switch (ESensorType(type))
-            {
-            case ESensorType::DHT11:
-            {
-                physSens = new DHT11(gpio);
-            };
-            default:
-            {
-                break;
-            }
-            }
-
-            App::Get().GetPhysSensors().push_back(physSens);
-        }
-
-        // Now create a Sensor.
-        auto sensor = new SensorController(EPhysicalQuantityType(physicalQuantity), physSens, id);
-        sensor->SetActiveInterval(activeFrom, activeTo);
-
-        App::Get().GetSensors().push_back(sensor);
-    }
+    if (auto interval = GetIntervalFromString(section["active_interval"]))
+        activeInterval = interval.value();
     else
-    {
-        Log::Error("Not enough arguments for a sensor.");
-        return;
-    }
+        Log::Warning("No active value interval specified.");
+
+    if (auto nightInterval = GetIntervalFromString(section["night_active_interval"]))
+        activeNightInterval = nightInterval.value();
+
+    // Create PhysicalSensor, if does not exists.
+    Log::Info("Instantiating a sensor controller id: {}!", id);
+    Log::Info("\t{} connected to GPIO {} for measuring {}", sensors[type], gpio, physicalQuantities[physicalQuantity]);
+    Log::Info("\t associated switches will be active from {} to {}", activeInterval.m_from * 24.0f, activeInterval.m_to * 24.0f);
+
+    // Check if sensor is already parsed.
+    auto physSens = App::Get().GetSensorByGPIO(gpio);
+    if (physSens == nullptr) // Phys. sensor is not assigned.
+        physSens = App::CreateSensor(ESensorType(type), gpio);
+
+    // Now create a Sensor controller.
+    App::CreateSensorController(id, EPhysicalQuantityType(physicalQuantity), physSens)
+        ->SetActiveInterval(activeInterval)
+        ->SetActiveNightInterval(activeNightInterval);
 }
 
 /// Switches are parsed at the end.
@@ -167,7 +188,8 @@ void ReadSwitch(ConfSection& section)
 {
     int gpio           = -1;
     int sensorId       = -1;
-    int oscilationStep = -1;
+    int oscillationStep = -1;
+    SensorController* sensor;
 
     if (!section.ContainsAll({"wp_gpio", "sensor_id"}))
     {
@@ -175,77 +197,69 @@ void ReadSwitch(ConfSection& section)
         return;
     }
 
-    gpio = std::stoi(section["wp_gpio"]);
-    sensorId = std::stoi(section["sensor_id"]);
+    if (auto parsedGPIO = GetInt(section["wp_gpio"], g_lowestWPGPIO, g_highestWPGPIO))
+        gpio = parsedGPIO.value();
+    else
+    {
+        Log::Error("Invalid GPIO number!");
+        return;
+    }
 
     if (section.Contains("oscillation_step"))
     {
-        oscilationStep = std::stoi(section["oscillation_step"]);
+        if (auto parsedOscillationStep = GetInt(section["oscillation_step"]))
+            oscillationStep = parsedOscillationStep.value();
+        else
+        {
+            Log::Error("Oscillation step must be integer value!");
+        }
     }
 
-    if (gpio != -1 && sensorId != -1)
+    if (auto parsedSensorId = GetInt(section["sensor_id"]))
     {
-        printf("Instantiating switch (GPIO %d) for sensor id:%d.\n", gpio, sensorId);
-
-        auto sensor = App::Get().GetSensorById(sensorId);
+        sensorId = parsedSensorId.value();
+        sensor = App::Get().GetSensorById(sensorId);
         if (sensor == nullptr)
         {
             Log::Error("A sensor for switch does not exists!\n");
             return;
         }
-
-        auto aSwitch = new Switch(gpio);
-        App::Get().GetSwitches().push_back(aSwitch);
-
-        sensor->SetSwitch(aSwitch);
-        if (oscilationStep != -1) { aSwitch->Oscille((unsigned) oscilationStep); }
     }
     else
     {
-        Log::Error("Not enough arguments for switch!\n");
+        Log::Error("Sensor ID must be integer value!");
+        return;
     }
+
+    Log::Info("Instantiating switch (GPIO {}) for sensor id: {}.", gpio, sensorId);
+
+    App::CreateSwitch(gpio, sensor, oscillationStep);
 }
 
 void ReadTimer(ConfSection& section)
 {
-    std::string activeFrom;
-    std::string activeTo;
     int id = -1;
+    ActiveInterval activeInterval;
 
     if (!section.ContainsAll({"id", "active_interval"}))
     {
         Log::Error("{}: section [timer] does not contain 'id' or 'active_interval' keys.", ConfigurationParser::g_currentLine);
         Log::Error("Skipping this timer.");
-
         return;
     }
 
-    id = std::stoi(section["id"]);
-
-    auto rawInterval = section["active_interval"];
-    Sanitize(rawInterval);
-    auto interval = SplitString(rawInterval, ",");
-
-    if (interval.size() == 2)
-    {
-        activeFrom = interval[0];
-        activeTo   = interval[1];
-    }
+    if (auto parsedId = GetInt(section["id"]))
+        id = parsedId.value();
     else
     {
-        Log::Error("{}: Active interval must has two values!", ConfigurationParser::g_currentLine);
+        Log::Error("Timer id is not numeric value!");
         return;
     }
 
-    auto from = StringToTime(activeFrom, "%H:%M");
-    auto to = StringToTime(activeTo, "%H:%M");
+    if (auto interval = GetIntervalFromString(section["active_interval"]))
+        activeInterval = interval.value();
 
-    auto clock = App::Get().GetClock();
-
-    auto timer = new SensorController(EPhysicalQuantityType::Time, clock, id);
-
-    timer->SetActiveInterval(from, to);
-    App::Get().GetSensors().push_back(timer);
+    App::CreateTimer(id, activeInterval);
 }
 
 void ReadEnvironmentProperties(ConfSection& section)

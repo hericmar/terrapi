@@ -2,11 +2,8 @@
 
 #include <stdio.h>
 
-
 #include "Environment.h"
 #include "Sensor.hpp"
-
-static constexpr unsigned int MEASURE_STEP = 2000; /// Measure step in milliseconds.
 
 namespace Terra
 {
@@ -23,7 +20,10 @@ public:
 
     void Initialize(const std::string& confFilePath);
     void PrintSensors();
-
+    static Switch* CreateSwitch(int gpio, SensorController* sensorController, int oscillationStep);
+    static SensorController* CreateTimer(int id, ActiveInterval activeInterval);
+    static SensorController* CreateSensorController(int id, EPhysicalQuantityType physicalQuantityType, PhysicalSensor* physicalSensor);
+    static PhysicalSensor* CreateSensor(ESensorType type, int gpio);
     PhysicalSensor* GetSensorByGPIO(unsigned gpio);
     SensorController* GetSensorById(unsigned id);
     Environment& GetEnvironment() { return m_environment; }

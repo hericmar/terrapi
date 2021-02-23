@@ -12,7 +12,6 @@ add_subdirectory(lib/fmt)
 set(TERRAPI_SOURCE
         src/ConfParser.cpp
         src/Defs.h
-        src/Main.cpp
         src/Log.h
         src/Pch.cpp
         src/Terra.cpp
@@ -23,7 +22,7 @@ set(TERRAPI_SOURCE
         src/Switch.cpp
         src/Utils.h)
 
-add_executable(${PROJECT_NAME} ${TERRAPI_SOURCE})
+add_executable(${PROJECT_NAME} ${TERRAPI_SOURCE} src/Main.cpp)
 
 target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-lwiringPi>)
 target_link_libraries(${PROJECT_NAME} PUBLIC fmt)
@@ -32,7 +31,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC fmt)
 add_executable(terrapi_test
         ${TERRAPI_SOURCE}
         test/dummy/wiringPi.c
-        test/terrapi/conf_parser_test.hpp
         test/terrapi/Main.cpp)
 
 target_compile_definitions(terrapi_test PRIVATE TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

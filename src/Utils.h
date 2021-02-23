@@ -18,7 +18,6 @@ constexpr int GetElementIndex(const std::array<T, Size>& array, const T& value)
         {
             if (strcmp(*it, value) == 0) { return i; }
         }
-
         ++i;
     }
 
