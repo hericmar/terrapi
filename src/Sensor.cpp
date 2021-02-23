@@ -1,14 +1,40 @@
-#include "sensor.hpp"
+#include "Sensor.hpp"
+
+#include "Environment.h"
 
 using namespace Terra;
 
-void Sensor::Update()
-{
-    m_physicalSensor->Measure();
+static std::function<bool(float)> g_dayStrategy;
+static std::function<bool(float)> g_nightStrategy;
 
+SensorController::SensorController(EPhysicalQuantityType physicalQuantity, PhysicalSensor* sensor,
+                                   unsigned int id)
+{
+    m_physicalSensor   = sensor;
+    m_physicalQuantity = physicalQuantity;
+    m_id               = id;
+
+    g_dayStrategy = [&](float measuredValue)
+    {
+      return m_activeInterval.m_from < measuredValue && measuredValue < m_activeInterval.m_to;
+    };
+
+    g_nightStrategy = [&](float measuredValue)
+    {
+      return m_activeNightInterval.m_from < measuredValue && measuredValue < m_activeNightInterval.m_to;
+    };
+
+    if (Terra::IsDay())
+        m_strategy = g_dayStrategy;
+    else
+        m_strategy = g_nightStrategy;
+}
+
+void SensorController::Update()
+{
     float measuredValue = m_physicalSensor->GetValue(m_physicalQuantity);
 
-    if (m_activeInterval.m_from < measuredValue && measuredValue < m_activeInterval.m_to)
+    if (m_strategy(measuredValue))
     {
         for (auto& aSwitch : m_switches) { aSwitch->On(); }
     }
@@ -83,4 +109,14 @@ void DHT11::Measure()
     {
         // printf("Data not good, skip\n");
     }
+}
+
+void Clock::Measure()
+{
+    std::time_t t = std::time(nullptr);
+    std::tm* now  = std::localtime(&t);
+
+    float result = TimeToFloat(*now);
+
+    SetValue(EPhysicalQuantityType::Time, result);
 }

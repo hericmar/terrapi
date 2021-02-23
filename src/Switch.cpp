@@ -1,4 +1,7 @@
-#include "switch.hpp"
+#include "Switch.hpp"
+
+#include "Defs.h"
+#include "Log.h"
 
 using namespace Terra;
 

@@ -1,12 +1,12 @@
 #pragma once
 
-#include "pch.h"
+#include "Pch.h"
 
 #include <cctype>
 #include <map>
 #include <utility>
 
-#include "terra.h"
+#include "Log.h"
 
 namespace Terra
 {
@@ -52,27 +52,6 @@ public:
     }
 };
 
-/// Split string.
-/// \param s
-/// \param delimiter
-/// \return
-inline std::vector<std::string> SplitString(const std::string& s, const std::string& delimiter)
-{
-    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
-    std::string token;
-    std::vector<std::string> res;
-
-    while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos)
-    {
-        token     = s.substr(pos_start, pos_end - pos_start);
-        pos_start = pos_end + delim_len;
-        res.push_back(token);
-    }
-    res.push_back(s.substr(pos_start));
-
-    return res;
-}
-
 inline std::string Sanitize(std::string str)
 {
     str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
@@ -90,23 +69,28 @@ inline std::string Sanitize(std::string str)
     return result;
 }
 
-/// Get another non empty line.
-/// \param stream conf file.
-/// \return configuration line without whitespaces.
-inline std::string GetLine(std::ifstream& stream)
+/// Split string.
+/// \param s
+/// \param delimiter
+/// \return
+inline std::vector<std::string> SplitString(const std::string& s, const std::string& delimiter)
 {
-    std::string line;
-    while (line.empty() || !stream.eof())
+    Sanitize(s);
+
+    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+    std::string token;
+    std::vector<std::string> res;
+
+    while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos)
     {
-        if (std::getline(stream, line))
-        {
-            line = Sanitize(line);
-        }
+        token     = s.substr(pos_start, pos_end - pos_start);
+        pos_start = pos_end + delim_len;
+        res.push_back(token);
     }
+    res.push_back(s.substr(pos_start));
 
-    return line;
+    return res;
 }
-
 
 /// Configuration file is very simple.
 /// It contains sensor definitions at the top and switches definition

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "pch.h"
-#include "terra.h"
+#include "Pch.h"
 
 namespace Terra
 {

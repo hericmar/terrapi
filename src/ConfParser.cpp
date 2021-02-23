@@ -1,8 +1,9 @@
-#include "conf_parser.h"
+#include "ConfParser.h"
 
-#include "sensor.hpp"
-#include "time_utils.h"
-#include "utils.h"
+#include "Sensor.hpp"
+#include "Terra.h"
+#include "TimeUtils.h"
+#include "Utils.h"
 
 using namespace Terra;
 
@@ -67,6 +68,7 @@ void ReadSensor(ConfSection& section)
     int gpio             = -1;
     int physicalQuantity = -1;
     float activeFrom = FLT_MIN, activeTo = FLT_MAX;
+    float nightActiveFrom = FLT_MIN, nightActiveTo = FLT_MAX;
 
     if (!section.ContainsAll({"id", "type", "wp_gpio", "physical_quantity", "active_interval"}))
     {
@@ -93,22 +95,33 @@ void ReadSensor(ConfSection& section)
 
     {
         auto rawInterval = section["active_interval"];
-        Sanitize(rawInterval);
         auto interval = SplitString(rawInterval, ",");
 
-        if (interval.size() == 2)
-        {
-            activeFrom = std::stof(interval[0]);
-            activeTo   = std::stof(interval[1]);
-        }
-        else
+        if (interval.size() != 2)
         {
             Log::Error("{}: Active interval must has two values!", ConfigurationParser::g_currentLine);
+            return;
+        }
+        activeFrom = std::stof(interval[0]);
+        activeTo   = std::stof(interval[1]);
+
+        if (section.Contains("night_active_interval"))
+        {
+            rawInterval = section["night_active_interval"];
+            interval = SplitString(rawInterval, ",");
+
+            if (interval.size() != 2)
+            {
+                Log::Error("{}: Active night interval must has two values!", ConfigurationParser::g_currentLine);
+                return;
+            }
+            activeFrom = std::stof(interval[0]);
+            activeTo   = std::stof(interval[1]);
         }
     }
 
     // Validate values.
-    if (id != -1 && gpio != -1 )
+    if (id != -1 && gpio != -1)
     {
         // Create PhysicalSensor, if does not exists.
         printf("Instantiating a sensor id:%d!\n", id);
@@ -137,7 +150,7 @@ void ReadSensor(ConfSection& section)
         }
 
         // Now create a Sensor.
-        auto sensor = new Sensor(EPhysicalQuantityType(physicalQuantity), physSens, id);
+        auto sensor = new SensorController(EPhysicalQuantityType(physicalQuantity), physSens, id);
         sensor->SetActiveInterval(activeFrom, activeTo);
 
         App::Get().GetSensors().push_back(sensor);
@@ -145,6 +158,7 @@ void ReadSensor(ConfSection& section)
     else
     {
         Log::Error("Not enough arguments for a sensor.");
+        return;
     }
 }
 
@@ -226,16 +240,9 @@ void ReadTimer(ConfSection& section)
     auto from = StringToTime(activeFrom, "%H:%M");
     auto to = StringToTime(activeTo, "%H:%M");
 
-    // TODO -> rename timer to clock?
-    // TODO -> GlobalTimer???
-    auto globalTimer = App::Get().GetSensorByGPIO(GPIO_TIMER);
-    if (globalTimer == nullptr)
-    {
-        globalTimer = new Timer(GPIO_TIMER);
-        App::Get().GetPhysSensors().push_back(globalTimer);
-    }
+    auto clock = App::Get().GetClock();
 
-    auto timer = new Sensor(EPhysicalQuantityType::Time, globalTimer, id);
+    auto timer = new SensorController(EPhysicalQuantityType::Time, clock, id);
 
     timer->SetActiveInterval(from, to);
     App::Get().GetSensors().push_back(timer);

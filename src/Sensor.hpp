@@ -1,11 +1,11 @@
 #pragma once
 
-#include "pch.h"
-#include "switch.hpp"
-#include "terra.h"
-#include "time_utils.h"
+#include "Pch.h"
+#include "Switch.hpp"
+#include "TimeUtils.h"
 
 #include <ctime>
+#include <functional>
 
 #define DHT_MAX_TIMINGS 85
 
@@ -64,7 +64,7 @@ protected:
     /// If any value is not supported by the sensor, its value is FLT_MIN.
     std::array<float, (unsigned) EPhysicalQuantityType::COUNT> m_values{};
 
-    /// Set measured value (used in measuring proccess).
+    /// Set measured value (used in measuring process).
     /// \param type value type.
     /// \param value measured value.
     void SetValue(EPhysicalQuantityType type, float value) { m_values[(unsigned) type] = value; }
@@ -77,21 +77,16 @@ protected:
 /// It is used for generic sensor definition.
 /// It stores reference to a "physical" sensor and measure one value
 /// only.
-class Sensor
+class SensorController
 {
 public:
     /// Create a logical representation of the one measured value.
     /// \param physicalQuantity watched value.
     /// \param sensor physical sensor.
     /// \param id unique id!
-    explicit Sensor(EPhysicalQuantityType physicalQuantity, class PhysicalSensor* sensor, unsigned id)
-    {
-        m_physicalSensor   = sensor;
-        m_physicalQuantity = physicalQuantity;
-        m_id               = id;
-    }
+    explicit SensorController(EPhysicalQuantityType physicalQuantity, class PhysicalSensor* sensor, unsigned id);
 
-    /// Set interval in which assigned switches should be active.
+    /// Set interval within assigned switches should be active.
     /// \param from min value.
     /// \param to max value.
     void SetActiveInterval(float from, float to)
@@ -100,11 +95,17 @@ public:
         m_activeInterval.m_to   = to;
     }
 
+    void SetActiveNightInterval(float from, float to)
+    {
+        m_activeNightInterval.m_from = from;
+        m_activeNightInterval.m_to   = to;
+    }
+
     /// Add new switch dependent to measured phys. quantity.
     /// \param aSwitch
     void SetSwitch(class Switch* aSwitch) { m_switches.push_back(aSwitch); }
 
-    /// Perform measurement and update switches.
+    /// Update switches.
     void Update();
 
     [[nodiscard]] unsigned GetId() const { return m_id; };
@@ -122,6 +123,9 @@ private:
 
     /// Interval for switch a switch on.
     ActiveInterval m_activeInterval;
+    ActiveInterval m_activeNightInterval;
+
+    std::function<bool(float)> m_strategy;
 
     /// PhysicalSensor reference.
     class PhysicalSensor* m_physicalSensor;
@@ -136,7 +140,7 @@ private:
 class DHT11 : public PhysicalSensor
 {
 public:
-    explicit DHT11(int gpio) : PhysicalSensor(gpio){};
+    explicit DHT11(int gpio) : PhysicalSensor(gpio) {};
 
     void Measure() override;;
 
@@ -144,20 +148,12 @@ private:
     int data[5] = {0, 0, 0, 0, 0};
 };
 
-class Timer : public PhysicalSensor
+class Clock : public PhysicalSensor
 {
 public:
-    explicit Timer(int gpio) : PhysicalSensor(gpio){};
+    explicit Clock(int gpio = -1) : PhysicalSensor(gpio) {};
 
     /// Timer measure time ratio.
-    void Measure() override
-    {
-        std::time_t t = std::time(nullptr);
-        std::tm* now  = std::localtime(&t);
-
-        float result = TimeToFloat(*now);
-
-        SetValue(EPhysicalQuantityType::Time, result);
-    }
+    void Measure() override;
 };
 } // namespace Terra
