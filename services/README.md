@@ -1,4 +1,3 @@
-````
-docker-compose build
-docker-compose up
+````sh
+docker-compose --env-file=env up
 ````
