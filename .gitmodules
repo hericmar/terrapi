@@ -1,5 +1,5 @@
 [submodule "lib/fmt"]
-	path = lib/fmt
+	path = terrapi/lib/fmt
 	url = https://github.com/fmtlib/fmt.git
 	ignore = dirty
 [submodule "lib/rapidjson"]
