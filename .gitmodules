@@ -2,3 +2,6 @@
 	path = lib/fmt
 	url = https://github.com/fmtlib/fmt.git
 	ignore = dirty
+[submodule "lib/rapidjson"]
+	path = lib/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
