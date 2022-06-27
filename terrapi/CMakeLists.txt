@@ -12,7 +12,10 @@ include_directories(include)
 add_subdirectory(lib/fmt)
 
 set(TERRAPI_SOURCE
-        src/main.cpp)
+        src/config.cpp
+        src/switch.cpp
+        src/terrapi.cpp
+        src/utils.cpp)
 
 add_executable(${PROJECT_NAME} ${TERRAPI_SOURCE} src/main.cpp)
 

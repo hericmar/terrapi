@@ -1,0 +1,7 @@
+namespace terra
+{
+class sensor
+{
+
+};
+}
