@@ -25,6 +25,7 @@ namespace fs
         if (f.good()) {
             std::stringstream buffer;
             buffer << f.rdbuf();
+            result = buffer.str();
         }
 
         return result;

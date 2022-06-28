@@ -1,10 +1,16 @@
+#include <iostream>
+
 #include "fmt/format.h"
 
 #include "tests.h"
 
 int main()
 {
-    test_config();
+    try {
+        test_config();
+    } catch (std::exception& ex) {
+        std::cout << ex.what() << std::endl;
+    }
 
     /*
     auto& app = App::Get();

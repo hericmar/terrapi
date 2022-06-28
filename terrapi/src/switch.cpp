@@ -12,7 +12,7 @@ namespace terra
 Switch::Switch(std::string name, int gpio, int oscillation_step)
     : m_name(std::move(name)), m_gpio(gpio), m_oscillation_step(oscillation_step)
 {
-    if (oscillation_step < MEASURE_STEP) {
+    if (m_oscillation_step != -1 && m_oscillation_step < MEASURE_STEP) {
         m_oscillation_step = -1;
         log::err("Invalid config for switch at GPIO {}, ensure oscillation_step < MEASURE_STEP.", gpio);
     }

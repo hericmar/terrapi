@@ -15,12 +15,12 @@ public:
     ///     you must set oscillation_step as non negative value in ms.
     ///     Oscillation step should be greater than the measure step
     ///     (MEASURE_STEP)!
-    Switch(std::string  name, int gpio, int oscillation_step = -1);
+    Switch(std::string name, int gpio, int oscillation_step = -1);
 
     void turn_on();
     void turn_off();
 
-    const std::string& name() const { return m_name.c_str(); }
+    [[nodiscard]] const std::string& name() const { return m_name; }
 
 private:
     std::string m_name;

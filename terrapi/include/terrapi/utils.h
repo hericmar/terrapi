@@ -19,13 +19,13 @@ namespace log
     template <typename... Args>
     void info(const std::string& str, Args&&... args)
     {
-        printf("%s", fmt::format(str, std::forward<Args>(args)...).c_str());
+        printf("%s\n", fmt::format(str, std::forward<Args>(args)...).c_str());
     }
 
     template <typename... Args>
     void err(const std::string& str, Args&&... args)
     {
-        fprintf(stderr, "%s", fmt::format(str, std::forward<Args>(args)...).c_str());
+        fprintf(stderr, "%s\n", fmt::format(str, std::forward<Args>(args)...).c_str());
     }
 }
 }
