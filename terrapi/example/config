@@ -8,7 +8,6 @@ day_to = 17:00
 # In this example we use sensor.id := 0 for measuring humidity,
 # although the DHT11 can measure temperature and humidity.
 [sensor "dht/temperature"]
-id = 0
 type = DHT11
 wp_gpio = 7
 physical_quantity = humidity
@@ -16,7 +15,6 @@ active_interval = 75.0, 100.0
 night_active_interval = 60.0, 80.0
 
 [sensor "dht/humidity"]
-id = 1
 type = DHT11
 wp_gpio = 11
 physical_quantity = temperature
@@ -25,13 +23,18 @@ night_active_interval = none
 
 
 [timer "day"]
-id = 1
-active_interval = 10:59, 20:57
+active_interval = 10:59, 21:57
 
+
+[switch "lights"]
+sensor = day
+gpio = 17
 
 [switch "heater"]
-gpio = 0
+sensor = dht/temperature
+gpio = 27
 
 [switch "humidifier"]
-gpio = 2
+sensor = dht/humidity
+gpio = 22
 oscillation_step = 2000

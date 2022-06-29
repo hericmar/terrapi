@@ -1,6 +1,8 @@
 #include "Sensor.hpp"
 
 #include "Environment.h"
+#include "terrapi/sensor.h"
+
 
 using namespace Terra;
 

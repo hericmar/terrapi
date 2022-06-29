@@ -6,6 +6,7 @@
 #include "terrapi/terrapi.h"
 
 #include "config.h"
+#include "chrono.h"
 
 namespace terra
 {
@@ -39,7 +40,12 @@ static const std::map<std::string, bool> g_sections = {
     {"timer", true}
 };
 
+//------------------------------------------------------------------------------
+
 static int line_number = 0;
+static std::map<std::string, int> sensor_name_idx_map;
+
+//------------------------------------------------------------------------------
 
 /// Lines with breaks are empty.
 ///
@@ -186,14 +192,10 @@ static std::optional<Section> get_section(std::string_view sanitized_line)
     return Section{std::string(section), name};
 }
 
-static bool read_int(const SectionBody& section_body, const std::string& key, int& dest)
+//------------------------------------------------------------------------------
+
+static bool read_int(const std::string& val, int& dest)
 {
-    if (section_body.count(key) == 0) {
-        return false;
-    }
-
-    const auto& val = section_body.at(key).first;
-
     auto [ptr, ec] = std::from_chars(val.data(), val.data() + val.size(), dest);
 
     if (ec != std::errc()) {
@@ -203,35 +205,120 @@ static bool read_int(const SectionBody& section_body, const std::string& key, in
     return true;
 }
 
-static void read_environment(Context& ctx, const SectionBody& environment_config)
+static bool read_int(const SectionBody& section_body, const std::string& key, int& dest)
 {
+    if (section_body.count(key) == 0) {
+        return false;
+    }
 
+    const auto& val = section_body.at(key).first;
+
+    return read_int(val, dest);
 }
 
-static void read_sensor(Context& ctx, const SectionBody& sensor_config)
+static bool read_time(const SectionBody& section_body, const std::string& key, int& dest)
 {
+    if (section_body.count(key) == 0) {
+        return false;
+    }
 
+    const auto& val = section_body.at(key).first;
+
+    return str_to_time(val, dest);
 }
 
-static void read_switch(Context& ctx, const Section& section, const SectionBody& switch_config)
+static bool read_time_interval(const SectionBody& section_body, const std::string& key, ValueInterval& dest)
 {
+    if (section_body.count(key) == 0) {
+        return false;
+    }
+
+    const auto values = split(section_body.at(key).first, ",");
+
+    if (values.size() != 2) {
+        return false;
+    }
+
+    auto result = str_to_time(std::string(values[0]), dest[0].int_val);
+
+    return result && str_to_time(std::string(values[1]), dest[1].int_val);
+}
+
+//------------------------------------------------------------------------------
+
+static bool read_environment(Context& ctx, const SectionBody& environment_config)
+{
+    ValueInterval daytime{};
+
+    if (!read_time(environment_config, "day_from", daytime[0].int_val)) {
+        log::err("Switch \"environment\" does not have valid GPIO pin specified.");
+        return false;
+    }
+
+    if (!read_time(environment_config, "day_to", daytime[1].int_val)) {
+        log::err("Switch \"environment\" does not have valid GPIO pin specified.");
+        return false;
+    }
+
+    ctx.m_daytime[0] = daytime[0].int_val;
+    ctx.m_daytime[1] = daytime[1].int_val;
+
+    return true;
+}
+
+static void read_sensor(Context& ctx, const Section& section, const SectionBody& sensor_config)
+{
+    sensor_name_idx_map[section.name] = ctx.m_controllers.size() - 1;
+}
+
+static bool read_switch(Context& ctx, const Section& section, const SectionBody& switch_config)
+{
+    if (switch_config.count("sensor") == 0) {
+        log::err(R"(Switch "{}" does not have "sensor" specified.)", section.name);
+        return false;
+    }
+
+    const auto& sensor_name = switch_config.at("sensor").first;
+    if (sensor_name_idx_map.find(sensor_name) == sensor_name_idx_map.end()) {
+        log::err(R"(Switch "{}" has invalid "sensor" specified, sensor "{}" does not exist.)", section.name, sensor_name);
+        return false;
+    }
+
     int gpio = 0;
     if (!read_int(switch_config, "gpio", gpio)) {
         log::err("Switch \"{}\" does not have valid GPIO pin specified.", section.name);
+        return false;
     }
 
     int oscillation_step = -1;
-    if (switch_config.count("oscillation_step") != 0 && !read_int(switch_config, "oscillation_step", oscillation_step)) {
+    if (switch_config.count("oscillation_step") && !read_int(switch_config, "oscillation_step", oscillation_step)) {
         log::err("Switch \"{}\" does not have valid oscillation_step.", section.name);
+        return false;
     }
 
     ctx.m_switches.push_back(Switch{section.name, gpio, oscillation_step});
+
+    auto& controller = ctx.m_controllers[sensor_name_idx_map[sensor_name]];
+    controller.set_switch_id(ctx.m_switches.size() - 1);
+
+    return true;
 }
 
-static void read_timer(Context& ctx, const SectionBody& timer_config)
+static bool read_timer(Context& ctx, const Section& section, const SectionBody& timer_config)
 {
+    ValueInterval interval;
+    if (!read_time_interval(timer_config, "active_interval", interval)) {
+        log::err(R"(Cannot read "active_interval" for timer "{}".)", section.name);
+        return false;
+    }
 
+    ctx.m_controllers.push_back(SensorController(section.name, ctx.m_clock, EPhysicalQuantity::Time, interval));
+    sensor_name_idx_map[section.name] = ctx.m_controllers.size() - 1;
+
+    return true;
 }
+
+//------------------------------------------------------------------------------
 
 void parse_config(Context& ctx, std::string_view str)
 {
@@ -276,13 +363,20 @@ void parse_config(Context& ctx, std::string_view str)
     }
 
     // Process config
+
     for (const auto& [section_header, section_body] : conf) {
         if (section_header.type == "environment") {
-            // read_environment(ctx, conf);
+            read_environment(ctx, section_body);
         } else if (section_header.type == "sensor") {
-        } else if (section_header.type == "switch") {
-            read_switch(ctx, section_header, section_body);
+
         } else if (section_header.type == "timer") {
+            read_timer(ctx, section_header, section_body);
+        }
+    }
+
+    for (const auto& [section_header, section_body] : conf) {
+        if (section_header.type == "switch") {
+            read_switch(ctx, section_header, section_body);
         }
     }
 }

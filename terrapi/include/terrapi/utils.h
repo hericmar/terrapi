@@ -23,6 +23,12 @@ namespace log
     }
 
     template <typename... Args>
+    void warn(const std::string& str, Args&&... args)
+    {
+        fprintf(stderr, "%s\n", fmt::format(str, std::forward<Args>(args)...).c_str());
+    }
+
+    template <typename... Args>
     void err(const std::string& str, Args&&... args)
     {
         fprintf(stderr, "%s\n", fmt::format(str, std::forward<Args>(args)...).c_str());

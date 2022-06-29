@@ -1,6 +1,9 @@
 #pragma once
 
+#include <ctime>
 #include <vector>
+
+#include "wiringPi.h"
 
 #include "terrapi/sensor.h"
 #include "terrapi/switch.h"
@@ -12,11 +15,15 @@ constexpr inline unsigned int MEASURE_STEP = 2000;  /// Measure step in millisec
 
 namespace terra
 {
-using Switches = std::vector<Switch>;
 
 struct Context
 {
-    Switches m_switches;
+    int m_daytime[2]{};
+
+    SensorPtr m_clock;
+    std::vector<SensorController> m_controllers;
+    std::vector<SensorPtr>        m_sensors;
+    std::vector<Switch>           m_switches;
 };
 
 class App
@@ -26,9 +33,13 @@ public:
     static App& create(const char* path);
     static App& create_from_string(const char* str_config);
 
+    static void run();
+
     const std::vector<Switch>& switches() const { return m_ctx.m_switches; }
 
 private:
+    friend Context& ctx();
+
     Context m_ctx;
 };
 }
