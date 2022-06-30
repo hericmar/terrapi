@@ -23,15 +23,19 @@ Switch::Switch(std::string name, int gpio, int oscillation_step)
 
 void Switch::turn_on()
 {
-    log::info("Switching ON GPIO {}.", m_gpio);
-    digitalWrite(m_gpio, GPIO_ON);
-    m_is_on = true;
+    if (!m_is_on) {
+        log::info("{}: Switching ON GPIO {}.", m_name, m_gpio);
+        digitalWrite(m_gpio, GPIO_ON);
+        m_is_on = true;
+    }
 }
 
 void Switch::turn_off()
 {
-    log::info("Switching OFF GPIO {}.", m_gpio);
-    digitalWrite(m_gpio, GPIO_ON);
-    m_is_on = true;
+    if (m_is_on) {
+        log::info("{}: Switching OFF GPIO {}.", m_name, m_gpio);
+        digitalWrite(m_gpio, GPIO_ON);
+        m_is_on = false;
+    }
 }
 }

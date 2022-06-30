@@ -3,6 +3,7 @@
 #include <array>
 #include <memory>
 #include <optional>
+#include <string>
 #include <unordered_map>
 #include <utility>
 
@@ -10,10 +11,13 @@ namespace terra
 {
 enum class EPhysicalQuantity
 {
-    Humidity,
+    Humidity    = 0,
     Temperature,
     Time,
 };
+
+const std::string& to_string(EPhysicalQuantity q);
+std::optional<EPhysicalQuantity> from_string(const std::string& str);
 
 /// \todo We have no value type validation.
 union Value
@@ -40,14 +44,14 @@ public:
     /// For timer only.
     SensorController(
         const std::string& name,
-        SensorPtr& sensor,
+        PhysicalSensor* sensor,
         EPhysicalQuantity q,
         std::optional<ValueInterval> day)
         : m_name(name), m_sensor(sensor), m_q(q), m_day_interval(day) {}
 
     SensorController(
         const std::string& name,
-        SensorPtr& sensor,
+        PhysicalSensor* sensor,
         EPhysicalQuantity q,
         std::optional<ValueInterval> day,
         std::optional<ValueInterval> night)
@@ -61,7 +65,7 @@ private:
     void evaluate(std::optional<ValueInterval> interval) const;
 
     std::string       m_name;
-    SensorPtr&        m_sensor;
+    PhysicalSensor*   m_sensor;
     int               m_switch_idx = -1;
     EPhysicalQuantity m_q;
 
@@ -77,9 +81,12 @@ class PhysicalSensor
 public:
     virtual void measure() = 0;
 
+    const std::string& name() const { return m_name; }
+
     Value value(EPhysicalQuantity q);
 
 protected:
+    std::string m_name;
     std::unordered_map<EPhysicalQuantity, Value> m_value;
 };
 
@@ -103,7 +110,12 @@ class DHT11 : public PhysicalSensor
 {
 public:
     /// \todo Validate GPIO number
-    explicit DHT11(int gpio) : m_gpio(gpio) {}
+    explicit DHT11(int gpio) : m_gpio(gpio) {
+        m_name = "DHT11@" + std::to_string(gpio);
+
+        m_value[EPhysicalQuantity::Humidity];
+        m_value[EPhysicalQuantity::Temperature];
+    }
 
     void measure() override;
 

@@ -7,6 +7,35 @@
 
 namespace terra
 {
+static const std::string physical_quantity_names[] = {
+    "humidity", "temperature", "time"
+};
+
+const std::string& terra::to_string(EPhysicalQuantity q)
+{
+    return physical_quantity_names[(int) q];
+}
+
+std::optional<EPhysicalQuantity> terra::from_string(const std::string& str)
+{
+    int i = 0;
+    bool has_value = false;
+
+    for (const auto& name : physical_quantity_names) {
+        if (name == str) {
+            has_value = true;
+            break;
+        }
+        ++i;
+    }
+
+    if (!has_value) {
+        return std::nullopt;
+    }
+
+    return EPhysicalQuantity(i);
+}
+
 bool terra::cmp(EPhysicalQuantity q, Value lhs, Value rhs)
 {
     switch (q)
@@ -47,11 +76,25 @@ void SensorController::update() const
 
 void SensorController::evaluate(std::optional<ValueInterval> maybe_interval) const
 {
+    const auto& val = m_sensor->value(m_q);
+
+    switch (m_q)
+    {
+    case EPhysicalQuantity::Humidity:
+        log::info("{} ({}): {} %", m_sensor->name(), m_name, val.float_val);
+        break;
+    case EPhysicalQuantity::Temperature:
+        log::info("{} ({}): {} °C", m_sensor->name(), m_name, val.float_val);
+        break;
+    default:
+        break;
+    }
+
     if (!maybe_interval.has_value()) {
         return;
     }
 
-    if (cmp_within(m_q, *maybe_interval, m_sensor->value(m_q))) {
+    if (cmp_within(m_q, *maybe_interval, val)) {
         ctx().m_switches[m_switch_idx].turn_on();
     } else {
         ctx().m_switches[m_switch_idx].turn_off();
@@ -154,7 +197,7 @@ bool Clock::is_day() const
 Value PhysicalSensor::value(EPhysicalQuantity q)
 {
     if (m_value.find(q) == m_value.end()) {
-        log::err("Sensor {} does not have value {}", "kunda", "q");
+        log::err("Sensor {} does not have value {}", m_name, to_string(q));
     }
 
     return m_value[q];

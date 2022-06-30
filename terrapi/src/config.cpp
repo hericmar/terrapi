@@ -194,6 +194,17 @@ static std::optional<Section> get_section(std::string_view sanitized_line)
 
 //------------------------------------------------------------------------------
 
+static bool read_float(const std::string& val, float& dest)
+{
+    try {
+        dest = std::stof(val);
+
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
 static bool read_int(const std::string& val, int& dest)
 {
     auto [ptr, ec] = std::from_chars(val.data(), val.data() + val.size(), dest);
@@ -244,6 +255,23 @@ static bool read_time_interval(const SectionBody& section_body, const std::strin
     return result && str_to_time(std::string(values[1]), dest[1].int_val);
 }
 
+static bool read_float_interval(const SectionBody& section_body, const std::string& key, ValueInterval& dest)
+{
+    if (section_body.count(key) == 0) {
+        return false;
+    }
+
+    const auto values = split(section_body.at(key).first, ",");
+
+    if (values.size() != 2) {
+        return false;
+    }
+
+    auto result = read_float(std::string(values[0]), dest[0].float_val);
+
+    return result && read_float(std::string(values[1]), dest[1].float_val);
+}
+
 //------------------------------------------------------------------------------
 
 static bool read_environment(Context& ctx, const SectionBody& environment_config)
@@ -266,9 +294,75 @@ static bool read_environment(Context& ctx, const SectionBody& environment_config
     return true;
 }
 
-static void read_sensor(Context& ctx, const Section& section, const SectionBody& sensor_config)
+static bool read_sensor(Context& ctx, const Section& section, const SectionBody& sensor_config)
 {
+    std::optional<ValueInterval> day_interval{ValueInterval()};
+    std::optional<ValueInterval> night_interval{ValueInterval()};
+
+    EPhysicalQuantity q;
+    if (sensor_config.count("type") == 0) {
+        log::err(R"(Sensor "{}" does not have valid "type" specified.)", section.name);
+        return false;
+    }
+
+    if (sensor_config.count("active_interval") == 0) {
+        log::err(R"(Sensor "{}" does not have valid "active_interval" specified.)", section.name);
+        return false;
+    }
+
+    if (sensor_config.at("type").first == "DHT11") {
+
+        if (sensor_config.count("physical_quantity") == 0) {
+            log::err(R"(Sensor "{}" does not have valid "physical_quantity" specified.)", section.name);
+            return false;
+        }
+
+        if (auto maybe_q = from_string(sensor_config.at("physical_quantity").first)) {
+            q = *maybe_q;
+        } else {
+            log::err(R"(Sensor "{}" does not have valid "physical_quantity" specified.)", section.name);
+            return false;
+        }
+
+        int gpio = 0;
+        if (!read_int(sensor_config, "gpio", gpio)) {
+            log::err(R"(Sensor "{}" does not have valid "gpio" specified.)", section.name);
+            return false;
+        }
+
+        if (!read_float_interval(sensor_config, "active_interval", *day_interval)) {
+            log::err(R"(Sensor "{}" does not have valid "active_interval".)", section.name);
+            return false;
+        }
+
+        if (sensor_config.count("night_active_interval")) {
+            if (sensor_config.at("night_active_interval").first == "none") {
+                night_interval = std::nullopt;
+            } else {
+                if (!read_float_interval(sensor_config, "night_active_interval", *night_interval)) {
+                    log::err(R"(Sensor "{}" does not have valid "night_active_interval".)", section.name);
+                    return false;
+                }
+            }
+        }
+
+        ctx.m_sensors.push_back(std::make_unique<DHT11>(gpio));
+        ctx.m_controllers.push_back(SensorController(
+            section.name,
+            ctx.m_sensors[ctx.m_sensors.size() - 1].get(),
+            q,
+            day_interval,
+            night_interval
+        ));
+
+    } else {
+        log::err(R"(Sensor "{}" has unknown "type" specified.)", section.name);
+        return false;
+    }
+
     sensor_name_idx_map[section.name] = ctx.m_controllers.size() - 1;
+
+    return true;
 }
 
 static bool read_switch(Context& ctx, const Section& section, const SectionBody& switch_config)
@@ -312,7 +406,7 @@ static bool read_timer(Context& ctx, const Section& section, const SectionBody& 
         return false;
     }
 
-    ctx.m_controllers.push_back(SensorController(section.name, ctx.m_clock, EPhysicalQuantity::Time, interval));
+    ctx.m_controllers.push_back(SensorController(section.name, ctx.m_clock.get(), EPhysicalQuantity::Time, interval));
     sensor_name_idx_map[section.name] = ctx.m_controllers.size() - 1;
 
     return true;
@@ -368,7 +462,7 @@ void parse_config(Context& ctx, std::string_view str)
         if (section_header.type == "environment") {
             read_environment(ctx, section_body);
         } else if (section_header.type == "sensor") {
-
+            read_sensor(ctx, section_header, section_body);
         } else if (section_header.type == "timer") {
             read_timer(ctx, section_header, section_body);
         }
