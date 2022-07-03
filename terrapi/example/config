@@ -1,3 +1,8 @@
+[general]
+broker_address = tcp://localhost:1883
+client_id = test_client
+
+
 # In system time
 [environment]
 day_from = 09:00

@@ -274,6 +274,19 @@ static bool read_float_interval(const SectionBody& section_body, const std::stri
 
 //------------------------------------------------------------------------------
 
+static bool read_general(Context& ctx, const SectionBody& general_config)
+{
+    if (general_config.count("broker_address") == 0 || general_config.count("client_id") == 0) {
+        log::info(R"(No "broker_address" or "client_id" specified, running in the single device mode.)");
+        return true;
+    }
+
+    ctx.m_broker_addr = general_config.at("broker_address").first;
+    ctx.m_client_id   = general_config.at("client_id").first;
+
+    return true;
+}
+
 static bool read_environment(Context& ctx, const SectionBody& environment_config)
 {
     ValueInterval daytime{};
@@ -459,7 +472,9 @@ void parse_config(Context& ctx, std::string_view str)
     // Process config
 
     for (const auto& [section_header, section_body] : conf) {
-        if (section_header.type == "environment") {
+        if (section_header.type == "general") {
+            read_general(ctx, section_body);
+        } else if (section_header.type == "environment") {
             read_environment(ctx, section_body);
         } else if (section_header.type == "sensor") {
             read_sensor(ctx, section_header, section_body);
