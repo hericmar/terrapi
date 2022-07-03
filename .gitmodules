@@ -5,9 +5,6 @@
 [submodule "lib/rapidjson"]
 	path = lib/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
-[submodule "terrapi/lib/paho.mqtt.cpp"]
-	path = terrapi/lib/paho.mqtt.cpp
-	url = https://github.com/eclipse/paho.mqtt.cpp.git
-[submodule "terrapi/lib/paho.mqtt.c"]
-	path = terrapi/lib/paho.mqtt.c
-	url = https://github.com/eclipse/paho.mqtt.c.git
+[submodule "terrapi/lib/curlcpp"]
+	path = terrapi/lib/curlcpp
+	url = https://github.com/JosephP91/curlcpp.git

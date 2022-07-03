@@ -6,19 +6,21 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
 
-include_directories(lib/wiringPi/include)
 include_directories(lib/fmt/include)
-
-include_directories(include)
-
-add_subdirectory(lib/fmt)
+include_directories(lib/wiringPi/include)
 
 if (WIN32)
-    set(PAHO_MQTT_C_INCLUDE_DIRS "C:/Program Files (x86)/Eclipse Paho C/include")
-    set(PAHO_MQTT_C_LIBRARIES "C:/Program Files (x86)/Eclipse Paho C/lib/paho-mqtt3c.lib")
-    set(PAHO_MQTT_CPP_INCLUDE_DIRS "C:/Program Files (x86)/paho-mqtt-cpp/include")
-    set(PAHO_MQTT_CPP_LIBRARIES "C:/Program Files (x86)/paho-mqtt-cpp/lib/paho-mqttpp3-static.lib")
+    set(CURL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/lib/curl/windows/include")
+    set(CURL_LIBRARIES "${CMAKE_SOURCE_DIR}/lib/curl/windows/lib/LIBCURL.lib")
+    set(CURL_VERSION_STRING 7.84.0)
+
+    include_directories(lib/curl/windows/include)
+    link_directories(lib/curl/windows/lib)
+
+    find_package(CURL)
 endif()
+
+add_subdirectory(lib/fmt)
 
 ################################################################################
 
@@ -29,10 +31,10 @@ set(TERRAPI_SOURCE
         src/terrapi.cpp
         src/utils.cpp)
 
-add_executable(${PROJECT_NAME} ${TERRAPI_SOURCE} src/main.cpp)
+add_executable(terrapi ${TERRAPI_SOURCE} src/main.cpp)
 
-target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-lwiringPi>)
-target_link_libraries(${PROJECT_NAME} PUBLIC fmt)
+target_compile_options(terrapi PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-lwiringPi>)
+target_link_libraries(terrapi PUBLIC fmt)
 
 ################################################################################
 
@@ -44,8 +46,10 @@ add_executable(terrapi_test
         test/terrapi/test_config.cpp)
 
 target_compile_definitions(terrapi_test PRIVATE TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-target_include_directories(terrapi_test PRIVATE src)
+target_include_directories(terrapi_test PRIVATE include src)
 target_link_libraries(terrapi_test PUBLIC fmt)
+
+# message(FATAL_ERROR ${CURL_LIBRARIES})
 
 ################################################################################
 
@@ -55,13 +59,5 @@ add_executable(terrapi_test_app
         test/terrapi/test_app.cpp)
 
 target_compile_definitions(terrapi_test_app PRIVATE TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-target_include_directories(terrapi_test_app PRIVATE src)
-target_link_libraries(terrapi_test_app PUBLIC fmt)
-
-if (WIN32)
-    target_include_directories(terrapi_test PRIVATE ${PAHO_MQTT_C_INCLUDE_DIRS} ${PAHO_MQTT_CPP_INCLUDE_DIRS})
-    target_link_libraries(terrapi_test PUBLIC "${PAHO_MQTT_C_LIBRARIES}" "${PAHO_MQTT_CPP_LIBRARIES}")
-
-    target_include_directories(terrapi_test_app PRIVATE ${PAHO_MQTT_C_INCLUDE_DIRS} ${PAHO_MQTT_CPP_INCLUDE_DIRS})
-    target_link_libraries(terrapi_test_app PUBLIC "${PAHO_MQTT_C_LIBRARIES}" "${PAHO_MQTT_CPP_LIBRARIES}")
-endif()
+target_include_directories(terrapi_test_app PRIVATE include src)
+target_link_libraries(terrapi_test_app PUBLIC "${CURL_LIBRARIES}" fmt)
