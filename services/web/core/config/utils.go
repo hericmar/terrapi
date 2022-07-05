@@ -1,11 +1,23 @@
 package config
 
 import (
+	"errors"
 	"gopkg.in/ini.v1"
 	"regexp"
 	"strings"
 	"terrapi-web/core/entities"
 )
+
+func GetSectionName(sectionHeader string) (string, error) {
+	re := regexp.MustCompile(" \"([a-z]+)")
+	matches := re.FindStringSubmatch(sectionHeader)
+
+	if len(matches) != 2 {
+		return "", errors.New("cannot match section name")
+	}
+
+	return matches[1], nil
+}
 
 func ParseConfig(configStr string) (*entities.Config, error) {
 	cfg, err := ini.Load([]byte(configStr))
@@ -28,17 +40,15 @@ func ParseConfig(configStr string) (*entities.Config, error) {
 	for _, section := range sections {
 		if strings.HasPrefix(section, "switch") {
 			s := entities.Switch{}
-			err := cfg.Section(section).MapTo(&s)
 
+			err := cfg.Section(section).MapTo(&s)
 			if err != nil {
 				continue
 			}
 
-			re := regexp.MustCompile(" \"([a-z]+)")
-			matches := re.FindStringSubmatch(section)
-
-			if err == nil && len(matches) == 2 {
-				s.Name = matches[1]
+			name, err := GetSectionName(section)
+			if err == nil {
+				s.Name = name
 				config.Switches = append(config.Switches, s)
 			}
 		}
