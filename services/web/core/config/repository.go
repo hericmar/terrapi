@@ -9,6 +9,11 @@ import (
 var mu sync.RWMutex
 var configs map[string]*entities.Config
 
+type Config struct {
+	ClientID   string
+	ConfigBody string
+}
+
 type Repository interface {
 	Read(clientID string) (*entities.Config, error)
 	Put(config *entities.Config) (*entities.Config, error)
