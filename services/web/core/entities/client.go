@@ -1,5 +1,6 @@
 package entities
 
 type Client struct {
-	ID string
+	ID   string `json:"ID"`
+	Name string `json:"name"`
 }

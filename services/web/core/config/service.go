@@ -1,8 +1,12 @@
 package config
 
-import "errors"
+import (
+	"errors"
+	"terrapi-web/core/entities"
+)
 
 type Service interface {
+	ReadConfig(clientID string) (*entities.Config, error)
 	ReceiveConfig(configStr string) error
 }
 
@@ -17,6 +21,16 @@ func NewService(r Repository) Service {
 }
 
 // implementation
+
+func (s *service) ReadConfig(clientID string) (*entities.Config, error) {
+	config, err := s.repository.Read(clientID)
+
+	if err != nil {
+		return nil, errors.New("config does not exists")
+	}
+
+	return config, nil
+}
 
 func (s *service) ReceiveConfig(configStr string) error {
 	config, err := ParseConfig(configStr)

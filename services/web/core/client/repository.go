@@ -1,17 +1,20 @@
 package client
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"terrapi-web/core/entities"
 )
 
 type Repository interface {
+	ReadAll() ([]entities.Client, error)
 	Create(client *entities.Client) error
 	Remove(clientID string) error
 }
 
 type client struct {
-	ID string `gorm:"primaryKey;index"`
+	ID   string `gorm:"primaryKey;index"`
+	Name string `gorm:"notNull"`
 }
 
 type repository struct {
@@ -19,13 +22,26 @@ type repository struct {
 }
 
 func NewRepo(db *gorm.DB) Repository {
+	if err := db.AutoMigrate(&client{}); err != nil {
+		fmt.Println(err)
+	}
+
 	return &repository{db}
 }
 
 func mapping(c *entities.Client) *client {
 	return &client{
-		ID: c.ID,
+		ID:   c.ID,
+		Name: c.Name,
 	}
+}
+
+func (r *repository) ReadAll() ([]entities.Client, error) {
+	var clients []entities.Client
+
+	err := r.db.Find(&clients).Error
+
+	return clients, err
 }
 
 func (r *repository) Create(client *entities.Client) error {

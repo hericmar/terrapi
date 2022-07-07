@@ -6,13 +6,20 @@ import (
 	"log"
 	"os"
 	"terrapi-web/api/routes"
+	"terrapi-web/core"
 	"terrapi-web/core/client"
 	"terrapi-web/core/config"
 	"terrapi-web/database"
 )
 
 func main() {
-	db, err := database.Init()
+	cfg, err := core.ParseConfig("env")
+	if err != nil {
+		fmt.Println("Cannot load configuration.")
+		os.Exit(1)
+	}
+
+	db, err := database.Init(cfg)
 	if err != nil {
 		fmt.Println("Cannot connect to the database.")
 		os.Exit(1)

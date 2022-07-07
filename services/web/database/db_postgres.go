@@ -3,10 +3,11 @@ package database
 import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"terrapi-web/core"
 )
 
-func Init() (*gorm.DB, error) {
-	con, err := gorm.Open(postgres.Open(""), &gorm.Config{
+func Init(config *core.Config) (*gorm.DB, error) {
+	con, err := gorm.Open(postgres.Open(config.DB), &gorm.Config{
 		PrepareStmt: true,
 		/*
 			NamingStrategy: schema.NamingStrategy{

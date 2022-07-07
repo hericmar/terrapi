@@ -35,6 +35,12 @@ func ParseConfig(configStr string) (*entities.Config, error) {
 		}
 	*/
 
+	clientID, err := cfg.Section("DEFAULT").GetKey("clientID")
+	if err != nil {
+		return nil, errors.New("clientID is empty")
+	}
+	config.ClientID = clientID.Value()
+
 	var sections = cfg.SectionStrings()
 
 	for _, section := range sections {

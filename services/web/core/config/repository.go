@@ -31,15 +31,6 @@ func NewRepo() Repository {
 	return &repository{}
 }
 
-func (r *repository) Put(config *entities.Config) (*entities.Config, error) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	configs[config.ClientID] = config
-
-	return config, nil
-}
-
 func (r *repository) Read(clientID string) (*entities.Config, error) {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -50,6 +41,15 @@ func (r *repository) Read(clientID string) (*entities.Config, error) {
 	}
 
 	return val, nil
+}
+
+func (r *repository) Put(config *entities.Config) (*entities.Config, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	configs[config.ClientID] = config
+
+	return config, nil
 }
 
 func (r *repository) Delete(clientID string) error {

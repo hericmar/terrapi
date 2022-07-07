@@ -22,10 +22,3 @@ func DoSuccess(c *fiber.Ctx, httpCode int, data interface{}) error {
 		"data":    data,
 	})
 }
-
-func SuccessResponse(code int) *fiber.Map {
-	return &fiber.Map{
-		"status": true,
-		"data":   "",
-	}
-}

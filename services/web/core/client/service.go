@@ -6,7 +6,8 @@ import (
 )
 
 type Service interface {
-	CreateClient() (*entities.Client, error)
+	ReadAllClients() ([]entities.Client, error)
+	CreateClient(clientName string) (*entities.Client, error)
 	RemoveClient(clientID string) error
 }
 
@@ -18,9 +19,14 @@ func NewService(r Repository) Service {
 	return &service{repository: r}
 }
 
-func (s service) CreateClient() (*entities.Client, error) {
+func (s service) ReadAllClients() ([]entities.Client, error) {
+	return s.repository.ReadAll()
+}
+
+func (s service) CreateClient(clientName string) (*entities.Client, error) {
 	var client entities.Client
 	client.ID = utils.RandomString(32)
+	client.Name = clientName
 
 	err := s.repository.Create(&client)
 
