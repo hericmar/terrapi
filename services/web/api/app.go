@@ -9,6 +9,7 @@ import (
 	"terrapi-web/core"
 	"terrapi-web/core/client"
 	"terrapi-web/core/config"
+	"terrapi-web/core/measurement"
 	"terrapi-web/database"
 )
 
@@ -26,15 +27,18 @@ func main() {
 	}
 
 	clientRepo := client.NewRepo(db)
-	configRepo := config.NewRepo()
+	configRepo := config.NewRepo(db)
+	measurementRepo := measurement.NewRepo(db)
 
 	clientService := client.NewService(clientRepo)
 	configService := config.NewService(configRepo)
+	measurementService := measurement.NewService(measurementRepo, configRepo)
 
 	app := fiber.New()
 	api := app.Group("/api")
 	routes.ClientRouter(api, clientService)
 	routes.ConfigRouter(api, configService)
+	routes.MeasurementRouter(api, measurementService)
 
 	log.Fatal(app.Listen(":8080"))
 }

@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+	"fmt"
+	"gorm.io/gorm"
 	"sync"
 	"terrapi-web/core/entities"
 )
@@ -9,9 +11,9 @@ import (
 var mu sync.RWMutex
 var configs map[string]*entities.Config
 
-type Config struct {
-	ClientID   string
-	ConfigBody string
+type config struct {
+	ClientID   string `gorm:"primaryKey;index"`
+	ConfigBody string `gorm:"notNull"`
 }
 
 type Repository interface {
@@ -21,15 +23,47 @@ type Repository interface {
 }
 
 type repository struct {
+	db *gorm.DB
 }
 
-func NewRepo() Repository {
+func NewRepo(db *gorm.DB) Repository {
+	if err := db.AutoMigrate(&config{}); err != nil {
+		fmt.Println(err)
+	}
+
 	if configs == nil {
 		configs = make(map[string]*entities.Config)
 	}
 
-	return &repository{}
+	repo := &repository{db}
+
+	// read all from DB
+	var rawConfigs []config
+	err := db.Find(&rawConfigs).Error
+	if err != nil {
+		panic("cannot read \"config\" from the database")
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	for _, rawConfig := range rawConfigs {
+		// config should be valid once it is in the database
+		config, err := ParseConfig(rawConfig.ConfigBody)
+		if err != nil {
+			panic("cannot parse \"config\" from the database")
+		}
+
+		configs[rawConfig.ClientID] = config
+	}
+
+	return repo
 }
+
+func mapping(c *entities.Config) *config {
+	return &config{ClientID: c.ClientID, ConfigBody: c.ConfigBody}
+}
+
+//
 
 func (r *repository) Read(clientID string) (*entities.Config, error) {
 	mu.RLock()
@@ -48,6 +82,20 @@ func (r *repository) Put(config *entities.Config) (*entities.Config, error) {
 	defer mu.Unlock()
 
 	configs[config.ClientID] = config
+
+	dbConfig := mapping(config)
+	if err := r.db.First(dbConfig).Error; err == nil {
+		// exists, update
+		dbConfig.ConfigBody = config.ConfigBody
+		if err := r.db.Save(dbConfig).Error; err != nil {
+			return nil, errors.New("database error")
+		}
+	} else {
+		// does not exist, create new
+		if err := r.db.Create(dbConfig).Error; err != nil {
+			return nil, errors.New("database error")
+		}
+	}
 
 	return config, nil
 }

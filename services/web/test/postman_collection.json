@@ -12,7 +12,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"clientID\": \"asdf\",\r\n    \"config\": \"asdf:asfd\"\r\n}",
+					"raw": "{\r\n    \"clientID\": \"yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW\",\r\n    \"config\": \"[general]\\nclient_id: yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW\\n[sensor \\\"dht11.humidity\\\"]\\nphysical_quantity:humidity\\n[switch \\\"lights\\\"]\\nsensor=day\\ngpio=27\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -34,7 +34,7 @@
 			"response": []
 		},
 		{
-			"name": "localhost:8080/api/client",
+			"name": "Create new client",
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -78,6 +78,91 @@
 					"path": [
 						"api",
 						"client"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get config",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "127.0.0.1:8080/api/config/yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"config",
+						"yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Measurements",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "127.0.0.1:8080/api/measurement/yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW?limit=10",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"measurement",
+						"yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Measurements",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"value\": \"10\",\r\n    \"timestamp\": \"2022-07-09T01:02:56Z\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:8080/api/measurement/yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW/asdf",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"measurement",
+						"yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW",
+						"asdf"
 					]
 				}
 			},

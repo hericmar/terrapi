@@ -1,19 +1,29 @@
 package entities
 
+const (
+	Humidity    int = 0
+	Temperature     = 1
+)
+
 type Sensor struct {
+	Name             string `ini:"name" json:"name"`
+	Type             string `ini:"type" json:"type"`
+	PhysicalQuantity int    `ini:"physical_quantity" json:"physicalQuantity"`
 }
 
 type Switch struct {
-	Name       string `ini:"-"`
-	SensorName string `ini:"sensor"`
-	GPIO       int    `ini:"gpio"`
+	Name       string `ini:"-" json:"name"`
+	SensorName string `ini:"sensor" json:"sensorName"`
+	GPIO       int    `ini:"gpio" json:"gpio"`
 }
 
 type Timer struct {
 }
 
 type Config struct {
-	ClientID string
+	ClientID   string `json:"clientID"`
+	ConfigBody string `json:"-"`
 
-	Switches []Switch
+	Sensors  []Sensor `json:"sensors"`
+	Switches []Switch `json:"switches"`
 }
