@@ -7,14 +7,16 @@ import (
 )
 
 type Repository interface {
+	Read() (*entities.Client, error)
 	ReadAll() ([]entities.Client, error)
 	Create(client *entities.Client) error
 	Remove(clientID string) error
 }
 
 type client struct {
-	ID   string `gorm:"primaryKey;index"`
-	Name string `gorm:"notNull"`
+	ID       string `gorm:"primaryKey;index"`
+	Password string `gorm:"notNull"`
+	Name     string `gorm:"notNull"`
 }
 
 type repository struct {
@@ -31,9 +33,20 @@ func NewRepo(db *gorm.DB) Repository {
 
 func mapping(c *entities.Client) *client {
 	return &client{
-		ID:   c.ID,
-		Name: c.Name,
+		ID:       c.ID,
+		Name:     c.Name,
+		Password: c.Password,
 	}
+}
+
+//
+
+func (r *repository) Read() (*entities.Client, error) {
+	var client entities.Client
+
+	err := r.db.First(&client).Error
+
+	return &client, err
 }
 
 func (r *repository) ReadAll() ([]entities.Client, error) {

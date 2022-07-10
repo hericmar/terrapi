@@ -2,11 +2,6 @@ package presenter
 
 import "github.com/gofiber/fiber/v2"
 
-type ConfigRequest struct {
-	ClientID   string `json:"clientID"`
-	ConfigBody string `json:"config"`
-}
-
 func DoError(c *fiber.Ctx, httpCode int, err error) error {
 	return c.Status(httpCode).JSON(fiber.Map{
 		"status":  "error",

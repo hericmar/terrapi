@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	DB string `env:"DB"`
+	DB            string `env:"DB"`
+	AdminPassword string `env:"ADMIN_PASSWORD"`
 }
 
 func ParseConfig(path string) (*Config, error) {

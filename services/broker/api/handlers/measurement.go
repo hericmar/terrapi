@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/gofiber/fiber/v2"
+	"terrapi-web/api/middleware"
 	"terrapi-web/api/presenter"
 	"terrapi-web/core/entities"
 	"terrapi-web/core/measurement"
@@ -74,16 +76,19 @@ func ReadMeasurement(service measurement.Service) fiber.Handler {
 	}
 }
 
-func PostMeasurement(service measurement.Service) fiber.Handler {
+func PostMeasurement(service measurement.Service, auth middleware.Auth) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		params := struct {
 			ClientID   string `params:"clientID"`
 			SensorName string `params:"sensorName"`
 		}{}
-
 		err := c.ParamsParser(&params)
 		if err != nil {
 			return presenter.DoError(c, fiber.StatusBadRequest, err)
+		}
+
+		if !auth.IsAuthorized(c, params.ClientID) {
+			return presenter.DoError(c, fiber.StatusUnauthorized, errors.New(""))
 		}
 
 		var requestBody measurementRequest

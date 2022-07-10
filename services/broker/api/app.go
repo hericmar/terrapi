@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"log"
 	"os"
+	"terrapi-web/api/middleware"
 	"terrapi-web/api/routes"
 	"terrapi-web/core"
 	"terrapi-web/core/client"
@@ -34,11 +35,13 @@ func main() {
 	configService := config.NewService(configRepo)
 	measurementService := measurement.NewService(measurementRepo, configRepo)
 
+	auth := middleware.NewAuth(cfg, clientService)
+
 	app := fiber.New()
 	api := app.Group("/api")
-	routes.ClientRouter(api, clientService)
-	routes.ConfigRouter(api, configService)
-	routes.MeasurementRouter(api, measurementService)
+	routes.ClientRouter(api, clientService, auth)
+	routes.ConfigRouter(api, configService, auth)
+	routes.MeasurementRouter(api, measurementService, auth)
 
 	log.Fatal(app.Listen(":8080"))
 }
