@@ -8,6 +8,7 @@ import (
 )
 
 func ConfigRouter(app fiber.Router, service config.Service, auth middleware.Auth) {
+	app.Get("/config", handlers.ReadAllConfigs(service))
 	app.Get("/config/:id", handlers.ReadConfig(service))
 	app.Put("/config", handlers.PutConfig(service, auth))
 }

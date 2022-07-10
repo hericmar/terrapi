@@ -13,6 +13,17 @@ type configRequest struct {
 	ConfigBody string `json:"config"`
 }
 
+func ReadAllConfigs(service config.Service) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		configs, err := service.ReadAllConfigs()
+		if err != nil {
+			return presenter.DoError(c, fiber.StatusInternalServerError, errors.New("database error"))
+		}
+
+		return presenter.DoSuccess(c, fiber.StatusOK, configs)
+	}
+}
+
 func ReadConfig(service config.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		param := struct {

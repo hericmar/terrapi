@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	Read() (*entities.Client, error)
+	Read(ID string) (*entities.Client, error)
 	ReadAll() ([]entities.Client, error)
 	Create(client *entities.Client) error
 	Remove(clientID string) error
@@ -41,10 +41,10 @@ func mapping(c *entities.Client) *client {
 
 //
 
-func (r *repository) Read() (*entities.Client, error) {
+func (r *repository) Read(ID string) (*entities.Client, error) {
 	var client entities.Client
 
-	err := r.db.First(&client).Error
+	err := r.db.First(&client, "id = ?", ID).Error
 
 	return &client, err
 }

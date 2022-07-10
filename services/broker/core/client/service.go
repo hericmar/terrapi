@@ -23,7 +23,7 @@ func NewService(r Repository) Service {
 //
 
 func (s service) Read(clientID string) (*entities.Client, error) {
-	return s.repository.Read()
+	return s.repository.Read(clientID)
 }
 
 func (s service) ReadAllClients() ([]entities.Client, error) {

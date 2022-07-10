@@ -18,6 +18,7 @@ type config struct {
 
 type Repository interface {
 	Read(clientID string) (*entities.Config, error)
+	ReadAll() ([]entities.Config, error)
 	Put(config *entities.Config) (*entities.Config, error)
 	Delete(clientID string) error
 }
@@ -75,6 +76,19 @@ func (r *repository) Read(clientID string) (*entities.Config, error) {
 	}
 
 	return val, nil
+}
+
+func (r repository) ReadAll() ([]entities.Config, error) {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	var result []entities.Config
+
+	for _, val := range configs {
+		result = append(result, *val)
+	}
+
+	return result, nil
 }
 
 func (r *repository) Put(config *entities.Config) (*entities.Config, error) {

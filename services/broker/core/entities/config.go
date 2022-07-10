@@ -22,6 +22,7 @@ type Timer struct {
 
 type Config struct {
 	ClientID   string `json:"clientID"`
+	ClientName string `json:"name"`
 	ConfigBody string `json:"-"`
 
 	Sensors  []Sensor `json:"sensors"`
