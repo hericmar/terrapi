@@ -1,5 +1,8 @@
 <script>
 	import {onMount} from "svelte";
+	import {Router, Route, Link} from "svelte-navigator"
+	import Admin from "./routes/Admin.svelte";
+	import Client from "./routes/Client.svelte";
 
 	export let configs = [];
 	onMount(async () => {
@@ -7,29 +10,68 @@
 		const {data} = await response.json();
 		configs = data
 	})
+
+	const findConfig = (clientId) => {
+		return configs.find((config) => config.clientID === clientId)
+	}
 </script>
 
-<main>
-	<ul>
-		{#each configs as config}
-			<li>{config.name}</li>
-		{/each}
-	</ul>
-</main>
+<Router>
+	<header>
+		<nav>
+			<ul>
+				{#each configs as config}
+					<li><Link to="{`client/${config.clientID}`}">{config.name}</Link></li>
+				{/each}
+
+				<li class="line"></li>
+
+				<li><Link to="admin">Administrace</Link></li>
+			</ul>
+		</nav>
+	</header>
+
+	<main>
+		<Route path="client/:id" let:params>
+			<Client clientConfig="{findConfig(params.id)}"/>
+		</Route>
+
+		<Route path="admin">
+			<Admin/>
+		</Route>
+
+		<Route path="*">
+			...
+		</Route>
+	</main>
+</Router>
 
 <style>
+	nav {
+		margin: 16px;
+	}
+
+	nav ul {
+		padding: 0
+	}
+
+	nav ul li {
+		display: block;
+		padding: 8px;
+	}
+
+	nav ul li.line {
+		height: 1px;
+		margin: 4px 0;
+		padding: 0;
+		background-color: #cccccc;
+	}
+
 	main {
 		text-align: center;
 		padding: 1em;
 		max-width: 240px;
 		margin: 0 auto;
-	}
-
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
 	}
 
 	@media (min-width: 640px) {

@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "start": "sirv public --no-clear"
+    "dev": "sirv public --no-clear --dev -s",
+    "start": "sirv public --no-clear -s"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
@@ -18,6 +18,8 @@
     "svelte": "^3.0.0"
   },
   "dependencies": {
-    "sirv-cli": "^2.0.0"
+    "chart.js": "^3.8.0",
+    "sirv-cli": "^2.0.0",
+    "svelte-navigator": "^3.1.6"
   }
 }
