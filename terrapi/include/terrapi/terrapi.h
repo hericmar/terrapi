@@ -20,6 +20,7 @@ struct Context
 {
     std::string m_broker_addr;
     std::string m_client_id;
+    std::string m_password;
 
     int m_daytime[2]{};
 
@@ -33,8 +34,8 @@ class App
 {
 public:
     /// Create new terrapi app from configuration at \path.
-    static App& create(const char* path);
-    static App& create_from_string(const char* str_config);
+    static App* create(const char* path);
+    static App* create_from_string(const char* str_config);
 
     [[noreturn]] static void run();
 
@@ -43,6 +44,7 @@ public:
 private:
     friend Context& ctx();
 
-    Context m_ctx;
+    Context                           m_ctx;
+    std::unique_ptr<class HttpClient> m_http;
 };
 }

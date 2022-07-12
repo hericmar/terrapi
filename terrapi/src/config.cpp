@@ -33,7 +33,9 @@ using ConfigMap = std::map<
     SectionComparator
 >;
 
+/// {section, has_name}
 static const std::map<std::string, bool> g_sections = {
+    {"general", false},
     {"environment", false},
     {"sensor", true},
     {"switch", true},
@@ -276,13 +278,17 @@ static bool read_float_interval(const SectionBody& section_body, const std::stri
 
 static bool read_general(Context& ctx, const SectionBody& general_config)
 {
-    if (general_config.count("broker_address") == 0 || general_config.count("client_id") == 0) {
-        log::info(R"(No "broker_address" or "client_id" specified, running in the single device mode.)");
+    if (general_config.count("broker_address") == 0 ||
+        general_config.count("client_id") == 0 ||
+        general_config.count("password") == 0) {
+
+        log::info(R"(No "broker_address" or "client_id" or "password" specified, running in the single device mode.)");
         return true;
     }
 
     ctx.m_broker_addr = general_config.at("broker_address").first;
     ctx.m_client_id   = general_config.at("client_id").first;
+    ctx.m_password    = general_config.at("password").first;
 
     return true;
 }
@@ -427,7 +433,7 @@ static bool read_timer(Context& ctx, const Section& section, const SectionBody& 
 
 //------------------------------------------------------------------------------
 
-void parse_config(Context& ctx, std::string_view str)
+bool parse_config(Context& ctx, std::string_view str)
 {
     line_number = 0;
 
@@ -470,23 +476,26 @@ void parse_config(Context& ctx, std::string_view str)
     }
 
     // Process config
+    bool result = true;
 
     for (const auto& [section_header, section_body] : conf) {
         if (section_header.type == "general") {
-            read_general(ctx, section_body);
+            result = result && read_general(ctx, section_body);
         } else if (section_header.type == "environment") {
-            read_environment(ctx, section_body);
+            result = result && read_environment(ctx, section_body);
         } else if (section_header.type == "sensor") {
-            read_sensor(ctx, section_header, section_body);
+            result = result && read_sensor(ctx, section_header, section_body);
         } else if (section_header.type == "timer") {
-            read_timer(ctx, section_header, section_body);
+            result = result && read_timer(ctx, section_header, section_body);
         }
     }
 
     for (const auto& [section_header, section_body] : conf) {
         if (section_header.type == "switch") {
-            read_switch(ctx, section_header, section_body);
+            result = result && read_switch(ctx, section_header, section_body);
         }
     }
+
+    return result;
 }
 }

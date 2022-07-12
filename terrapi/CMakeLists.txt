@@ -26,6 +26,7 @@ add_subdirectory(lib/fmt)
 
 set(TERRAPI_SOURCE
         src/config.cpp
+        src/http.cpp
         src/sensor.cpp
         src/switch.cpp
         src/terrapi.cpp

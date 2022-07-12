@@ -1,6 +1,7 @@
 [general]
-broker_address = tcp://localhost:1883
-client_id = test_client
+broker_address = http://localhost:8000
+client_id = aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr
+password = password
 
 
 # In system time
@@ -12,14 +13,14 @@ day_to = 17:00
 # Sensor is one physical quantity representation of physical sensor.
 # In this example we use sensor.id := 0 for measuring humidity,
 # although the DHT11 can measure temperature and humidity.
-[sensor "dht/temperature"]
+[sensor "dht.temperature"]
 type = DHT11
 gpio = 4
 physical_quantity = humidity
 active_interval = 75.0, 100.0
 night_active_interval = 60.0, 80.0
 
-[sensor "dht/humidity"]
+[sensor "dht.humidity"]
 type = DHT11
 gpio = 4
 physical_quantity = temperature
@@ -36,10 +37,10 @@ sensor = day
 gpio = 17
 
 [switch "heater"]
-sensor = dht/temperature
+sensor = dht.temperature
 gpio = 27
 
 [switch "humidifier"]
-sensor = dht/humidity
+sensor = dht.humidity
 gpio = 22
 oscillation_step = 2000

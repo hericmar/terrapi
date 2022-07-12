@@ -9,10 +9,16 @@
 			"name": "Put config",
 			"request": {
 				"method": "PUT",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "password",
+						"type": "default"
+					}
+				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"clientID\": \"yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW\",\r\n    \"config\": \"[general]\\nclient_id: yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW\\n[sensor \\\"dht11.humidity\\\"]\\nphysical_quantity:humidity\\n[switch \\\"lights\\\"]\\nsensor=day\\ngpio=27\"\r\n}",
+					"raw": "{\r\n    \"clientID\": \"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr\",\r\n    \"config\": \"[general]\\nclient_id: aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr\\n\\n[sensor \\\"dht11.humidity\\\"]\\nphysical_quantity:humidity\\n[sensor \\\"dht11.temperature\\\"]\\nphysical_quantity:temperature\\n[switch \\\"lights\\\"]\\nsensor=day\\ngpio=27\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -20,11 +26,11 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:8080/api/config",
+					"raw": "localhost:8000/api/config",
 					"host": [
 						"localhost"
 					],
-					"port": "8080",
+					"port": "8000",
 					"path": [
 						"api",
 						"config"
@@ -40,7 +46,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"name\": \"\"\r\n}",
+					"raw": "{\r\n    \"name\": \"terárko\",\r\n    \"password\": \"password\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -65,16 +71,22 @@
 			"name": "List clients",
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "password",
+						"type": "default"
+					}
+				],
 				"url": {
-					"raw": "127.0.0.1:8080/api/client",
+					"raw": "127.0.0.1:8000/api/client",
 					"host": [
 						"127",
 						"0",
 						"0",
 						"1"
 					],
-					"port": "8080",
+					"port": "8000",
 					"path": [
 						"api",
 						"client"
@@ -89,7 +101,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "127.0.0.1:8080/api/config/yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW",
+					"raw": "127.0.0.1:8080/api/config/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
 					"host": [
 						"127",
 						"0",
@@ -100,7 +112,29 @@
 					"path": [
 						"api",
 						"config",
-						"yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW"
+						"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List configs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "127.0.0.1:8000/api/config",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"config"
 					]
 				}
 			},
@@ -108,28 +142,34 @@
 		},
 		{
 			"name": "Measurements",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
 				"method": "GET",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
-					"raw": "127.0.0.1:8080/api/measurement/yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW?limit=10",
+					"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
 					"host": [
 						"127",
 						"0",
 						"0",
 						"1"
 					],
-					"port": "8080",
+					"port": "8000",
 					"path": [
 						"api",
 						"measurement",
-						"yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW"
-					],
-					"query": [
-						{
-							"key": "limit",
-							"value": "10"
-						}
+						"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
 					]
 				}
 			},
@@ -139,10 +179,16 @@
 			"name": "Measurements",
 			"request": {
 				"method": "POST",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "password",
+						"type": "default"
+					}
+				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"value\": \"10\",\r\n    \"timestamp\": \"2022-07-09T01:02:56Z\"\r\n}",
+					"raw": "{\r\n    \"value\": \"10\",\r\n    \"timestamp\": \"2022-07-10T04:02:56Z\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -150,19 +196,19 @@
 					}
 				},
 				"url": {
-					"raw": "127.0.0.1:8080/api/measurement/yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW/asdf",
+					"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr/dht11.temperature",
 					"host": [
 						"127",
 						"0",
 						"0",
 						"1"
 					],
-					"port": "8080",
+					"port": "8000",
 					"path": [
 						"api",
 						"measurement",
-						"yLpdARIEqPBHjPzzhjpZDFsYdLkmjhDW",
-						"asdf"
+						"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
+						"dht11.temperature"
 					]
 				}
 			},

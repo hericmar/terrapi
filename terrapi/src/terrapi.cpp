@@ -1,24 +1,19 @@
-#ifdef WIN32
-// Strange error!
-#include "Windows.h"
-#endif
-
 #include "terrapi/terrapi.h"
 
 #include <chrono>
 #include <thread>
 
-#include <curl/curl.h>
+#include "terrapi/utils.h"
 
 #include "app.h"
 #include "config.h"
-#include "terrapi/utils.h"
+#include "http.h"
 
 namespace terra
 {
 static App* g_app = nullptr;
 
-App& App::create(const char* path)
+App* App::create(const char* path)
 {
     std::string str_config;
 
@@ -29,22 +24,34 @@ App& App::create(const char* path)
     return create_from_string(str_config.data());
 }
 
-App& App::create_from_string(const char* str_config)
+App* App::create_from_string(const char* str_config)
 {
     if (g_app == nullptr) {
         g_app = new App;
         g_app->m_ctx.m_clock = std::make_unique<Clock>();
     }
 
-    parse_config(g_app->m_ctx, std::string_view(str_config));
+    auto& c = g_app->m_ctx;
 
-    return *g_app;
-}
+    const auto parse_result = parse_config(c, std::string_view(str_config));
+    if (!parse_result) {
+        log::err("Cannot run TerraPI.");
 
-static size_t write_callback(void *contents, size_t size, size_t nmemb, void* userp)
-{
-    ((std::string*) userp)->append((char*)contents, size * nmemb);
-    return size * nmemb;
+        return nullptr;
+    }
+
+    if (!c.m_broker_addr.empty() && !c.m_client_id.empty()) {
+        g_app->m_http = std::make_unique<HttpClient>(c.m_broker_addr);
+    }
+
+    if (g_app->m_http != nullptr) {
+        const auto result = g_app->m_http->put_config(c, str_config);
+        if (!result) {
+            log::err("Cannot put config to the server!");
+        }
+    }
+
+    return g_app;
 }
 
 [[noreturn]] void App::run()
@@ -53,23 +60,6 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void* us
         return;
     }
     auto* app = g_app;
-
-    //
-    CURL *curl;
-    CURLcode res;
-    std::string readBuffer;
-
-    curl = curl_easy_init();
-    if(curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, "http://www.google.com");
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-        res = curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
-
-        log::info(readBuffer);
-    }
-    //
 
     while (true) {
         app->m_ctx.m_clock->measure();

@@ -3,5 +3,5 @@
 namespace terra
 {
 /// Creates new configuration.
-void parse_config(class Context& ctx, std::string_view str);
+bool parse_config(class Context& ctx, std::string_view str);
 }
