@@ -11,7 +11,7 @@
 		configs = data
 	})
 
-	const findConfig = (clientId) => {
+	export const findConfig = (clientId) => {
 		return configs.find((config) => config.clientID === clientId)
 	}
 </script>

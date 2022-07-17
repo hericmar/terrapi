@@ -10,9 +10,10 @@ import (
 	"time"
 )
 
-type measurementRequest struct {
-	Value     string    `json:"value"`
-	Timestamp time.Time `json:"timestamp"`
+type measurementEntry struct {
+	Value      string    `json:"value"`
+	SensorName string    `json:"sensorName"`
+	Timestamp  time.Time `json:"timestamp"`
 }
 
 func ReadAllMeasurement(service measurement.Service) fiber.Handler {
@@ -79,8 +80,7 @@ func ReadMeasurement(service measurement.Service) fiber.Handler {
 func PostMeasurement(service measurement.Service, auth middleware.Auth) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		params := struct {
-			ClientID   string `params:"clientID"`
-			SensorName string `params:"sensorName"`
+			ClientID string `params:"clientID"`
 		}{}
 		err := c.ParamsParser(&params)
 		if err != nil {
@@ -91,19 +91,21 @@ func PostMeasurement(service measurement.Service, auth middleware.Auth) fiber.Ha
 			return presenter.DoError(c, fiber.StatusUnauthorized, errors.New(""))
 		}
 
-		var requestBody measurementRequest
+		var requestBody []measurementEntry
 		err = c.BodyParser(&requestBody)
 		if err != nil {
 			return presenter.DoError(c, fiber.StatusBadRequest, err)
 		}
 
-		m := entities.Measurement{
-			ClientID:   params.ClientID,
-			SensorName: params.SensorName,
-			Value:      requestBody.Value,
-			Timestamp:  requestBody.Timestamp,
+		for _, entry := range requestBody {
+			m := entities.Measurement{
+				ClientID:   params.ClientID,
+				SensorName: entry.SensorName,
+				Value:      entry.Value,
+				Timestamp:  entry.Timestamp,
+			}
+			err = service.PostMeasurement(&m)
 		}
-		err = service.PostMeasurement(&m)
 
 		if err != nil {
 			return presenter.DoError(c, fiber.StatusBadRequest, err)

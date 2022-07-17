@@ -4,6 +4,7 @@
 
 #include "app.h"
 #include "chrono.h"
+#include "http.h"
 
 namespace terra
 {
@@ -55,7 +56,7 @@ bool cmp_within(EPhysicalQuantity q, ValueInterval interval, Value value)
     return cmp(q, interval[0], value) && cmp(q, value, interval[1]);
 }
 
-void SensorController::update() const
+void SensorController::update(const std::tm& tm) const
 {
     if (m_switch_idx == -1) {
         log::warn("Sensor \"{}\" does not have switch assigned.");
@@ -63,28 +64,28 @@ void SensorController::update() const
     }
 
     if (m_q == EPhysicalQuantity::Time) {
-        evaluate(m_day_interval);
+        evaluate(tm, m_day_interval);
         return;
     }
 
-    if (static_cast<Clock*>(ctx().m_clock.get())->is_day()) {
-        evaluate(m_day_interval);
+    if (dynamic_cast<Clock*>(ctx().m_clock.get())->is_day()) {
+        evaluate(tm, m_day_interval);
     } else {
-        evaluate(m_night_interval);
+        evaluate(tm, m_night_interval);
     }
 }
 
-void SensorController::evaluate(std::optional<ValueInterval> maybe_interval) const
+void SensorController::evaluate(const std::tm& tm, std::optional<ValueInterval> maybe_interval) const
 {
     const auto& val = m_sensor->value(m_q);
 
     switch (m_q)
     {
     case EPhysicalQuantity::Humidity:
-        log::info("{} ({}): {} %", m_sensor->name(), m_name, val.float_val);
+        log::info("{}: {} ({}): {} %", time_to_str(tm), m_sensor->name(), m_name, val.float_val);
         break;
     case EPhysicalQuantity::Temperature:
-        log::info("{} ({}): {} °C", m_sensor->name(), m_name, val.float_val);
+        log::info("{}: {} ({}): {} °C", time_to_str(tm), m_sensor->name(), m_name, val.float_val);
         break;
     default:
         break;
@@ -94,10 +95,16 @@ void SensorController::evaluate(std::optional<ValueInterval> maybe_interval) con
         return;
     }
 
+    auto& s = ctx().m_switches[m_switch_idx];
+
     if (cmp_within(m_q, *maybe_interval, val)) {
-        ctx().m_switches[m_switch_idx].turn_on();
+        if (s.turn_on()) {
+            App::http()->post_measurement(ctx(), *this, tm);
+        }
     } else {
-        ctx().m_switches[m_switch_idx].turn_off();
+        if (s.turn_off()) {
+            App::http()->post_measurement(ctx(), *this, tm);
+        }
     }
 }
 
@@ -194,12 +201,12 @@ bool Clock::is_day() const
 
 //------------------------------------------------------------------------------
 
-Value PhysicalSensor::value(EPhysicalQuantity q)
+Value PhysicalSensor::value(EPhysicalQuantity q) const
 {
     if (m_value.find(q) == m_value.end()) {
         log::err("Sensor {} does not have value {}", m_name, to_string(q));
     }
 
-    return m_value[q];
+    return m_value.at(q);
 }
 }

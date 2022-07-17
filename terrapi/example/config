@@ -8,19 +8,23 @@ password = password
 [environment]
 day_from = 09:00
 day_to = 17:00
-
+# seconds
+measure_step = 10
+# seconds
+# data_post_step = 1200
+data_post_step = 15
 
 # Sensor is one physical quantity representation of physical sensor.
 # In this example we use sensor.id := 0 for measuring humidity,
 # although the DHT11 can measure temperature and humidity.
-[sensor "dht.temperature"]
+[sensor "dht11.temperature"]
 type = DHT11
 gpio = 4
 physical_quantity = humidity
 active_interval = 75.0, 100.0
 night_active_interval = 60.0, 80.0
 
-[sensor "dht.humidity"]
+[sensor "dht11.humidity"]
 type = DHT11
 gpio = 4
 physical_quantity = temperature
@@ -37,10 +41,10 @@ sensor = day
 gpio = 17
 
 [switch "heater"]
-sensor = dht.temperature
+sensor = dht11.temperature
 gpio = 27
 
 [switch "humidifier"]
-sensor = dht.humidity
+sensor = dht11.humidity
 gpio = 22
 oscillation_step = 2000

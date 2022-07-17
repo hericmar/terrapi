@@ -307,6 +307,14 @@ static bool read_environment(Context& ctx, const SectionBody& environment_config
         return false;
     }
 
+    if (read_int(environment_config, "measure_step", ctx.m_measure_step)) {
+        ctx.m_measure_step *= 1000;
+    }
+
+    if (read_int(environment_config, "data_post_step", ctx.m_data_post_step)) {
+        ctx.m_data_post_step *= 1000;
+    }
+
     ctx.m_daytime[0] = daytime[0].int_val;
     ctx.m_daytime[1] = daytime[1].int_val;
 

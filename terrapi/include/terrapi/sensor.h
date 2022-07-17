@@ -57,12 +57,16 @@ public:
         std::optional<ValueInterval> night)
         : m_name(name), m_sensor(sensor), m_q(q), m_day_interval(day), m_night_interval(night) {}
 
-    void update() const;
+    void update(const std::tm& tm) const;
 
     void set_switch_id(int id) { m_switch_idx = id; }
 
+    const std::string& name() const { return m_name; }
+    EPhysicalQuantity q() const { return m_q; }
+    const PhysicalSensor* sensor() const { return m_sensor; }
+
 private:
-    void evaluate(std::optional<ValueInterval> interval) const;
+    void evaluate(const std::tm& tm, std::optional<ValueInterval> interval) const;
 
     std::string       m_name;
     PhysicalSensor*   m_sensor;
@@ -83,7 +87,7 @@ public:
 
     const std::string& name() const { return m_name; }
 
-    Value value(EPhysicalQuantity q);
+    Value value(EPhysicalQuantity q) const;
 
 protected:
     std::string m_name;

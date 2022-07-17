@@ -7,6 +7,7 @@
 
 #include "terrapi/utils.h"
 
+#include "chrono.h"
 #include "http.h"
 
 #include <curl/curl.h>
@@ -91,15 +92,129 @@ bool HttpClient::put_config(const Context& ctx, const std::string& config_body)
     return curl_result;
 }
 
-bool HttpClient::post_measurements(const Context& ctx)
+bool HttpClient::post_measurement(const Context& ctx, const SensorController& controller, const std::tm& now)
 {
-    return false;
+    std::vector<MeasurementData> data;
+
+    append_data(ctx, data, controller, now);
+
+    return post_measurement_ex(ctx, data);
 }
 
-bool HttpClient::put_config_ex() { return false; }
-
-bool HttpClient::post_measurement_ex(const std::string& sensor_name, const std::string& value, int timestamp)
+bool HttpClient::post_measurements(const Context& ctx, const std::tm& now)
 {
-    return false;
+    std::vector<MeasurementData> data;
+
+    for (const auto& sensorController : ctx.m_controllers) {
+        append_data(ctx, data, sensorController, now);
+    }
+
+    return post_measurement_ex(ctx, data);
+}
+
+void HttpClient::append_data(const Context& ctx, std::vector<MeasurementData>& data, const SensorController& sensorController, const std::tm& now)
+{
+    sensorController.name();
+    const auto* sensor = sensorController.sensor();
+    const auto value = sensor->value(sensorController.q());
+    std::string str;
+
+    switch (sensorController.q())
+    {
+    case EPhysicalQuantity::Humidity:
+        str = std::to_string(value.float_val);
+        break;
+    case EPhysicalQuantity::Temperature:
+        str = std::to_string(value.float_val);
+        break;
+    case EPhysicalQuantity::Time:
+        str = std::to_string(value.float_val);
+        break;
+    }
+
+    data.push_back(MeasurementData{
+        ctx.m_client_id,
+        sensorController.name(),
+        str,
+        time_to_str(now)
+    });
+}
+
+bool HttpClient::post_measurement_ex(const Context& ctx, const std::vector<MeasurementData>& request)
+{
+    if (request.empty()) {
+        return true;
+    }
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+
+    CURL* curl = curl_easy_init();
+    std::string read_buffer;
+
+    std::string request_body;
+    std::string request_body_data;
+
+    int i = 0;
+    for (const auto& entry : request) {
+        if (i != 0) {
+            request_body_data += ",";
+        }
+
+        request_body_data += fmt::format(R"({{"sensorName": "{}", "value": "{}", "timestamp": "{}")", entry.sensor_name, entry.value, entry.timestamp);
+        request_body_data += "}";
+
+        ++i;
+    }
+
+    request_body = fmt::format("[{}]", request_body_data);
+
+    bool curl_result = true;
+
+    const std::string url = m_server_url + fmt::format("api/measurement/{}", request[0].client_id);
+
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &read_buffer);
+
+        // headers
+        struct curl_slist* headers = nullptr;
+        // Remove a header curl would otherwise add by itself
+        headers = curl_slist_append(headers, "Accept:");
+
+        headers = curl_slist_append(headers, ("Authorization: " + ctx.m_password).c_str());
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        // data
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_body.c_str());
+
+        CURLcode result = curl_easy_perform(curl);
+        if (result != CURLE_OK) {
+            log::err("curl failed: {}", curl_easy_strerror(result));
+            curl_result = false;
+        }
+
+        long http_code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+
+        if ((http_code - 200) > 99) {
+            log::err("HTTP request to \"{}\" failed with code {}.", url, http_code);
+            curl_result = false;
+        }
+
+        curl_easy_cleanup(curl);
+
+        curl_slist_free_all(headers);
+    } else {
+        log::err("Cannot initialize CURL, no data will be loaded to the server.");
+        curl_result = false;
+    }
+
+    curl_global_cleanup();
+
+    return curl_result;
 }
 }

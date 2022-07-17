@@ -58,7 +58,7 @@ func (r *repository) ReadAll(clientId string, offset int, limit int) ([]entities
 	var entries []measurement
 	var result []entities.Measurement
 
-	err := r.db.Limit(limit).Offset(offset).Where("client_id = ?", clientId).Order("timestamp asc").Find(&entries).Error
+	err := r.db.Limit(limit).Offset(offset).Where("client_id = ?", clientId).Order("timestamp desc").Find(&entries).Error
 	if err != nil {
 		return nil, errors.New("database error")
 	}

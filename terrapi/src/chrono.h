@@ -32,4 +32,9 @@ inline bool str_to_time(const std::string& str, int& dest, const char* format = 
 
     return true;
 }
+
+inline std::string time_to_str(const std::tm& tm)
+{
+    return fmt::format("{}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}+00:00", 1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+}
 }

@@ -9,6 +9,6 @@ import (
 
 func MeasurementRouter(app fiber.Router, service measurement.Service, auth middleware.Auth) {
 	app.Get("/measurement/:clientID", handlers.ReadAllMeasurement(service))
+	app.Post("/measurement/:clientID", handlers.PostMeasurement(service, auth))
 	app.Get("/measurement/:clientID/:sensorName", handlers.ReadMeasurement(service))
-	app.Post("/measurement/:clientID/:sensorName", handlers.PostMeasurement(service, auth))
 }

@@ -17,8 +17,8 @@ public:
     ///     (MEASURE_STEP)!
     Switch(std::string name, int gpio, int oscillation_step = -1);
 
-    void turn_on();
-    void turn_off();
+    bool turn_on();
+    bool turn_off();
 
     [[nodiscard]] const std::string& name() const { return m_name; }
 
