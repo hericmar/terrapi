@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.13)
 project(terrapi VERSION 0.2.0)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/target/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/target/bin)
 
 include_directories(lib/fmt/include)
 include_directories(lib/wiringPi/include)
@@ -35,7 +35,12 @@ set(TERRAPI_SOURCE
 add_executable(terrapi ${TERRAPI_SOURCE} src/main.cpp)
 
 target_compile_options(terrapi PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-lwiringPi>)
-target_link_libraries(terrapi PUBLIC fmt)
+target_include_directories(terrapi PRIVATE
+        include
+        src)
+target_link_libraries(terrapi PUBLIC
+        "${CURL_LIBRARIES}"
+        fmt)
 
 ################################################################################
 
@@ -46,9 +51,13 @@ add_executable(terrapi_test
         test/terrapi/main.cpp
         test/terrapi/test_config.cpp)
 
-target_compile_definitions(terrapi_test PRIVATE TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-target_include_directories(terrapi_test PRIVATE include src)
-target_link_libraries(terrapi_test PUBLIC fmt)
+target_compile_definitions(terrapi_test PRIVATE
+        TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+target_include_directories(terrapi_test PRIVATE
+        include
+        src)
+target_link_libraries(terrapi_test PUBLIC
+        fmt)
 
 # message(FATAL_ERROR ${CURL_LIBRARIES})
 
@@ -59,6 +68,11 @@ add_executable(terrapi_test_app
         test/lib/wiringPi.c
         test/terrapi/test_app.cpp)
 
-target_compile_definitions(terrapi_test_app PRIVATE TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-target_include_directories(terrapi_test_app PRIVATE include src)
-target_link_libraries(terrapi_test_app PUBLIC "${CURL_LIBRARIES}" fmt)
+target_compile_definitions(terrapi_test_app PRIVATE
+        TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+target_include_directories(terrapi_test_app PRIVATE
+        include
+        src)
+target_link_libraries(terrapi_test_app PUBLIC
+        "${CURL_LIBRARIES}"
+        fmt)
