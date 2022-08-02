@@ -16,9 +16,9 @@ if (WIN32)
 
     include_directories(lib/curl/windows/include)
     link_directories(lib/curl/windows/lib)
-
-    find_package(CURL)
 endif()
+
+find_package(CURL)
 
 add_subdirectory(lib/fmt)
 
@@ -35,6 +35,11 @@ set(TERRAPI_SOURCE
 add_executable(terrapi ${TERRAPI_SOURCE} src/main.cpp)
 
 target_compile_options(terrapi PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-lwiringPi>)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	target_link_libraries(terrapi PRIVATE -lwiringPi)
+endif()
+
 target_include_directories(terrapi PRIVATE
         include
         src)

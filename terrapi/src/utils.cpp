@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <sys/stat.h>
 
 namespace terra
 {

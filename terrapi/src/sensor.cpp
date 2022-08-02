@@ -12,12 +12,12 @@ static const std::string physical_quantity_names[] = {
     "humidity", "temperature", "time"
 };
 
-const std::string& terra::to_string(EPhysicalQuantity q)
+const std::string& to_string(EPhysicalQuantity q)
 {
     return physical_quantity_names[(int) q];
 }
 
-std::optional<EPhysicalQuantity> terra::from_string(const std::string& str)
+std::optional<EPhysicalQuantity> from_string(const std::string& str)
 {
     int i = 0;
     bool has_value = false;
@@ -37,7 +37,7 @@ std::optional<EPhysicalQuantity> terra::from_string(const std::string& str)
     return EPhysicalQuantity(i);
 }
 
-bool terra::cmp(EPhysicalQuantity q, Value lhs, Value rhs)
+bool cmp(EPhysicalQuantity q, Value lhs, Value rhs)
 {
     switch (q)
     {
