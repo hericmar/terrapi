@@ -71,8 +71,9 @@ App* App::create_from_string(const char* str_config)
         std::time_t t = std::time(nullptr);
         std::tm* now  = std::localtime(&t);
 
+        app->m_ctx.m_clock->measure();
+
         if (measurement_delta > app->m_ctx.m_measure_step) {
-            app->m_ctx.m_clock->measure();
             for (const auto& sensor : app->m_ctx.m_sensors) {
                 sensor->measure();
             }

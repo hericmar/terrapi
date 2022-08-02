@@ -20,12 +20,18 @@ public:
     bool turn_on();
     bool turn_off();
 
+    void update(int delta_ms);
+
     [[nodiscard]] const std::string& name() const { return m_name; }
 
 private:
     std::string m_name;
     int m_gpio;
-    int m_oscillation_step = -1;
+
     bool m_is_on = false;
+    bool m_is_upper = false;
+
+    int m_oscillation_step = -1;
+    unsigned m_elapsed_ms = 0;
 };
 }

@@ -98,6 +98,8 @@ void SensorController::evaluate(const std::tm& tm, std::optional<ValueInterval> 
     auto& s = ctx().m_switches[m_switch_idx];
 
     if (cmp_within(m_q, *maybe_interval, val)) {
+        s.update(UPDATE_STEP);
+
         if (s.turn_on()) {
             App::http()->post_measurement(ctx(), *this, tm);
         }

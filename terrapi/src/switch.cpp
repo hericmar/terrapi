@@ -1,5 +1,6 @@
 #include "terrapi/switch.h"
 
+#include <iostream>
 #include <utility>
 
 #include "wiringPi.h"
@@ -31,6 +32,24 @@ bool Switch::turn_on()
         return true;
     }
 
+    float k = (float) m_elapsed_ms / (float) m_oscillation_step;
+
+    if ((int) std::floor(k) % 2 == 0) {
+        if (!m_is_upper) {
+            // log::info("{}: UP GPIO {}.", m_name, m_gpio);
+
+            digitalWrite(m_gpio, GPIO_ON);
+            m_is_upper = true;
+        }
+    } else {
+        if (m_is_upper) {
+            // log::info("{}: DOWN GPIO {}.", m_name, m_gpio);
+
+            digitalWrite(m_gpio, GPIO_OFF);
+            m_is_upper = false;
+        }
+    }
+
     return false;
 }
 
@@ -45,5 +64,25 @@ bool Switch::turn_off()
     }
 
     return false;
+}
+
+void Switch::update(int delta_ms)
+{
+    if (m_oscillation_step == -1) {
+        return;
+    }
+
+    /*
+    float k = (float) m_elapsed_ms / (float) m_oscillation_step;
+
+    std::cerr << (int) std::floor(k) << std::endl;
+    if ((int) std::floor(k) % 2 == 0) {
+        turn_on();
+    } else {
+        turn_off();
+    }
+     */
+
+    m_elapsed_ms += (unsigned) delta_ms;
 }
 }
