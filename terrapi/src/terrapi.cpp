@@ -20,6 +20,10 @@ App* App::create(const char* path)
 
     if (fs::exists(path)) {
         str_config = fs::read(path);
+    } else {
+	log::err("Config file at \"{}\" does not exist.", path);
+
+	return nullptr;
     }
 
     return create_from_string(str_config.data());

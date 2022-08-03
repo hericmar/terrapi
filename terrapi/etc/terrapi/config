@@ -17,14 +17,14 @@ data_post_step = 15
 # Sensor is one physical quantity representation of physical sensor.
 # In this example we use sensor.id := 0 for measuring humidity,
 # although the DHT11 can measure temperature and humidity.
-[sensor "dht11.temperature"]
+[sensor "dht11.humidity"]
 type = DHT11
 gpio = 4
 physical_quantity = humidity
 active_interval = 75.0, 100.0
 night_active_interval = 60.0, 80.0
 
-[sensor "dht11.humidity"]
+[sensor "dht11.temperature"]
 type = DHT11
 gpio = 4
 physical_quantity = temperature
