@@ -17,7 +17,6 @@ constexpr inline unsigned int DATA_STEP    = 20 * 60 * 1000;
 
 namespace terra
 {
-
 struct Context
 {
     std::string m_broker_addr;
@@ -46,6 +45,7 @@ public:
 
     [[noreturn]] static void run();
 
+    const std::vector<SensorPtr>& sensors() const { return m_ctx.m_sensors; }
     const std::vector<Switch>& switches() const { return m_ctx.m_switches; }
 
 private:

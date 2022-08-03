@@ -2,6 +2,7 @@
 #include <charconv>
 #include <optional>
 #include <map>
+#include <set>
 
 #include "terrapi/terrapi.h"
 
@@ -323,6 +324,8 @@ static bool read_environment(Context& ctx, const SectionBody& environment_config
 
 static bool read_sensor(Context& ctx, const Section& section, const SectionBody& sensor_config)
 {
+    static std::set<unsigned> used_gpios;
+
     std::optional<ValueInterval> day_interval{ValueInterval()};
     std::optional<ValueInterval> night_interval{ValueInterval()};
 
@@ -373,7 +376,11 @@ static bool read_sensor(Context& ctx, const Section& section, const SectionBody&
             }
         }
 
-        ctx.m_sensors.push_back(std::make_unique<DHT11>(gpio));
+        if (used_gpios.count(gpio) == 0) {
+            ctx.m_sensors.push_back(std::make_unique<DHT11>(gpio));
+            used_gpios.insert(gpio);
+        }
+
         ctx.m_controllers.push_back(SensorController(
             section.name,
             ctx.m_sensors[ctx.m_sensors.size() - 1].get(),

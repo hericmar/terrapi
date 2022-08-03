@@ -62,6 +62,7 @@ target_include_directories(terrapi_test PRIVATE
         include
         src)
 target_link_libraries(terrapi_test PUBLIC
+        "${CURL_LIBRARIES}"
         fmt)
 
 # message(FATAL_ERROR ${CURL_LIBRARIES})
