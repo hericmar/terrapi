@@ -105,6 +105,7 @@ App* App::create_from_string(const char* str_config)
 
         unsigned sleep_time = (unsigned) multiplier * UPDATE_STEP - elapsed;
 
+	measurement_delta += (unsigned) multiplier * UPDATE_STEP;
         data_post_delta += (unsigned) multiplier * UPDATE_STEP;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));

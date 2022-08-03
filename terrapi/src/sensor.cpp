@@ -172,10 +172,12 @@ void DHT11::measure()
 
         m_value[EPhysicalQuantity::Temperature].float_val = c;
         m_value[EPhysicalQuantity::Humidity].float_val = h;
+
+	log::info("GPIO {}: t = {}, hum = {} %", m_gpio, c, h);
     }
     else
     {
-        // printf("Data not good, skip\n");
+		log::err("DHT11: data not good, skip.");
     }
 }
 

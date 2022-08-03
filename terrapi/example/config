@@ -21,15 +21,15 @@ data_post_step = 15
 type = DHT11
 gpio = 4
 physical_quantity = humidity
-active_interval = -75.0, 100.0
-night_active_interval = -60.0, 80.0
+active_interval = 75.0, 100.0
+night_active_interval = 60.0, 80.0
 
-[sensor "dht11.temperature"]
-type = DHT11
-gpio = 4
-physical_quantity = temperature
-active_interval = 22.0, 24.0
-night_active_interval = none
+#[sensor "dht11.temperature"]
+#type = DHT11
+#gpio = 7
+#physical_quantity = temperature
+#active_interval = 22.0, 24.0
+#night_active_interval = none
 
 
 [timer "day"]
@@ -40,11 +40,12 @@ active_interval = 10:59, 21:57
 sensor = day
 gpio = 17
 
-[switch "heater"]
-sensor = dht11.temperature
-gpio = 27
+#[switch "heater"]
+#sensor = dht11.temperature
+#gpio = 27
 
 [switch "humidifier"]
 sensor = dht11.humidity
 gpio = 22
 oscillation_step = 6000
+
