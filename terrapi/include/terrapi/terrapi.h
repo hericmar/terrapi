@@ -32,6 +32,9 @@ struct Context
     std::vector<SensorController> m_controllers;
     std::vector<SensorPtr>        m_sensors;
     std::vector<Switch>           m_switches;
+
+    const SensorPtr& get_sensor(const std::string& name);
+    int get_sensor_idx(const std::string& name);
 };
 
 class App

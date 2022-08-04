@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <string_view>
+#include <vector>
 
 #include "fmt/format.h"
 
@@ -37,6 +38,8 @@ namespace log
 
 namespace string_utils
 {
+    using Lines = std::vector<std::string_view>;
+
     inline std::string replace(std::string str, const std::string& from, const std::string& to)
     {
         size_t start_pos = 0;
@@ -45,6 +48,15 @@ namespace string_utils
             start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
         }
         return str;
+    }
+
+    /// Lines with breaks are empty.
+    ///
+    /// https://www.cppstories.com/2018/07/string-view-perf-followup/
+    Lines split(std::string_view str, std::string_view delims = " ");
+
+    constexpr bool is_whitespace(char c) {
+        return c == ' ' || c == '\n';
     }
 }
 }

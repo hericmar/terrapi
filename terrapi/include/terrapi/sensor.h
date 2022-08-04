@@ -21,6 +21,7 @@ const std::string& to_string(EPhysicalQuantity q);
 std::optional<EPhysicalQuantity> from_string(const std::string& str);
 
 /// \todo We have no value type validation.
+/// \todo Everything as float!!!
 union Value
 {
     float float_val;  // humidity or temperature

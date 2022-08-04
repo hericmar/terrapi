@@ -28,6 +28,7 @@ set(TERRAPI_SOURCE
         src/config.cpp
         src/http.cpp
         src/sensor.cpp
+        src/rule.cpp
         src/switch.cpp
         src/terrapi.cpp
         src/utils.cpp)
@@ -54,7 +55,8 @@ add_executable(terrapi_test
         ${TERRAPI_SOURCE}
         test/lib/wiringPi.c
         test/terrapi/main.cpp
-        test/terrapi/test_config.cpp)
+        test/terrapi/test_config.cpp
+        test/terrapi/test_rules.cpp)
 
 target_compile_definitions(terrapi_test PRIVATE
         TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

@@ -8,25 +8,16 @@
 
 #include "config.h"
 #include "chrono.h"
+#include "rule.h"
 
 namespace terra
 {
-using Lines = std::vector<std::string_view>;
-
-struct Section
-{
-    std::string type;
-    std::string name;
-};
-
 struct SectionComparator
 {
     bool operator()(const Section& lhs, const Section& rhs) const {
         return lhs.type < rhs.type || (!(rhs.type < lhs.type) && lhs.name < rhs.name);
     }
 };
-
-using SectionBody = std::map<std::string, std::pair<std::string, int>>;  // key, { val, line }
 
 using ConfigMap = std::map<
     Section,
@@ -46,54 +37,15 @@ static const std::map<std::string, bool> g_sections = {
 //------------------------------------------------------------------------------
 
 static int line_number = 0;
-static std::map<std::string, int> sensor_name_idx_map;
 
 //------------------------------------------------------------------------------
 
-/// Lines with breaks are empty.
-///
-/// https://www.cppstories.com/2018/07/string-view-perf-followup/
-static Lines split(std::string_view str, std::string_view delims = " ")
+bool is_str_literal(int c)
 {
-    std::vector<std::string_view> output;
-    size_t first = 0;
-
-    if (str.size() < 2) {
-        return output;
-    }
-
-    while (first < str.size())
-    {
-        const auto second = str.find_first_of(delims, first);
-
-        if (first != second) {
-            output.emplace_back(str.substr(first, second - first));
-        }
-        else {
-            // push empty lines
-            size_t next = first - 1;
-
-            if (output.size() > 2) {
-                if (output.back()[0] != '\n' && output[output.size() - 2][0] == '\n') {
-                    // left empty
-                } else {
-                    output.emplace_back(str.substr(next, 1));
-                }
-            }
-        }
-
-        if (second == std::string_view::npos)
-            break;
-
-        first = second + 1;
-    }
-
-    return output;
+    return std::isalnum(c) || c == '.';
 }
 
-static constexpr bool is_whitespace(char c) {
-    return c == ' ' || c == '\n';
-}
+//------------------------------------------------------------------------------
 
 static std::string sanitize_line(std::string_view line)
 {
@@ -101,7 +53,7 @@ static std::string sanitize_line(std::string_view line)
     sanitized.reserve(line.size());
 
     for (char c : line) {
-        if (is_whitespace(c)) {
+        if (string_utils::is_whitespace(c)) {
             continue;
         }
         sanitized.push_back(c);
@@ -247,7 +199,7 @@ static bool read_time_interval(const SectionBody& section_body, const std::strin
         return false;
     }
 
-    const auto values = split(section_body.at(key).first, ",");
+    const auto values = string_utils::split(section_body.at(key).first, ",");
 
     if (values.size() != 2) {
         return false;
@@ -264,7 +216,7 @@ static bool read_float_interval(const SectionBody& section_body, const std::stri
         return false;
     }
 
-    const auto values = split(section_body.at(key).first, ",");
+    const auto values = string_utils::split(section_body.at(key).first, ",");
 
     if (values.size() != 2) {
         return false;
@@ -394,12 +346,12 @@ static bool read_sensor(Context& ctx, const Section& section, const SectionBody&
         return false;
     }
 
-    sensor_name_idx_map[section.name] = ctx.m_controllers.size() - 1;
+    // sensor_name_idx_map[section.name] = ctx.m_controllers.size() - 1;
 
     return true;
 }
 
-static bool read_switch(Context& ctx, const Section& section, const SectionBody& switch_config)
+bool read_switch(Context& ctx, const Section& section, const SectionBody& switch_config)
 {
     if (switch_config.count("sensor") == 0) {
         log::err(R"(Switch "{}" does not have "sensor" specified.)", section.name);
@@ -407,7 +359,7 @@ static bool read_switch(Context& ctx, const Section& section, const SectionBody&
     }
 
     const auto& sensor_name = switch_config.at("sensor").first;
-    if (sensor_name_idx_map.find(sensor_name) == sensor_name_idx_map.end()) {
+    if (ctx.get_sensor_idx(sensor_name) == -1) {
         log::err(R"(Switch "{}" has invalid "sensor" specified, sensor "{}" does not exist.)", section.name, sensor_name);
         return false;
     }
@@ -424,10 +376,30 @@ static bool read_switch(Context& ctx, const Section& section, const SectionBody&
         return false;
     }
 
+    //
+
+    if (switch_config.count("rule") == 0) {
+        log::err("Switch \"{}\" does not have valid rule.", section.name);
+        return false;
+    } else {
+        try {
+            const auto tree = create_expr_tree(switch_config.at("rule").first);
+            tree;
+        } catch (...) {
+            log::err("Switch \"{}\" does not have valid rules.", section.name);
+        }
+    }
+
+    //
+
     ctx.m_switches.push_back(Switch{section.name, gpio, oscillation_step});
 
-    auto& controller = ctx.m_controllers[sensor_name_idx_map[sensor_name]];
+    const auto sensor_idx = ctx.get_sensor_idx(sensor_name);
+
+    /*
+    auto& controller = ctx.m_controllers[ctx.m_sensors[sensor_idx]];
     controller.set_switch_id(ctx.m_switches.size() - 1);
+     */
 
     return true;
 }
@@ -441,7 +413,6 @@ static bool read_timer(Context& ctx, const Section& section, const SectionBody& 
     }
 
     ctx.m_controllers.push_back(SensorController(section.name, ctx.m_clock.get(), EPhysicalQuantity::Time, interval));
-    sensor_name_idx_map[section.name] = ctx.m_controllers.size() - 1;
 
     return true;
 }
@@ -457,7 +428,7 @@ bool parse_config(Context& ctx, std::string_view str)
     ConfigMap conf;
 
     // Parse
-    const auto lines = split(str, "\n");
+    const auto lines = string_utils::split(str, "\n");
     std::optional<Section> current_section = std::nullopt;
 
     for (int i = 0; i < lines.size(); ++i)
@@ -477,7 +448,7 @@ bool parse_config(Context& ctx, std::string_view str)
                 auto& section_lines = conf[current_section.value()];
 
                 // expecting key, value pair
-                const auto key_val_pair = split(sanitized_line, "=");
+                const auto key_val_pair = string_utils::split(sanitized_line, "=");
                 if (key_val_pair.size() != 2) {
                     log::err("Syntax error at line {}.", line_number);
                     continue;

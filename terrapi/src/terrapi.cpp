@@ -14,6 +14,35 @@ namespace terra
 {
 static App* g_app = nullptr;
 
+struct EmptySensor : PhysicalSensor
+{
+    void measure() override {}
+};
+
+const SensorPtr& Context::get_sensor(const std::string& name)
+{
+    const auto idx = get_sensor_idx(name);
+
+    if (idx == -1) {
+        static SensorPtr stub = std::make_unique<EmptySensor>();
+
+        return stub;
+    }
+
+    return m_sensors[idx];
+}
+
+int Context::get_sensor_idx(const std::string& name)
+{
+    for (int i = 0; i < m_sensors.size(); ++i) {
+        if (m_sensors[i]->name() == name) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 App* App::create(const char* path)
 {
     std::string str_config;
@@ -120,5 +149,10 @@ std::unique_ptr<class HttpClient>& App::http()
 Context& ctx()
 {
     return g_app->m_ctx;
+}
+
+void test::create_test_app()
+{
+    g_app = new App{};
 }
 }

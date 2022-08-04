@@ -7,7 +7,9 @@
 int main()
 {
     try {
-        test_config();
+        /// \todo
+        // test_config();
+        test_rules();
     } catch (std::exception& ex) {
         std::cout << ex.what() << std::endl;
     }
