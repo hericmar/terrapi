@@ -2,6 +2,7 @@
 
 #include "app.h"
 #include "config.h"
+#include "rule.h"
 
 struct TestSensor : public terra::PhysicalSensor
 {
@@ -28,10 +29,34 @@ struct TestSensor : public terra::PhysicalSensor
         m_value[PQ].float_val = value;
     }
 
-    void measure() override
+    void measure(const std::tm& now) override
     {
     }
 };
+
+void test_tokenizer()
+{
+    {
+        terra::Tokenizer t("dht11.humidity < 10");
+        const auto result = t.parse();
+
+        TEST_ASSERT(result.size() == 3 + 1)
+    }
+
+    {
+        terra::Tokenizer t("dht11.humidity < 10 & dht11.temperature < 20");
+        const auto result = t.parse();
+
+        TEST_ASSERT(result.size() == 7 + 1)
+    }
+
+    {
+        terra::Tokenizer t("dht11.humidity < 0 & dht11.humidity < 60 & dht11.temperature < 15 & dht11.temperature < 25");
+        const auto result = t.parse();
+
+        TEST_ASSERT(result.size() == 15 + 1)
+    }
+}
 
 void test_basic_rules()
 {
@@ -45,7 +70,7 @@ void test_basic_rules()
     terra::SectionBody s1_config = {
         {"sensor", {"dht11", 0}},
         {"gpio", {"1", 0}},
-        {"rule", {"dht11.humidity < 0 & dht11.humidity < 60 & dht11.temperature < 15 && dht11.temperature < 25", 0}},
+        {"rule", {"dht11.humidity < 0 & dht11.humidity < 60 & dht11.temperature < 15 & dht11.temperature < 25", 0}},
     };
     terra::read_switch(c, {"switch", "humidity"}, s1_config);
 }
@@ -54,5 +79,6 @@ void test_basic_rules()
 
 void test_rules()
 {
+    test_tokenizer();
     test_basic_rules();
 }

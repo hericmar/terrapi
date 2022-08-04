@@ -14,7 +14,7 @@ struct Time
 
 using TimeInterval = std::array<std::tm, 2>;
 
-inline int tm_to_seconds(std::tm& src)
+inline int tm_to_seconds(const std::tm& src)
 {
     return src.tm_hour * 60 * 60 + src.tm_min * 60 + src.tm_sec;
 }

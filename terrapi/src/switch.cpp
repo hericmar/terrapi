@@ -10,8 +10,8 @@
 
 namespace terra
 {
-Switch::Switch(std::string name, int gpio, int oscillation_step)
-    : m_name(std::move(name)), m_gpio(gpio), m_oscillation_step(oscillation_step)
+Switch::Switch(std::string name, int gpio, Expr rules, int oscillation_step)
+    : m_name(std::move(name)), m_gpio(gpio), m_rules(std::move(rules)), m_oscillation_step(oscillation_step)
 {
     if (m_oscillation_step != -1 && m_oscillation_step < UPDATE_STEP) {
         m_oscillation_step = -1;

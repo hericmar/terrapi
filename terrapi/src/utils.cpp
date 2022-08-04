@@ -1,5 +1,7 @@
 #include "terrapi/utils.h"
 
+#include "chrono.h"
+
 #include <fstream>
 #include <sstream>
 #include <sys/stat.h>
@@ -30,6 +32,24 @@ namespace fs
         }
 
         return result;
+    }
+}
+
+namespace log
+{
+    void print_measurement(const std::tm& tm, EPhysicalQuantity pq, const std::string& sensor_name, float val)
+    {
+        switch (pq)
+        {
+        case EPhysicalQuantity::Humidity:
+            log::info("{}: {} ({}): {} %", time_to_str(tm), sensor_name, val);
+            break;
+        case EPhysicalQuantity::Temperature:
+            log::info("{}: {} ({}): {} °C", time_to_str(tm), sensor_name, val);
+            break;
+        default:
+            break;
+        }
     }
 }
 

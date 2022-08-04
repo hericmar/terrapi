@@ -92,52 +92,45 @@ bool HttpClient::put_config(const Context& ctx, const std::string& config_body)
     return curl_result;
 }
 
-bool HttpClient::post_measurement(const Context& ctx, const SensorController& controller, const std::tm& now)
-{
-    std::vector<MeasurementData> data;
-
-    append_data(ctx, data, controller, now);
-
-    return post_measurement_ex(ctx, data);
-}
-
 bool HttpClient::post_measurements(const Context& ctx, const std::tm& now)
 {
     std::vector<MeasurementData> data;
 
-    for (const auto& sensorController : ctx.m_controllers) {
-        append_data(ctx, data, sensorController, now);
+    for (const auto& sensor : ctx.m_sensors) {
+        append_data(ctx, data, sensor, now);
     }
 
     return post_measurement_ex(ctx, data);
 }
 
-void HttpClient::append_data(const Context& ctx, std::vector<MeasurementData>& data, const SensorController& sensorController, const std::tm& now)
+void HttpClient::append_data(const Context& ctx, std::vector<MeasurementData>& data, const SensorPtr& sensor, const std::tm& now)
 {
-    sensorController.name();
-    const auto* sensor = sensorController.sensor();
-    const auto value = sensor->value(sensorController.q());
-    std::string str;
+    for (const auto& [pq, value] : sensor->values()) {
+        std::string str;
 
-    switch (sensorController.q())
-    {
-    case EPhysicalQuantity::Humidity:
-        str = std::to_string(value.float_val);
-        break;
-    case EPhysicalQuantity::Temperature:
-        str = std::to_string(value.float_val);
-        break;
-    case EPhysicalQuantity::Time:
-        str = std::to_string(value.float_val);
-        break;
+        switch (pq)
+        {
+        case EPhysicalQuantity::Humidity:
+            str = std::to_string(value.float_val);
+            break;
+        case EPhysicalQuantity::Temperature:
+            str = std::to_string(value.float_val);
+            break;
+        case EPhysicalQuantity::Time:
+            /*
+            str = std::to_string(value.float_val);
+            break;
+             */
+            continue;
+        }
+
+        data.push_back(MeasurementData{
+            ctx.m_client_id,
+            sensor->name(),
+            str,
+            time_to_str(now)
+        });
     }
-
-    data.push_back(MeasurementData{
-        ctx.m_client_id,
-        sensorController.name(),
-        str,
-        time_to_str(now)
-    });
 }
 
 bool HttpClient::post_measurement_ex(const Context& ctx, const std::vector<MeasurementData>& request)

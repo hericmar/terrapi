@@ -278,9 +278,7 @@ static bool read_sensor(Context& ctx, const Section& section, const SectionBody&
 {
     static std::set<unsigned> used_gpios;
 
-    std::optional<ValueInterval> day_interval{ValueInterval()};
-    std::optional<ValueInterval> night_interval{ValueInterval()};
-
+    /// \todo multiple physical quantities.
     EPhysicalQuantity q;
     if (sensor_config.count("type") == 0) {
         log::err(R"(Sensor "{}" does not have valid "type" specified.)", section.name);
@@ -312,34 +310,10 @@ static bool read_sensor(Context& ctx, const Section& section, const SectionBody&
             return false;
         }
 
-        if (!read_float_interval(sensor_config, "active_interval", *day_interval)) {
-            log::err(R"(Sensor "{}" does not have valid "active_interval".)", section.name);
-            return false;
-        }
-
-        if (sensor_config.count("night_active_interval")) {
-            if (sensor_config.at("night_active_interval").first == "none") {
-                night_interval = std::nullopt;
-            } else {
-                if (!read_float_interval(sensor_config, "night_active_interval", *night_interval)) {
-                    log::err(R"(Sensor "{}" does not have valid "night_active_interval".)", section.name);
-                    return false;
-                }
-            }
-        }
-
         if (used_gpios.count(gpio) == 0) {
             ctx.m_sensors.push_back(std::make_unique<DHT11>(gpio));
             used_gpios.insert(gpio);
         }
-
-        ctx.m_controllers.push_back(SensorController(
-            section.name,
-            ctx.m_sensors[ctx.m_sensors.size() - 1].get(),
-            q,
-            day_interval,
-            night_interval
-        ));
 
     } else {
         log::err(R"(Sensor "{}" has unknown "type" specified.)", section.name);
@@ -358,11 +332,13 @@ bool read_switch(Context& ctx, const Section& section, const SectionBody& switch
         return false;
     }
 
+    /*
     const auto& sensor_name = switch_config.at("sensor").first;
     if (ctx.get_sensor_idx(sensor_name) == -1) {
         log::err(R"(Switch "{}" has invalid "sensor" specified, sensor "{}" does not exist.)", section.name, sensor_name);
         return false;
     }
+     */
 
     int gpio = 0;
     if (!read_int(switch_config, "gpio", gpio)) {
@@ -378,13 +354,14 @@ bool read_switch(Context& ctx, const Section& section, const SectionBody& switch
 
     //
 
+    Expr tree;
+
     if (switch_config.count("rule") == 0) {
         log::err("Switch \"{}\" does not have valid rule.", section.name);
         return false;
     } else {
         try {
-            const auto tree = create_expr_tree(switch_config.at("rule").first);
-            tree;
+            tree = create_expr_tree(switch_config.at("rule").first);
         } catch (...) {
             log::err("Switch \"{}\" does not have valid rules.", section.name);
         }
@@ -392,27 +369,10 @@ bool read_switch(Context& ctx, const Section& section, const SectionBody& switch
 
     //
 
-    ctx.m_switches.push_back(Switch{section.name, gpio, oscillation_step});
+    auto s = Switch{section.name, gpio, tree, oscillation_step};
 
-    const auto sensor_idx = ctx.get_sensor_idx(sensor_name);
-
-    /*
-    auto& controller = ctx.m_controllers[ctx.m_sensors[sensor_idx]];
-    controller.set_switch_id(ctx.m_switches.size() - 1);
-     */
-
-    return true;
-}
-
-static bool read_timer(Context& ctx, const Section& section, const SectionBody& timer_config)
-{
-    ValueInterval interval;
-    if (!read_time_interval(timer_config, "active_interval", interval)) {
-        log::err(R"(Cannot read "active_interval" for timer "{}".)", section.name);
-        return false;
-    }
-
-    ctx.m_controllers.push_back(SensorController(section.name, ctx.m_clock.get(), EPhysicalQuantity::Time, interval));
+    ctx.m_switches.push_back(s);
+    ctx.m_switch_controllers.emplace_back(s);
 
     return true;
 }
@@ -471,8 +431,6 @@ bool parse_config(Context& ctx, std::string_view str)
             result = result && read_environment(ctx, section_body);
         } else if (section_header.type == "sensor") {
             result = result && read_sensor(ctx, section_header, section_body);
-        } else if (section_header.type == "timer") {
-            result = result && read_timer(ctx, section_header, section_body);
         }
     }
 

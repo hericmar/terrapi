@@ -6,6 +6,8 @@
 
 #include "fmt/format.h"
 
+#include "sensor.h"
+
 namespace terra
 {
 namespace fs
@@ -17,6 +19,8 @@ namespace fs
 
 namespace log
 {
+    void print_measurement(const std::tm& tm, EPhysicalQuantity pq, const std::string& sensor_name, float val);
+
     template <typename... Args>
     void info(const std::string& str, Args&&... args)
     {

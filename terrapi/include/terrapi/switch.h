@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rule.h"
 #include "utils.h"
 
 namespace terra
@@ -15,7 +16,7 @@ public:
     ///     you must set oscillation_step as non negative value in ms.
     ///     Oscillation step should be greater than the measure step
     ///     (MEASURE_STEP)!
-    Switch(std::string name, int gpio, int oscillation_step = -1);
+    Switch(std::string name, int gpio, Expr rules, int oscillation_step = -1);
 
     bool turn_on();
     bool turn_off();
@@ -25,8 +26,12 @@ public:
     [[nodiscard]] const std::string& name() const { return m_name; }
 
 private:
+    friend class Controller;
+
     std::string m_name;
     int m_gpio;
+
+    Expr m_rules;
 
     bool m_is_on = false;
     bool m_is_upper = false;

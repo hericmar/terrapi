@@ -16,8 +16,13 @@ static App* g_app = nullptr;
 
 struct EmptySensor : PhysicalSensor
 {
-    void measure() override {}
+    void measure(const std::tm& now) override {}
 };
+
+const Clock* Context::get_clock()
+{
+    return dynamic_cast<Clock*>(ctx().m_clock.get());
+}
 
 const SensorPtr& Context::get_sensor(const std::string& name)
 {
@@ -42,6 +47,8 @@ int Context::get_sensor_idx(const std::string& name)
 
     return -1;
 }
+
+//------------------------------------------------------------------------------
 
 App* App::create(const char* path)
 {
@@ -102,24 +109,24 @@ App* App::create_from_string(const char* str_config)
         auto t1 = std::chrono::high_resolution_clock::now();
 
         std::time_t t = std::time(nullptr);
-        std::tm* now  = std::localtime(&t);
+        std::tm now   = *std::localtime(&t);
 
-        app->m_ctx.m_clock->measure();
+        app->m_ctx.m_clock->measure(now);
 
         if (measurement_delta > app->m_ctx.m_measure_step) {
             for (const auto& sensor : app->m_ctx.m_sensors) {
-                sensor->measure();
+                sensor->measure(now);
             }
             measurement_delta = 0;
         }
 
-        for (const auto& controller : ctx().m_controllers) {
-            controller.update(*now);
+        for (auto& controller : ctx().m_switch_controllers) {
+            controller.update(now);
         }
 
         if (data_post_delta > app->m_ctx.m_data_post_step) {
-            app->m_http->post_measurements(app->m_ctx, *now);
-            log::info("{}: Data posted to server.", time_to_str(*now));
+            app->m_http->post_measurements(app->m_ctx, now);
+            log::info("{}: Data posted to server.", time_to_str(now));
             data_post_delta = 0;
         }
 

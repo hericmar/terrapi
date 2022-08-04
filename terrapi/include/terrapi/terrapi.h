@@ -7,6 +7,7 @@
 
 #include "terrapi/sensor.h"
 #include "terrapi/switch.h"
+#include "controller.h"
 
 #define GPIO_ON HIGH
 #define GPIO_OFF LOW
@@ -29,9 +30,11 @@ struct Context
     int m_daytime[2]{};
 
     SensorPtr m_clock;
-    std::vector<SensorController> m_controllers;
+    std::vector<Controller>       m_switch_controllers;
     std::vector<SensorPtr>        m_sensors;
     std::vector<Switch>           m_switches;
+
+    const Clock* get_clock();
 
     const SensorPtr& get_sensor(const std::string& name);
     int get_sensor_idx(const std::string& name);
