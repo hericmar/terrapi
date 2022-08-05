@@ -30,9 +30,8 @@ struct Context
     int m_daytime[2]{};
 
     SensorPtr m_clock;
-    std::vector<Controller>       m_switch_controllers;
-    std::vector<SensorPtr>        m_sensors;
-    std::vector<Switch>           m_switches;
+    std::vector<Controller> m_switch_controllers;
+    std::vector<SensorPtr>  m_sensors;
 
     const Clock* get_clock();
 
@@ -52,7 +51,7 @@ public:
     [[noreturn]] static void run();
 
     const std::vector<SensorPtr>& sensors() const { return m_ctx.m_sensors; }
-    const std::vector<Switch>& switches() const { return m_ctx.m_switches; }
+    const std::vector<Controller>& controllers() const { return m_ctx.m_switch_controllers; }
 
 private:
     friend Context& ctx();

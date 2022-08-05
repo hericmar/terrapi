@@ -4,6 +4,7 @@
 #include "app.h"
 #include "config.h"
 #include "rule.h"
+#include "chrono.h"
 
 namespace terra
 {
@@ -45,10 +46,30 @@ Token Tokenizer::next()
     bool consume = true;
 
     if (std::isdigit(c)) {
-        float number;
+        float number  = 0;
+
         m_ss >> number;
+        {
+            char next = m_ss.peek();
+            if (next == ':') {
+                m_ss.get();
+
+                float min;
+                m_ss >> min;
+                if (!m_ss.fail()) {
+                    std::tm tm{};
+                    tm.tm_hour = (int) number;
+                    tm.tm_min = min;
+
+                    number = (float) tm_to_seconds(tm);
+                }
+            } else {
+                m_ss.clear(m_ss.rdstate() & ~std::ios::failbit);
+            }
+        }
         result = Token{TokenID::Number, number};
         consume = false;
+
     } else if (is_str_literal(c)) {
         std::string ident;
         m_ss.ignore();
@@ -88,6 +109,10 @@ Expr number(float num)
 
 Expr variable(const std::string& identifier)
 {
+    if (identifier == "time") {
+        return std::make_shared<Var>(identifier, EPhysicalQuantity::Time);
+    }
+
     const auto name_pq_pair = string_utils::split(identifier, ".");
 
     if (name_pq_pair.size() != 2) {
@@ -121,7 +146,11 @@ Expr operator&(Expr a, Expr b)
 
 float Var::get_value() const
 {
-    return ctx().get_sensor(m_sensor_name)->value(m_physical_quantity).float_val;
+    if (m_sensor_name == "time") {
+        return ctx().get_clock()->value(terra::EPhysicalQuantity::Time);
+    }
+
+    return ctx().get_sensor(m_sensor_name)->value(m_physical_quantity);
 }
 
 //------------------------------------------------------------------------------

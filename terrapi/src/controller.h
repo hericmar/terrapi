@@ -13,6 +13,9 @@ public:
 
     void update(const std::tm& now);
 
+    Switch& get_switch() { return m_switch; }
+    const Switch& get_switch() const { return m_switch; }
+
 private:
     void evaluate(const std::tm& now);
 

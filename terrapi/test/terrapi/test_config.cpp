@@ -22,9 +22,7 @@ void test_basic_config()
     auto* app = terra::App::create(TERRAPI_PROJECT_ROOT "/example/config");
     TEST_ASSERT(app != nullptr);
 
-    TEST_ASSERT(app->switches().size() == 2);
-    // TEST_ASSERT(app->switches()[0].name() == "heater");
-    // TEST_ASSERT(app->switches()[1].name() == "humidifier");
+    TEST_ASSERT(app->controllers().size() == 3);
 
     // No duplicates.
     TEST_ASSERT(app->sensors().size() == 1);

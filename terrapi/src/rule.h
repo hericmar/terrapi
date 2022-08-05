@@ -156,7 +156,7 @@ struct LessThan : public ExprBase
 
     bool evaluate() const override
     {
-        return m_lhs->evaluate() < m_rhs->evaluate();
+        return m_lhs->get_value() < m_rhs->get_value();
     }
 
 private:

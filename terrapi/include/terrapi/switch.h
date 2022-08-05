@@ -23,6 +23,8 @@ public:
 
     void update(int delta_ms);
 
+    bool is_on() const { return m_is_on; }
+
     [[nodiscard]] const std::string& name() const { return m_name; }
 
 private:

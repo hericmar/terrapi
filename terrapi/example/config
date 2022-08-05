@@ -28,16 +28,11 @@ gpio = 4
 physical_quantity = temperature
 
 
-[timer "day"]
-active_interval = 10:59, 21:57
-
-
 [switch "lights"]
-sensor = day
 gpio = 17
+rule = 10:59 < time & time < 21:57
 
 [switch "heater"]
-sensor = dht11.temperature
 gpio = 27
 rule = dht11.temperature < 22
 

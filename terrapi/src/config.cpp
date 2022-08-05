@@ -45,6 +45,11 @@ bool is_str_literal(int c)
     return std::isalnum(c) || c == '.';
 }
 
+bool is_time_char(int c)
+{
+    return std::isalnum(c) || c == ':';
+}
+
 //------------------------------------------------------------------------------
 
 static std::string sanitize_line(std::string_view line)
@@ -142,6 +147,11 @@ static std::optional<Section> get_section(std::string_view sanitized_line)
         name_chars.push_back('\0');
 
         name = std::string(name_chars.data());
+
+        if (std::find(reserved_keywords.begin(), reserved_keywords.end(), name) != reserved_keywords.end()) {
+            log::err("Your sensor/switch cannot have reserved name \"{}\", line {}.", name, line_number);
+            return std::nullopt;
+        }
     }
 
     return Section{std::string(section), name};
@@ -182,7 +192,7 @@ static bool read_int(const SectionBody& section_body, const std::string& key, in
     return read_int(val, dest);
 }
 
-static bool read_time(const SectionBody& section_body, const std::string& key, int& dest)
+static bool read_time(const SectionBody& section_body, const std::string& key, float& dest)
 {
     if (section_body.count(key) == 0) {
         return false;
@@ -205,9 +215,9 @@ static bool read_time_interval(const SectionBody& section_body, const std::strin
         return false;
     }
 
-    auto result = str_to_time(std::string(values[0]), dest[0].int_val);
+    auto result = str_to_time(std::string(values[0]), dest[0]);
 
-    return result && str_to_time(std::string(values[1]), dest[1].int_val);
+    return result && str_to_time(std::string(values[1]), dest[1]);
 }
 
 static bool read_float_interval(const SectionBody& section_body, const std::string& key, ValueInterval& dest)
@@ -222,9 +232,9 @@ static bool read_float_interval(const SectionBody& section_body, const std::stri
         return false;
     }
 
-    auto result = read_float(std::string(values[0]), dest[0].float_val);
+    auto result = read_float(std::string(values[0]), dest[0]);
 
-    return result && read_float(std::string(values[1]), dest[1].float_val);
+    return result && read_float(std::string(values[1]), dest[1]);
 }
 
 //------------------------------------------------------------------------------
@@ -250,12 +260,12 @@ static bool read_environment(Context& ctx, const SectionBody& environment_config
 {
     ValueInterval daytime{};
 
-    if (!read_time(environment_config, "day_from", daytime[0].int_val)) {
+    if (!read_time(environment_config, "day_from", daytime[0])) {
         log::err("Switch \"environment\" does not have valid GPIO pin specified.");
         return false;
     }
 
-    if (!read_time(environment_config, "day_to", daytime[1].int_val)) {
+    if (!read_time(environment_config, "day_to", daytime[1])) {
         log::err("Switch \"environment\" does not have valid GPIO pin specified.");
         return false;
     }
@@ -268,8 +278,8 @@ static bool read_environment(Context& ctx, const SectionBody& environment_config
         ctx.m_data_post_step *= 1000;
     }
 
-    ctx.m_daytime[0] = daytime[0].int_val;
-    ctx.m_daytime[1] = daytime[1].int_val;
+    ctx.m_daytime[0] = daytime[0];
+    ctx.m_daytime[1] = daytime[1];
 
     return true;
 }
@@ -282,11 +292,6 @@ static bool read_sensor(Context& ctx, const Section& section, const SectionBody&
     EPhysicalQuantity q;
     if (sensor_config.count("type") == 0) {
         log::err(R"(Sensor "{}" does not have valid "type" specified.)", section.name);
-        return false;
-    }
-
-    if (sensor_config.count("active_interval") == 0) {
-        log::err(R"(Sensor "{}" does not have valid "active_interval" specified.)", section.name);
         return false;
     }
 
@@ -320,26 +325,11 @@ static bool read_sensor(Context& ctx, const Section& section, const SectionBody&
         return false;
     }
 
-    // sensor_name_idx_map[section.name] = ctx.m_controllers.size() - 1;
-
     return true;
 }
 
 bool read_switch(Context& ctx, const Section& section, const SectionBody& switch_config)
 {
-    if (switch_config.count("sensor") == 0) {
-        log::err(R"(Switch "{}" does not have "sensor" specified.)", section.name);
-        return false;
-    }
-
-    /*
-    const auto& sensor_name = switch_config.at("sensor").first;
-    if (ctx.get_sensor_idx(sensor_name) == -1) {
-        log::err(R"(Switch "{}" has invalid "sensor" specified, sensor "{}" does not exist.)", section.name, sensor_name);
-        return false;
-    }
-     */
-
     int gpio = 0;
     if (!read_int(switch_config, "gpio", gpio)) {
         log::err("Switch \"{}\" does not have valid GPIO pin specified.", section.name);
@@ -352,27 +342,25 @@ bool read_switch(Context& ctx, const Section& section, const SectionBody& switch
         return false;
     }
 
-    //
-
-    Expr tree;
+    Expr rules;
 
     if (switch_config.count("rule") == 0) {
-        log::err("Switch \"{}\" does not have valid rule.", section.name);
+        log::err(R"(Switch "{}" does not have "rule" specified.)", section.name);
         return false;
     } else {
         try {
-            tree = create_expr_tree(switch_config.at("rule").first);
-        } catch (...) {
+            rules = create_expr_tree(switch_config.at("rule").first);
+        } catch (const std::exception& e) {
+            log::err(e.what());
             log::err("Switch \"{}\" does not have valid rules.", section.name);
+
+            return false;
         }
     }
 
-    //
+    auto s = Switch{section.name, gpio, rules, oscillation_step};
 
-    auto s = Switch{section.name, gpio, tree, oscillation_step};
-
-    ctx.m_switches.push_back(s);
-    ctx.m_switch_controllers.emplace_back(s);
+    ctx.m_switch_controllers.push_back(Controller{s});
 
     return true;
 }
@@ -382,8 +370,6 @@ bool read_switch(Context& ctx, const Section& section, const SectionBody& switch
 bool parse_config(Context& ctx, std::string_view str)
 {
     line_number = 0;
-
-    ctx.m_switches.clear();
 
     ConfigMap conf;
 

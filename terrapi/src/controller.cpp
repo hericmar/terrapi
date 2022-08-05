@@ -24,6 +24,6 @@ void Controller::evaluate(const std::tm& now)
             // App::http()->post_measurement(ctx(), *this, tm);
         }
     }
-    m_switch.turn_on();
+    // m_switch.turn_on();
 }
 }

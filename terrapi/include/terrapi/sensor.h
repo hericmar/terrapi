@@ -20,16 +20,7 @@ enum class EPhysicalQuantity
 const std::string& to_string(EPhysicalQuantity q);
 std::optional<EPhysicalQuantity> from_string(const std::string& str);
 
-/// \todo We have no value type validation.
-/// \todo Everything as float!!!
-union Value
-{
-    float float_val;  // humidity or temperature
-    int   int_val;    // time
-    bool  bool_val;   //
-};
-
-using ValueInterval = std::array<Value, 2>;
+using ValueInterval = std::array<float, 2>;
 
 using SensorPtr = std::unique_ptr<class PhysicalSensor>;
 
@@ -38,14 +29,14 @@ using SensorPtr = std::unique_ptr<class PhysicalSensor>;
 /// Physical sensor can measure.
 class PhysicalSensor
 {
-    using Values = std::unordered_map<EPhysicalQuantity, Value>;
+    using Values = std::unordered_map<EPhysicalQuantity, float>;
 
 public:
     virtual void measure(const std::tm& now) = 0;
 
     [[nodiscard]] const std::string& name() const { return m_name; }
 
-    Value value(EPhysicalQuantity q) const;
+    float value(EPhysicalQuantity q) const;
     [[nodiscard]] const Values& values() const { return m_value; }
 
 protected:

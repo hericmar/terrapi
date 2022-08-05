@@ -39,7 +39,7 @@ std::optional<EPhysicalQuantity> from_string(const std::string& str)
 
 //------------------------------------------------------------------------------
 
-Value PhysicalSensor::value(EPhysicalQuantity q) const
+float PhysicalSensor::value(EPhysicalQuantity q) const
 {
     if (m_value.find(q) == m_value.end()) {
         log::err("Sensor {} does not have value {}", m_name, to_string(q));
@@ -108,8 +108,8 @@ void DHT11::measure(const std::tm& now)
         }
         if (m_data[2] & 0x80) { c = -c; }
 
-        m_value[EPhysicalQuantity::Temperature].float_val = c;
-        m_value[EPhysicalQuantity::Humidity].float_val = h;
+        m_value[EPhysicalQuantity::Temperature] = c;
+        m_value[EPhysicalQuantity::Humidity]    = h;
 
         log::print_measurement(now, EPhysicalQuantity::Temperature, name(), c);
         log::print_measurement(now, EPhysicalQuantity::Humidity, name(), h);
@@ -124,17 +124,17 @@ void DHT11::measure(const std::tm& now)
 
 Clock::Clock()
 {
-    m_value[EPhysicalQuantity::Time].int_val = 0;
+    m_value[EPhysicalQuantity::Time] = 0;
 }
 
 void Clock::measure(const std::tm& now)
 {
-    m_value[EPhysicalQuantity::Time].int_val = tm_to_seconds(now);
+    m_value[EPhysicalQuantity::Time] = (float) tm_to_seconds(now);
 }
 
 bool Clock::is_day() const
 {
-    const auto now = m_value.at(EPhysicalQuantity::Time).int_val;
+    const auto now = (unsigned) m_value.at(EPhysicalQuantity::Time);
 
     return ctx().m_daytime[0] <= now && now <= ctx().m_daytime[1];
 }

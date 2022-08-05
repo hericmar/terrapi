@@ -106,23 +106,7 @@ bool HttpClient::post_measurements(const Context& ctx, const std::tm& now)
 void HttpClient::append_data(const Context& ctx, std::vector<MeasurementData>& data, const SensorPtr& sensor, const std::tm& now)
 {
     for (const auto& [pq, value] : sensor->values()) {
-        std::string str;
-
-        switch (pq)
-        {
-        case EPhysicalQuantity::Humidity:
-            str = std::to_string(value.float_val);
-            break;
-        case EPhysicalQuantity::Temperature:
-            str = std::to_string(value.float_val);
-            break;
-        case EPhysicalQuantity::Time:
-            /*
-            str = std::to_string(value.float_val);
-            break;
-             */
-            continue;
-        }
+        std::string             str = std::to_string(value);
 
         data.push_back(MeasurementData{
             ctx.m_client_id,

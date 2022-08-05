@@ -14,21 +14,35 @@ struct Time
 
 using TimeInterval = std::array<std::tm, 2>;
 
+inline const std::tm& get_now()
+{
+    std::time_t t = std::time(nullptr);
+    return *std::localtime(&t);
+}
+
 inline int tm_to_seconds(const std::tm& src)
 {
     return src.tm_hour * 60 * 60 + src.tm_min * 60 + src.tm_sec;
 }
 
-inline bool str_to_time(const std::string& str, int& dest, const char* format = "%H:%M")
+inline bool str_to_time(const std::string& str, std::tm& dest, const char* format = "%H:%M")
 {
-    std::tm tm{};
     std::istringstream ss(str);
-    ss >> std::get_time(&tm, format);
+    ss >> std::get_time(&dest, format);
     if (ss.fail()) {
         return false;
     }
+    return true;
+}
 
-    dest = tm_to_seconds(tm);
+inline bool str_to_time(const std::string& str, float& dest, const char* format = "%H:%M")
+{
+    std::tm tm{};
+    if (!str_to_time(str, tm, format)) {
+        return false;
+    }
+
+    dest = (float) tm_to_seconds(tm);
 
     return true;
 }

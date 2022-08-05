@@ -13,7 +13,10 @@ using SectionBody = std::map<std::string, std::pair<std::string, int>>;  // key,
 
 //------------------------------------------------------------------------------
 
+static std::vector<std::string> reserved_keywords = {"time"};
+
 bool is_str_literal(int c);
+bool is_time_char(int c);
 
 //------------------------------------------------------------------------------
 

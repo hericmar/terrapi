@@ -160,6 +160,12 @@ Context& ctx()
 
 void test::create_test_app()
 {
+    if (g_app != nullptr) {
+        delete g_app;
+    }
+
     g_app = new App{};
+
+    ctx().m_clock = std::make_unique<Clock>();
 }
 }
