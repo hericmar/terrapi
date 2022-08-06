@@ -37,7 +37,7 @@
 		</Route>
 
 		<Route path="admin">
-			<Admin/>
+			<Admin />
 		</Route>
 
 		<Route path="*">
