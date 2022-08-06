@@ -119,9 +119,22 @@ Expr variable(const std::string& identifier)
         throw parse_error("invalid format: expected sensor_name.physical_quantity");
     }
 
+    std::string sensor_name = std::string(name_pq_pair[0]);
+    if (ctx().get_sensor_idx(sensor_name) == -1) {
+        log::err("Sensor \"{}\" does not exists.", name_pq_pair[0]);
+        throw parse_error("invalid config: invalid rule");
+    }
+
+    const auto& sensor = ctx().get_sensor(sensor_name);
+
     auto maybe_pq = from_string(std::string(name_pq_pair[1]));
     if (!maybe_pq.has_value()) {
         throw parse_error("invalid format: invalid physical quantity name");
+    }
+
+    if (sensor->get_sensor_properties().count(*maybe_pq) == 0) {
+        log::err(R"(Sensor "{}" does not measure "{}".)", name_pq_pair[1]);
+        throw parse_error("invalid config: invalid rule");
     }
 
     return std::make_shared<Var>(std::string(name_pq_pair[0]), maybe_pq.value());

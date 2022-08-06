@@ -16,6 +16,9 @@ static App* g_app = nullptr;
 
 struct EmptySensor : PhysicalSensor
 {
+    EmptySensor() :
+        PhysicalSensor("Default") {}
+
     void measure(const std::tm& now) override {}
 };
 

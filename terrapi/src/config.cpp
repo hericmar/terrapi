@@ -288,26 +288,12 @@ static bool read_sensor(Context& ctx, const Section& section, const SectionBody&
 {
     static std::set<unsigned> used_gpios;
 
-    /// \todo multiple physical quantities.
-    EPhysicalQuantity q;
     if (sensor_config.count("type") == 0) {
         log::err(R"(Sensor "{}" does not have valid "type" specified.)", section.name);
         return false;
     }
 
     if (sensor_config.at("type").first == "DHT11") {
-
-        if (sensor_config.count("physical_quantity") == 0) {
-            log::err(R"(Sensor "{}" does not have valid "physical_quantity" specified.)", section.name);
-            return false;
-        }
-
-        if (auto maybe_q = from_string(sensor_config.at("physical_quantity").first)) {
-            q = *maybe_q;
-        } else {
-            log::err(R"(Sensor "{}" does not have valid "physical_quantity" specified.)", section.name);
-            return false;
-        }
 
         int gpio = 0;
         if (!read_int(sensor_config, "gpio", gpio)) {
@@ -316,7 +302,7 @@ static bool read_sensor(Context& ctx, const Section& section, const SectionBody&
         }
 
         if (used_gpios.count(gpio) == 0) {
-            ctx.m_sensors.push_back(std::make_unique<DHT11>(gpio));
+            ctx.m_sensors.push_back(std::make_unique<DHT11>(section.name, gpio));
             used_gpios.insert(gpio);
         }
 

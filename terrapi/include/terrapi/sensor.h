@@ -2,8 +2,10 @@
 
 #include <array>
 #include <ctime>
+#include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -26,12 +28,20 @@ using SensorPtr = std::unique_ptr<class PhysicalSensor>;
 
 //------------------------------------------------------------------------------
 
+static inline const std::map<std::string, std::set<EPhysicalQuantity>> g_known_sensors = {
+    {"DHT11", {EPhysicalQuantity::Temperature, EPhysicalQuantity::Humidity}}
+};
+
+//------------------------------------------------------------------------------
+
 /// Physical sensor can measure.
 class PhysicalSensor
 {
     using Values = std::unordered_map<EPhysicalQuantity, float>;
 
 public:
+    PhysicalSensor(std::string type) : m_type(std::move(type)) {}
+
     virtual void measure(const std::tm& now) = 0;
 
     [[nodiscard]] const std::string& name() const { return m_name; }
@@ -39,7 +49,11 @@ public:
     float value(EPhysicalQuantity q) const;
     [[nodiscard]] const Values& values() const { return m_value; }
 
+    const std::set<EPhysicalQuantity>& get_sensor_properties();
+
 protected:
+    const std::string m_type;
+
     std::string m_name;
     Values      m_value;
 };
@@ -64,8 +78,10 @@ class DHT11 : public PhysicalSensor
 {
 public:
     /// \todo Validate GPIO number
-    explicit DHT11(int gpio) : m_gpio(gpio) {
-        m_name = "DHT11@" + std::to_string(gpio);
+    explicit DHT11(std::string name, int gpio)
+        : PhysicalSensor("DHT11"), m_gpio(gpio)
+    {
+        m_name = std::move(name);
 
         m_value[EPhysicalQuantity::Humidity];
         m_value[EPhysicalQuantity::Temperature];

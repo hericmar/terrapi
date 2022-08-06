@@ -48,6 +48,11 @@ float PhysicalSensor::value(EPhysicalQuantity q) const
     return m_value.at(q);
 }
 
+const std::set<EPhysicalQuantity>& PhysicalSensor::get_sensor_properties()
+{
+    return g_known_sensors.at(m_type);
+}
+
 //------------------------------------------------------------------------------
 
 void DHT11::measure(const std::tm& now)
@@ -122,7 +127,7 @@ void DHT11::measure(const std::tm& now)
 
 //------------------------------------------------------------------------------
 
-Clock::Clock()
+Clock::Clock() : PhysicalSensor("Clock")
 {
     m_value[EPhysicalQuantity::Time] = 0;
 }
