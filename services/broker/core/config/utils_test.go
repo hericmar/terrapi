@@ -2,14 +2,14 @@ package config
 
 import "testing"
 
-var config string = `
+var configStr string = `
 [switch "lights"]
 sensor = day
 gpio = 17
 `
 
 func TestParseConfig(t *testing.T) {
-	_, err := ParseConfig(config)
+	_, err := ParseConfig(configStr)
 	if err != nil {
 		t.Errorf("Got error.")
 	}

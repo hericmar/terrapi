@@ -2,6 +2,7 @@
     import Chart from 'chart.js/auto';
     import {onMount} from "svelte";
     import {useParams} from "svelte-navigator";
+    import {prepareData, processData} from "../stores";
 
     export let clientConfig;
 
@@ -12,46 +13,22 @@
 
     let measurements = [];
 
-    let times = [];
-    let datasets = [];
-    let datasetsMap = {};
+    let res = {
+        datasetsMap: {},
+        times: [],
+        datasets: []
+    }
 
     let data = {}
 
     const charts = [];
-
-    function prepareData(data) {
-        measurements = data;
-        measurements = [...measurements].reverse()
-
-        const sensorsCount = Object.keys(datasetsMap).length;
-
-        for (let i = 0; i < sensorsCount; ++i) {
-            if (times[i].length !== 0) {
-                times[i].splice(0, times[i].length)
-            }
-            if (datasets[i].data.length) {
-                datasets[i].data.splice(0, datasets[i].data.length)
-            }
-        }
-
-        for (const m of measurements) {
-            if (datasetsMap[m.sensorName] === undefined) {
-                continue;
-            }
-            let dataset = datasets[datasetsMap[m.sensorName]];
-
-            times[datasetsMap[m.sensorName]].push(m.timestamp);
-            dataset.data.push(m.value);
-        }
-    }
 
     async function fetchData() {
         const response = await fetch(`http://127.0.0.1:8000/api/measurement/${$params.id}?offset=${requestOffset}&limit=${requestLimit}`);
         const {data} = await response.json();
 
         if (data) {
-            prepareData(data)
+            processData(res, data)
             return data.length
         } else {
             return 0;
@@ -59,25 +36,9 @@
     }
 
     onMount(async () => {
-        /*
-        if (!clientConfig) {
-            const response = await fetch('http://127.0.0.1:8000/api/config');
-            const {data} = await response.json();
-            configs = data;
-            clientConfig = findConfig($params.id);
-        }
-         */
+        prepareData(res, clientConfig)
 
-        for (const sensor of clientConfig.sensors) {
-            datasetsMap[sensor.name] = datasets.length;
-            times.push([])
-            datasets.push({
-                label: sensor.name,
-                data: []
-            });
-        }
-
-        const sensorsCount = Object.keys(datasetsMap).length;
+        const sensorsCount = Object.keys(res.datasetsMap).length;
         requestLimit = sensorsCount * 100;
 
         await fetchData()
@@ -87,8 +48,8 @@
             const chart = new Chart(`chart${sensor.name}`, {
                 type: "line",
                 data: {
-                    labels: times[i],
-                    datasets: [datasets[i]]
+                    labels: res.times[i],
+                    datasets: [res.datasets[i]]
                 },
                 options: {}
             })

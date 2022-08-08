@@ -11,9 +11,10 @@ import (
 )
 
 type measurementEntry struct {
-	Value      string    `json:"value"`
-	SensorName string    `json:"sensorName"`
-	Timestamp  time.Time `json:"timestamp"`
+	Value            string    `json:"value"`
+	SensorName       string    `json:"sensorName"`
+	PhysicalQuantity int       `json:"physicalQuantity"`
+	Timestamp        time.Time `json:"timestamp"`
 }
 
 func ReadAllMeasurement(service measurement.Service) fiber.Handler {
@@ -99,10 +100,11 @@ func PostMeasurement(service measurement.Service, auth middleware.Auth) fiber.Ha
 
 		for _, entry := range requestBody {
 			m := entities.Measurement{
-				ClientID:   params.ClientID,
-				SensorName: entry.SensorName,
-				Value:      entry.Value,
-				Timestamp:  entry.Timestamp,
+				ClientID:         params.ClientID,
+				SensorName:       entry.SensorName,
+				Value:            entry.Value,
+				PhysicalQuantity: entry.PhysicalQuantity,
+				Timestamp:        entry.Timestamp,
 			}
 			err = service.PostMeasurement(&m)
 		}

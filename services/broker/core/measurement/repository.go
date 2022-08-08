@@ -15,11 +15,12 @@ type Repository interface {
 }
 
 type measurement struct {
-	ID         int       `gorm:"primaryKey;autoIncrement"`
-	ClientID   string    `gorm:"notNull"`
-	SensorName string    `gorm:"index"`
-	Value      string    `gorm:"notNull"`
-	Timestamp  time.Time `gorm:"notNull"`
+	ID               int       `gorm:"primaryKey;autoIncrement"`
+	ClientID         string    `gorm:"notNull"`
+	SensorName       string    `gorm:"index"`
+	Value            string    `gorm:"notNull"`
+	PhysicalQuantity int       `gorm:"notNull"`
+	Timestamp        time.Time `gorm:"notNull"`
 }
 
 type repository struct {
@@ -36,19 +37,21 @@ func NewRepo(db *gorm.DB) Repository {
 
 func mapping(m *entities.Measurement) *measurement {
 	return &measurement{
-		ClientID:   m.ClientID,
-		SensorName: m.SensorName,
-		Value:      m.Value,
-		Timestamp:  m.Timestamp,
+		ClientID:         m.ClientID,
+		SensorName:       m.SensorName,
+		Value:            m.Value,
+		PhysicalQuantity: m.PhysicalQuantity,
+		Timestamp:        m.Timestamp,
 	}
 }
 
 func convert(m *measurement) *entities.Measurement {
 	return &entities.Measurement{
-		ClientID:   m.ClientID,
-		SensorName: m.SensorName,
-		Value:      m.Value,
-		Timestamp:  m.Timestamp,
+		ClientID:         m.ClientID,
+		SensorName:       m.SensorName,
+		Value:            m.Value,
+		PhysicalQuantity: m.PhysicalQuantity,
+		Timestamp:        m.Timestamp,
 	}
 }
 

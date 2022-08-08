@@ -54,18 +54,6 @@ func ParseConfig(configStr string) (*entities.Config, error) {
 			if err == nil {
 				s.Name = name
 
-				physQuantity, err := cfg.Section(section).GetKey("physical_quantity")
-				if err != nil {
-					return nil, errors.New("\"physical_quantity\" is empty")
-				}
-
-				switch physQuantity.Value() {
-				case "humidity":
-					s.PhysicalQuantity = entities.Humidity
-				case "temperature":
-					s.PhysicalQuantity = entities.Temperature
-				}
-
 				config.Sensors = append(config.Sensors, s)
 			}
 		}

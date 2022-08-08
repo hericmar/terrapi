@@ -12,6 +12,7 @@ class HttpClient
         std::string client_id;
         std::string sensor_name;
         std::string value;
+        int         physical_quantity;
         std::string timestamp;
     };
 

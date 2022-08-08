@@ -105,13 +105,14 @@ bool HttpClient::post_measurements(const Context& ctx, const std::tm& now)
 
 void HttpClient::append_data(const Context& ctx, std::vector<MeasurementData>& data, const SensorPtr& sensor, const std::tm& now)
 {
-    for (const auto& [pq, value] : sensor->values()) {
-        std::string             str = std::to_string(value);
+    for (const auto& [physical_quantity, value] : sensor->values()) {
+        std::string str = std::to_string(value);
 
         data.push_back(MeasurementData{
             ctx.m_client_id,
             sensor->name(),
             str,
+            (int) physical_quantity,
             time_to_str(now)
         });
     }
@@ -137,7 +138,7 @@ bool HttpClient::post_measurement_ex(const Context& ctx, const std::vector<Measu
             request_body_data += ",";
         }
 
-        request_body_data += fmt::format(R"({{"sensorName": "{}", "value": "{}", "timestamp": "{}")", entry.sensor_name, entry.value, entry.timestamp);
+        request_body_data += fmt::format(R"({{"sensorName": "{}", "value": "{}", "physicalQuantity": {}, "timestamp": "{}")", entry.sensor_name, entry.value, entry.physical_quantity, entry.timestamp);
         request_body_data += "}";
 
         ++i;
