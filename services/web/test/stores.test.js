@@ -1,4 +1,4 @@
-import {prepareData, processData} from "../src/stores";
+import {processData} from "../src/stores";
 
 describe("stores test", () => {
     test("processes test payload", () => {
@@ -73,20 +73,27 @@ describe("stores test", () => {
         };
         expect(testPayload.data.length === 8).toBeTruthy();
 
-        prepareData(res, testConfig.data[0]);
         processData(res, testPayload.data);
 
-        expect(res.datasetsMap["dht11.temperature"]).not.toBeUndefined();
-        expect(res.datasetsMap["dht11.humidity"]).not.toBeUndefined();
+        const assertions = () => {
+            expect(res.datasetsMap["dht11.temperature"]).not.toBeUndefined();
+            expect(res.datasetsMap["dht11.humidity"]).not.toBeUndefined();
 
-        expect(res.times.length === 2).toBeTruthy();
+            expect(res.times.length === 2).toBeTruthy();
 
-        const i = res.datasetsMap["dht11.temperature"];
-        expect(res.times[i].length === 4).toBeTruthy();
+            const i = res.datasetsMap["dht11.temperature"];
+            expect(res.times[i].length === 4).toBeTruthy();
 
-        const j = res.datasetsMap["dht11.humidity"];
-        expect(res.times[j].length === 4).toBeTruthy();
+            const j = res.datasetsMap["dht11.humidity"];
+            expect(res.times[j].length === 4).toBeTruthy();
 
-        console.log(res.datasets)
+            expect(Object.keys(res.datasetsMap).length === 2).toBeTruthy();
+        }
+
+        assertions();
+
+        processData(res, testPayload.data);
+
+        assertions();
     });
 });

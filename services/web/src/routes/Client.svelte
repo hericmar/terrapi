@@ -1,12 +1,10 @@
 <script>
     import Chart from 'chart.js/auto';
     import {onMount} from "svelte";
-    import {useParams} from "svelte-navigator";
-    import {prepareData, processData} from "../stores";
+    import {findConfig, page, processData} from "../stores";
 
-    export let clientConfig;
-
-    const params = useParams();
+    const clientID = $page.split('#')[1]
+    export let clientConfig = findConfig(clientID);
 
     let requestLimit = 20;
     let requestOffset = 0;
@@ -23,12 +21,20 @@
 
     const charts = [];
 
+    let sensors = []
+
     async function fetchData() {
-        const response = await fetch(`http://127.0.0.1:8000/api/measurement/${$params.id}?offset=${requestOffset}&limit=${requestLimit}`);
+        const response = await fetch(`http://127.0.0.1:8000/api/measurement/${clientID}?offset=${requestOffset}&limit=${requestLimit}`);
         const {data} = await response.json();
+        measurements = data
 
         if (data) {
             processData(res, data)
+            for (const sensorLabel of Object.keys(res.datasetsMap)) {
+                if (!sensors.find(label => label === sensorLabel)) {
+                    sensors = [...sensors, sensorLabel]
+                }
+            }
             return data.length
         } else {
             return 0;
@@ -36,16 +42,15 @@
     }
 
     onMount(async () => {
-        prepareData(res, clientConfig)
-
         const sensorsCount = Object.keys(res.datasetsMap).length;
-        requestLimit = sensorsCount * 100;
+        // requestLimit = sensorsCount * 100;
+        requestLimit = 2;
 
         await fetchData()
 
         let i = 0
-        for (const sensor of clientConfig.sensors) {
-            const chart = new Chart(`chart${sensor.name}`, {
+        for (const sensorLabel of Object.keys(res.datasetsMap)) {
+            const chart = new Chart(`chart${sensorLabel}`, {
                 type: "line",
                 data: {
                     labels: res.times[i],
@@ -85,16 +90,16 @@
     }
 </script>
 
-<h1>{clientConfig.name} </h1>
-<p>{clientConfig.clientID}</p>
+<h1>{clientConfig.name} <span style="font-size: 0.5em; color: gray">{clientConfig.clientID}</span></h1>
 
-{#each clientConfig.sensors as sensor}
-<canvas id="{`chart${sensor.name}`}" style="width:100%;max-width:700px"></canvas>
+{#each sensors as sensorLabel}
+    <canvas id="{`chart${sensorLabel}`}" style="width:100%;max-width:700px"></canvas>
 {/each}
 
 <button on:click={handleClickPrev}>&lt;</button>
 <button on:click={handleClickNext}>&gt;</button>
 
+<!--
 <table>
     <tr>
         <th>Time</th>
@@ -109,3 +114,4 @@
     </tr>
     {/each}
 </table>
+-->
