@@ -1,4 +1,4 @@
-module terrapi-web
+module terra
 
 go 1.16
 

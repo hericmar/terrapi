@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "rollup -c -w",
+    "build": "rollup -c",
     "start": "sirv public --single",
     "test": "jest --verbose test"
   },
