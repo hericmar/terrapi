@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	DB            string `env:"DB"`
+	Port          int    `env:"PORT"`
 	AdminPassword string `env:"ADMIN_PASSWORD"`
 }
 

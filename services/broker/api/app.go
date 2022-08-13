@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"log"
 	"os"
+	"strconv"
 	"terrapi/api/middleware"
 	"terrapi/api/routes"
 	"terrapi/core"
@@ -68,5 +69,5 @@ func main() {
 	routes.ConfigRouter(api, configService, auth)
 	routes.MeasurementRouter(api, measurementService, auth)
 
-	log.Fatal(app.Listen(":8000"))
+	log.Fatal(app.Listen(":" + strconv.Itoa(cfg.Port)))
 }
