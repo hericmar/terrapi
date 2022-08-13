@@ -10,10 +10,10 @@ if [ -e "broker/terrapi" ]; then
 	mkdir -p "${STATIC_ROOT}"
 
 	if [ ! -e "/etc/terrapi/env" ]; then
-		cp "etc/terrapi/env.example" "/etc/terrapi/env"
+		cp "broker/env.example" "/etc/terrapi/env"
 		chown -R root:terra "/etc/terrapi"
 		chmod 550 "/etc/terrapi"
-		chmod 440 "/etc/terrapi/env"
+		chmod 640 "/etc/terrapi/env"
 	fi
     
 	cp "broker/terrapi" "${BIN_PATH}"

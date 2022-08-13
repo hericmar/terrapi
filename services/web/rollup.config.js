@@ -49,7 +49,7 @@ export default {
 		css({ output: 'bundle.css' }),
 
 		replace({
-			"API_ROOT": production ? "http://terrapi.lan.phire/api" : "http://127.0.0.1:8000/api"
+			"API_ROOT": production ? "http://terrapi.lan.phire.cz/api" : "http://127.0.0.1:8000/api"
 		}),
 
 		// If you have external dependencies installed from
