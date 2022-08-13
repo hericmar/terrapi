@@ -2,6 +2,7 @@
     import Chart from 'chart.js/auto';
     import {onMount} from "svelte";
     import {findConfig, page, processData} from "../stores";
+    import {fetchMeasurements} from "../api";
 
     const clientID = $page.split('#')[1]
     export let clientConfig = findConfig(clientID);
@@ -24,7 +25,7 @@
     let sensors = []
 
     async function fetchData() {
-        const response = await fetch(`http://127.0.0.1:8000/api/measurement/${clientID}?offset=${requestOffset}&limit=${requestLimit}`);
+        const response = await fetchMeasurements(clientID, requestOffset, requestLimit);
         const {data} = await response.json();
         measurements = data
 

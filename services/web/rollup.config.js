@@ -1,5 +1,6 @@
 import svelte from 'rollup-plugin-svelte';
 import commonjs from '@rollup/plugin-commonjs';
+import replace from 'rollup-plugin-replace';
 import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
@@ -46,6 +47,10 @@ export default {
 		// we'll extract any component CSS out into
 		// a separate file - better for performance
 		css({ output: 'bundle.css' }),
+
+		replace({
+			"API_ROOT": production ? "http://terrapi.lan.phire/api" : "http://127.0.0.1:8000/api"
+		}),
 
 		// If you have external dependencies installed from
 		// npm, you'll most likely need these plugins. In

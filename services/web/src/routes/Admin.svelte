@@ -1,6 +1,7 @@
 <script>
     import {user} from '../stores.js';
     import PasswordReader from "../components/PasswordReader.svelte";
+    import {fetchClients} from "../api";
 
     let clients = [];
 
@@ -21,11 +22,7 @@
     async function onSubmit(e) {
         inputMessage = '';
 
-        const response = await fetch('http://127.0.0.1:8000/api/client', {
-            headers: {
-                'Authorization': inputPassword
-            }
-        });
+        const response = await fetchClients(inputPassword);
 
         if (response.status === 200) {
             inputMessage = '';

@@ -4,13 +4,14 @@
 	import Admin from "./routes/Admin.svelte";
 	import Client from "./routes/Client.svelte";
 	import NotFound from "./routes/NotFound.svelte";
+	import {fetchConfigs} from "./api";
 
 	let pages = [
 		{id: "Admin", name: "Admin", component: Admin}
 	]
 
 	onMount(async () => {
-		const response = await fetch('http://127.0.0.1:8000/api/config')
+		const response = await fetchConfigs();
 		const {data} = await response.json();
 
 		$configs = data
