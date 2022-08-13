@@ -2,6 +2,7 @@
 
 command="/usr/bin/terrapi"
 command_args="/etc/terrapi/env"
+command_background=true
 command_user="terra"
 pidfile="/run/${RC_SVCNAME}.pid"
 
