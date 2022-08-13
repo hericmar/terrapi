@@ -3,7 +3,7 @@ package client
 import (
 	"fmt"
 	"gorm.io/gorm"
-	"terrapi-web/core/entities"
+	"terrapi/core/entities"
 )
 
 type Repository interface {

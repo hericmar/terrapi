@@ -3,7 +3,7 @@ package database
 import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"terrapi-web/core"
+	"terrapi/core"
 )
 
 func Init(config *core.Config) (*gorm.DB, error) {

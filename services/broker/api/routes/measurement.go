@@ -2,9 +2,9 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"terrapi-web/api/handlers"
-	"terrapi-web/api/middleware"
-	"terrapi-web/core/measurement"
+	"terrapi/api/handlers"
+	"terrapi/api/middleware"
+	"terrapi/core/measurement"
 )
 
 func MeasurementRouter(app fiber.Router, service measurement.Service, auth middleware.Auth) {

@@ -5,7 +5,7 @@ import (
 	"gopkg.in/ini.v1"
 	"regexp"
 	"strings"
-	"terrapi-web/core/entities"
+	"terrapi/core/entities"
 )
 
 func GetSectionName(sectionHeader string) (string, error) {

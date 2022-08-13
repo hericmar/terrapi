@@ -7,17 +7,23 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"log"
 	"os"
-	"terrapi-web/api/middleware"
-	"terrapi-web/api/routes"
-	"terrapi-web/core"
-	"terrapi-web/core/client"
-	"terrapi-web/core/config"
-	"terrapi-web/core/measurement"
-	"terrapi-web/database"
+	"terrapi/api/middleware"
+	"terrapi/api/routes"
+	"terrapi/core"
+	"terrapi/core/client"
+	"terrapi/core/config"
+	"terrapi/core/measurement"
+	"terrapi/database"
 )
 
 func main() {
-	cfg, err := core.ParseConfig("env")
+	confPath := "env"
+
+	if len(os.Args[1:]) != 0 {
+		confPath = os.Args[1:][0]
+	}
+
+	cfg, err := core.ParseConfig(confPath)
 	if err != nil {
 		fmt.Println("Cannot load configuration.")
 		os.Exit(1)

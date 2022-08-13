@@ -1,8 +1,8 @@
 package client
 
 import (
-	"terrapi-web/core/entities"
-	"terrapi-web/utils"
+	"terrapi/core/entities"
+	"terrapi/utils"
 )
 
 type Service interface {

@@ -2,9 +2,9 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"terrapi-web/api/handlers"
-	"terrapi-web/api/middleware"
-	"terrapi-web/core/client"
+	"terrapi/api/handlers"
+	"terrapi/api/middleware"
+	"terrapi/core/client"
 )
 
 func ClientRouter(app fiber.Router, service client.Service, auth middleware.Auth) {

@@ -3,10 +3,10 @@ package handlers
 import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
-	"terrapi-web/api/middleware"
-	"terrapi-web/api/presenter"
-	"terrapi-web/core/entities"
-	"terrapi-web/core/measurement"
+	"terrapi/api/middleware"
+	"terrapi/api/presenter"
+	"terrapi/core/entities"
+	"terrapi/core/measurement"
 	"time"
 )
 

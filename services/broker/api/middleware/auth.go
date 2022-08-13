@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"terrapi-web/core"
-	"terrapi-web/core/client"
+	"terrapi/core"
+	"terrapi/core/client"
 )
 
 type Auth interface {

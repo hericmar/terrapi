@@ -1,8 +1,8 @@
 package measurement
 
 import (
-	"terrapi-web/core/config"
-	"terrapi-web/core/entities"
+	"terrapi/core/config"
+	"terrapi/core/entities"
 )
 
 type Service interface {

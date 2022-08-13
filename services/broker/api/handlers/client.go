@@ -3,9 +3,9 @@ package handlers
 import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
-	"terrapi-web/api/middleware"
-	"terrapi-web/api/presenter"
-	"terrapi-web/core/client"
+	"terrapi/api/middleware"
+	"terrapi/api/presenter"
+	"terrapi/core/client"
 )
 
 type clientRequest struct {

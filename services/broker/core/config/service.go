@@ -2,8 +2,8 @@ package config
 
 import (
 	"errors"
-	"terrapi-web/core/client"
-	"terrapi-web/core/entities"
+	"terrapi/core/client"
+	"terrapi/core/entities"
 )
 
 type Service interface {

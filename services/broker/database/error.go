@@ -3,7 +3,7 @@ package database
 import (
 	"errors"
 	"gorm.io/gorm"
-	"terrapi-web/core"
+	"terrapi/core"
 )
 
 func ToError(gormError error) core.Error {

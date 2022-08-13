@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"sync"
-	"terrapi-web/core/entities"
+	"terrapi/core/entities"
 )
 
 var mu sync.RWMutex

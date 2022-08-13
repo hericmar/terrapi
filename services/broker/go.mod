@@ -1,4 +1,4 @@
-module terra
+module terrapi
 
 go 1.16
 
