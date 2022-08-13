@@ -1,0 +1,11 @@
+#!/sbin/openrc-run
+
+command="/usr/bin/terrapi"
+command_args="/etc/terrapi/env"
+command_user="terra"
+pidfile="/run/${RC_SVCNAME}.pid"
+
+depend() {
+        need localmount net
+}
+

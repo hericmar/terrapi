@@ -1,18 +1,22 @@
 #!/bin/sh
 
 # Alpine Linux specific!
-SERVICE_PATH="/etc/init.d/terra"
-BIN_PATH="/usr/bin/terra"
-STATIC_ROOT="/usr/share/webapps/terra"
+SERVICE_PATH="/etc/init.d/terrapi"
+BIN_PATH="/usr/bin/terrapi"
+STATIC_ROOT="/usr/share/webapps/terrapi"
 
-if [ -e "broker/terra" ]; then
-    cp broker/terra "${BIN_PATH}"
-
-    mkdir -p "${STATIC_ROOT}"
-    cp "web/public" "${STATIC_ROOT}"
+if [ -e "broker/terrapi" ]; then
+	mkdir -p "/etc/terrapi"
+	mkdir -p "${STATIC_ROOT}"
     
-    echo "Instalation completed, configure NGINX manually and then run the service."
+	cp broker/terra "${BIN_PATH}"
+
+	cp "web/public" "${STATIC_ROOT}"
+
+	cp "etc/init.d/terrapi" "${SERVICE_PATH}"
+    
+	echo "Instalation completed, configure NGINX manually and then run the service."
 else
-    echo "Webapp is not build, run 'make' first."
-    exit 1
+	echo "Webapp is not build, run 'make' first."
+	exit 1
 fi
