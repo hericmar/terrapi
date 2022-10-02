@@ -15,13 +15,14 @@ enum class TokenID : char
 {
     Number = '0',
     Identifier = 'a',
+    Equal = '=',
     LessThan = '<',
     And = '&',
     Or = '|',
     End = 0
 };
 
-#define SYMBOL_TOKENS "<&|"
+#define SYMBOL_TOKENS "<&|="
 
 struct Token
 {
@@ -185,6 +186,20 @@ struct Or : public ExprBase
     bool evaluate() const override
     {
         return m_lhs->evaluate() || m_rhs->evaluate();
+    }
+
+private:
+    Expr m_lhs, m_rhs;
+};
+
+struct Equal : public ExprBase
+{
+    Equal(Expr& lhs, Expr& rhs)
+        : m_lhs(lhs), m_rhs(rhs) {}
+
+    bool evaluate() const override
+    {
+        return m_lhs->evaluate() == m_rhs->evaluate();
     }
 
 private:

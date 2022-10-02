@@ -17,6 +17,7 @@ enum class EPhysicalQuantity
     Humidity    = 0,
     Temperature,
     Time,
+    Signal
 };
 
 const std::string& to_string(EPhysicalQuantity q);
@@ -29,7 +30,8 @@ using SensorPtr = std::unique_ptr<class PhysicalSensor>;
 //------------------------------------------------------------------------------
 
 static inline const std::map<std::string, std::set<EPhysicalQuantity>> g_known_sensors = {
-    {"DHT11", {EPhysicalQuantity::Temperature, EPhysicalQuantity::Humidity}}
+    {"DHT11", {EPhysicalQuantity::Temperature, EPhysicalQuantity::Humidity}},
+    {"WaterLevel", {EPhysicalQuantity::Signal}}
 };
 
 //------------------------------------------------------------------------------
@@ -92,6 +94,25 @@ public:
 private:
     int m_gpio;
     int m_data[5]{};
+};
+
+//------------------------------------------------------------------------------
+
+class WaterLevel : public PhysicalSensor
+{
+public:
+    WaterLevel(std::string name, int gpio)
+        : PhysicalSensor("WaterLevel"), m_gpio(gpio)
+    {
+        m_name = std::move(name);
+
+        m_value[EPhysicalQuantity::Signal];
+    }
+
+    void measure(const std::tm& now) override;
+
+private:
+    int m_gpio;
 };
 
 //------------------------------------------------------------------------------

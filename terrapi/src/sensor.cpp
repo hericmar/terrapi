@@ -9,7 +9,7 @@
 namespace terra
 {
 static const std::string physical_quantity_names[] = {
-    "humidity", "temperature", "time"
+    "humidity", "temperature", "time", "signal"
 };
 
 const std::string& to_string(EPhysicalQuantity q)
@@ -142,5 +142,12 @@ bool Clock::is_day() const
     const auto now = (unsigned) m_value.at(EPhysicalQuantity::Time);
 
     return ctx().m_daytime[0] <= now && now <= ctx().m_daytime[1];
+}
+
+//------------------------------------------------------------------------------
+
+void WaterLevel::measure(const std::tm& now)
+{
+
 }
 }

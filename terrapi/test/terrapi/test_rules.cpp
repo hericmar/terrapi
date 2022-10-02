@@ -7,7 +7,7 @@
 
 struct TestSensor : public terra::PhysicalSensor
 {
-    TestSensor(std::string name)
+    explicit TestSensor(std::string name) : PhysicalSensor("DHT11")
     {
         m_name = std::move(name);
 
@@ -34,6 +34,28 @@ struct TestSensor : public terra::PhysicalSensor
     {
     }
 };
+
+struct TestSignalSensor : public terra::PhysicalSensor
+{
+    explicit TestSignalSensor(std::string name, int gpio) : PhysicalSensor("WaterLevel")
+    {
+        m_name = std::move(name);
+
+        m_value[terra::EPhysicalQuantity::Signal];
+    }
+
+    void set_value(bool value)
+    {
+        m_value[terra::EPhysicalQuantity::Signal] = value;
+    }
+
+    void measure(const std::tm &now) override
+    {
+
+    }
+};
+
+//
 
 void test_tokenizer()
 {
@@ -65,14 +87,15 @@ void test_basic_rules()
 
     auto& c = terra::ctx();
 
+    c.m_sensors.push_back(std::make_unique<TestSignalSensor>("water", 7));
+    const auto& test_water = (TestSignalSensor*) c.m_sensors.back().get();
+
     c.m_sensors.push_back(std::make_unique<TestSensor>("dht11"));
     const auto& test_dht11 = (TestSensor*) c.m_sensors.back().get();
 
-    // c.m_sensors.push_back(std::make_unique<TestSensor>("s2", terra::EPhysicalQuantity::Humidity));
-
     terra::SectionBody s1_config = {
         {"gpio", {"1", 0}},
-        {"rule", {"dht11.humidity < 60 & dht11.temperature < 25", 0}},
+        {"rule", {"dht11.humidity < 60 & dht11.temperature < 25 & water.signal = 1", 0}},
     };
     TEST_ASSERT(terra::read_switch(c, {"switch", "humidifier"}, s1_config));
 
@@ -116,6 +139,7 @@ void test_basic_rules()
 
         test_dht11->set_value(terra::EPhysicalQuantity::Humidity, 50.0f);
         test_dht11->set_value(terra::EPhysicalQuantity::Temperature, 20.0f);
+        test_water->set_value(true);
 
         c1.update(terra::get_now());
         TEST_ASSERT(s1.is_on());

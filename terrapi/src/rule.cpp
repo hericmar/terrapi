@@ -109,6 +109,10 @@ Expr number(float num)
 
 Expr variable(const std::string& identifier)
 {
+    if (identifier == "water.signal") {
+        int i = 0;
+    }
+
     if (identifier == "time") {
         return std::make_shared<Var>(identifier, EPhysicalQuantity::Time);
     }
@@ -133,7 +137,7 @@ Expr variable(const std::string& identifier)
     }
 
     if (sensor->get_sensor_properties().count(*maybe_pq) == 0) {
-        log::err(R"(Sensor "{}" does not measure "{}".)", name_pq_pair[1]);
+        log::err(R"(Sensor "{}" does not measure "{}".)", sensor_name, name_pq_pair[1]);
         throw parse_error("invalid config: invalid rule");
     }
 
@@ -153,6 +157,11 @@ Expr operator|(Expr a, Expr b)
 Expr operator&(Expr a, Expr b)
 {
     return std::make_shared<And>(a, b);
+}
+
+Expr operator==(Expr a, Expr b)
+{
+    return std::make_shared<Equal>(a, b);
 }
 
 //------------------------------------------------------------------------------
@@ -195,6 +204,11 @@ static void create_operator(std::vector<Expr>& expr_queue, Token token)
         expr_queue.emplace_back(lhs | rhs);
         break;
     }
+    case TokenID::Equal: {
+        rhs = expr_queue.back(); expr_queue.pop_back();
+        lhs = expr_queue.back(); expr_queue.pop_back();
+        expr_queue.emplace_back(lhs == rhs);
+    }
     default:
         break;
     }
@@ -226,7 +240,8 @@ Expr create_expr_tree(const std::string& expr)
         }
         case TokenID::LessThan:
         case TokenID::And:
-        case TokenID::Or: {
+        case TokenID::Or:
+        case TokenID::Equal: {
             Token popped_token;
 
             while (!operators.empty()) {
