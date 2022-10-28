@@ -146,8 +146,17 @@ bool Clock::is_day() const
 
 //------------------------------------------------------------------------------
 
+WaterLevel::WaterLevel(std::string name, int gpio) : PhysicalSensor("WaterLevel"), m_gpio(gpio)
+{
+    m_name = std::move(name);
+    m_value[EPhysicalQuantity::Signal];
+
+    pinMode(gpio, INPUT);
+}
+
 void WaterLevel::measure(const std::tm& now)
 {
-
+    const int liquid_level = digitalRead(m_gpio);
+    m_value.at(EPhysicalQuantity::Signal) = (float) liquid_level;
 }
 }

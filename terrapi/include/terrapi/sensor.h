@@ -101,13 +101,7 @@ private:
 class WaterLevel : public PhysicalSensor
 {
 public:
-    WaterLevel(std::string name, int gpio)
-        : PhysicalSensor("WaterLevel"), m_gpio(gpio)
-    {
-        m_name = std::move(name);
-
-        m_value[EPhysicalQuantity::Signal];
-    }
+    WaterLevel(std::string name, int gpio);
 
     void measure(const std::tm& now) override;
 

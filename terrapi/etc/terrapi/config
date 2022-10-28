@@ -14,38 +14,27 @@ measure_step = 10
 # data_post_step = 1200
 data_post_step = 15
 
-# Sensor is one physical quantity representation of physical sensor.
-# In this example we use sensor.id := 0 for measuring humidity,
-# although the DHT11 can measure temperature and humidity.
-[sensor "dht11.humidity"]
+### SENSORS ###
+
+[sensor "dht11"]
 type = DHT11
 gpio = 4
-physical_quantity = humidity
-active_interval = 75.0, 100.0
-night_active_interval = 60.0, 80.0
 
-#[sensor "dht11.temperature"]
-#type = DHT11
-#gpio = 7
-#physical_quantity = temperature
-#active_interval = 22.0, 24.0
-#night_active_interval = none
+[sensor "water"]
+type = WaterLevel
+gpio = 25
 
-
-[timer "day"]
-active_interval = 10:59, 21:57
-
+### SWITCHES AND THEIR RULES ###
 
 [switch "lights"]
-sensor = day
 gpio = 17
+rule = 10:59 < time & time < 21:57
 
-#[switch "heater"]
-#sensor = dht11.temperature
-#gpio = 27
+[switch "heater"]
+gpio = 27
+rule = dht11.temperature < 22
 
 [switch "humidifier"]
-sensor = dht11.humidity
 gpio = 22
 oscillation_step = 6000
-
+rule = dht11.humidity < 60 & water.signal = 1

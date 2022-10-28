@@ -293,19 +293,33 @@ static bool read_sensor(Context& ctx, const Section& section, const SectionBody&
         return false;
     }
 
-    if (sensor_config.at("type").first == "DHT11") {
-
+    if (sensor_config.at("type").first == "DHT11")
+    {
         int gpio = 0;
-        if (!read_int(sensor_config, "gpio", gpio)) {
+        if (!read_int(sensor_config, "gpio", gpio))
+        {
             log::err(R"(Sensor "{}" does not have valid "gpio" specified.)", section.name);
             return false;
         }
 
-        if (used_gpios.count(gpio) == 0) {
+        if (used_gpios.count(gpio) == 0)
+        {
             ctx.m_sensors.push_back(std::make_unique<DHT11>(section.name, gpio));
             used_gpios.insert(gpio);
         }
+    } else if (sensor_config.at("type").first == "WaterLevel") {
+        int gpio = 0;
+        if (!read_int(sensor_config, "gpio", gpio))
+        {
+            log::err(R"(Sensor "{}" does not have valid "gpio" specified.)", section.name);
+            return false;
+        }
 
+        if (used_gpios.count(gpio) == 0)
+        {
+            ctx.m_sensors.push_back(std::make_unique<WaterLevel>(section.name, gpio));
+            used_gpios.insert(gpio);
+        }
     } else {
         log::err(R"(Sensor "{}" has unknown "type" specified.)", section.name);
         return false;
