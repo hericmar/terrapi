@@ -42,10 +42,13 @@ namespace log
         switch (pq)
         {
         case EPhysicalQuantity::Humidity:
-            log::info("{}: {} ({}): {} %", time_to_str(tm), sensor_name, val);
+            log::info("{}: {}: {} %", time_to_str(tm), sensor_name, val);
             break;
         case EPhysicalQuantity::Temperature:
-            log::info("{}: {} ({}): {} °C", time_to_str(tm), sensor_name, val);
+            log::info("{}: {}: {} °C", time_to_str(tm), sensor_name, val);
+            break;
+        case EPhysicalQuantity::Signal:
+            log::info("{}: {}: '{}' value", time_to_str(tm), sensor_name, val == 1.0f ? "true" : "false");
             break;
         default:
             break;

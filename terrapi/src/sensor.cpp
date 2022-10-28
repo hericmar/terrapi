@@ -150,13 +150,15 @@ WaterLevel::WaterLevel(std::string name, int gpio) : PhysicalSensor("WaterLevel"
 {
     m_name = std::move(name);
     m_value[EPhysicalQuantity::Signal];
-
-    pinMode(gpio, INPUT);
 }
 
 void WaterLevel::measure(const std::tm& now)
 {
-    const int liquid_level = digitalRead(m_gpio);
-    m_value.at(EPhysicalQuantity::Signal) = (float) liquid_level;
+    pinMode(m_gpio, INPUT);
+
+    const auto liquid_level = (float) digitalRead(m_gpio);
+    m_value.at(EPhysicalQuantity::Signal) = liquid_level;
+
+    log::print_measurement(now, EPhysicalQuantity::Signal, name(), liquid_level);
 }
 }
