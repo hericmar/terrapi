@@ -59,6 +59,8 @@ namespace string_utils
     /// https://www.cppstories.com/2018/07/string-view-perf-followup/
     Lines split(std::string_view str, std::string_view delims = " ");
 
+    Lines split_first(std::string_view str, std::string_view delims);
+
     constexpr bool is_whitespace(char c) {
         return c == ' ' || c == '\n';
     }

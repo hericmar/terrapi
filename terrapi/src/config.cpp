@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <charconv>
 #include <optional>
@@ -394,7 +395,7 @@ bool parse_config(Context& ctx, std::string_view str)
                 auto& section_lines = conf[current_section.value()];
 
                 // expecting key, value pair
-                const auto key_val_pair = string_utils::split(sanitized_line, "=");
+                const auto key_val_pair = string_utils::split_first(sanitized_line, "=");
                 if (key_val_pair.size() != 2) {
                     log::err("Syntax error at line {}.", line_number);
                     continue;

@@ -92,5 +92,14 @@ namespace string_utils
 
         return output;
     }
+
+    Lines split_first(std::string_view str, std::string_view delims)
+    {
+        size_t pos = str.find(delims);
+        auto s1 = str.substr(0, pos);
+        auto s2 = str.substr(pos + 1, std::string::npos);
+
+        return {s1, s2};
+    }
 }
 }
