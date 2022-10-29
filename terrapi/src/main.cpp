@@ -2,8 +2,8 @@
 
 int main(int argc, char** argv)
 {
-	if (wiringPiSetupGpio() != 0) {
-		terra::log::err("Cannot setup GPIOs");
+	if (wiringPiSetup() != 0) {
+		terra::log::err("Cannot setup wiring PI");
 		
 		return 1;
 	}

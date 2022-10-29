@@ -156,7 +156,8 @@ void WaterLevel::measure(const std::tm& now)
 {
     pinMode(m_gpio, INPUT);
 
-    const auto liquid_level = (float) digitalRead(m_gpio);
+    const auto liquid_level = digitalRead(m_gpio);
+    printf("GPIO#%d %d\n", m_gpio, liquid_level);
     m_value.at(EPhysicalQuantity::Signal) = liquid_level;
 
     log::print_measurement(now, EPhysicalQuantity::Signal, name(), liquid_level);
