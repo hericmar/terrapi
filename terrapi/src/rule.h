@@ -70,7 +70,7 @@ private:
 struct ExprBase
 {
     virtual bool evaluate() const = 0;
-    virtual float get_value() const { return 0; }
+    virtual float get_value() const { return NONE_VALUE; }
 };
 
 struct Expr final
@@ -157,6 +157,10 @@ struct LessThan : public ExprBase
 
     bool evaluate() const override
     {
+        if (m_lhs->get_value() == NONE_VALUE || m_rhs->get_value() == NONE_VALUE) {
+            return false;
+        }
+
         return m_lhs->get_value() < m_rhs->get_value();
     }
 
@@ -199,7 +203,11 @@ struct Equal : public ExprBase
 
     bool evaluate() const override
     {
-        return m_lhs->evaluate() == m_rhs->evaluate();
+        if (m_lhs->get_value() == NONE_VALUE || m_rhs->get_value() == NONE_VALUE) {
+            return false;
+        }
+
+        return m_lhs->get_value() == m_rhs->get_value();
     }
 
 private:

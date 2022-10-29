@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include <float.h>
+
 namespace terra
 {
 enum class EPhysicalQuantity
@@ -26,6 +28,8 @@ std::optional<EPhysicalQuantity> from_string(const std::string& str);
 using ValueInterval = std::array<float, 2>;
 
 using SensorPtr = std::unique_ptr<class PhysicalSensor>;
+
+constexpr const float NONE_VALUE = FLT_MIN;
 
 //------------------------------------------------------------------------------
 
@@ -80,14 +84,7 @@ class DHT11 : public PhysicalSensor
 {
 public:
     /// \todo Validate GPIO number
-    explicit DHT11(std::string name, int gpio)
-        : PhysicalSensor("DHT11"), m_gpio(gpio)
-    {
-        m_name = std::move(name);
-
-        m_value[EPhysicalQuantity::Humidity];
-        m_value[EPhysicalQuantity::Temperature];
-    }
+    DHT11(std::string name, int gpio);
 
     void measure(const std::tm& now) override;
 

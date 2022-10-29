@@ -30,6 +30,9 @@ public:
 private:
     friend class Controller;
 
+    void write_on();
+    void write_off();
+
     std::string m_name;
     int m_gpio;
 

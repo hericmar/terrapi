@@ -55,6 +55,14 @@ const std::set<EPhysicalQuantity>& PhysicalSensor::get_sensor_properties()
 
 //------------------------------------------------------------------------------
 
+DHT11::DHT11(std::string name, int gpio) : PhysicalSensor("DHT11"), m_gpio(gpio)
+{
+    m_name = std::move(name);
+
+    m_value[EPhysicalQuantity::Humidity]    = NONE_VALUE;
+    m_value[EPhysicalQuantity::Temperature] = NONE_VALUE;
+}
+
 void DHT11::measure(const std::tm& now)
 {
     uint8_t laststate = HIGH;
@@ -149,13 +157,13 @@ bool Clock::is_day() const
 WaterLevel::WaterLevel(std::string name, int gpio) : PhysicalSensor("WaterLevel"), m_gpio(gpio)
 {
     m_name = std::move(name);
-    m_value[EPhysicalQuantity::Signal];
+    m_value[EPhysicalQuantity::Signal] = NONE_VALUE;
+
+    pinMode(m_gpio, INPUT);
 }
 
 void WaterLevel::measure(const std::tm& now)
 {
-    pinMode(m_gpio, INPUT);
-
     const auto liquid_level = digitalRead(m_gpio);
     printf("GPIO#%d %d\n", m_gpio, liquid_level);
     m_value.at(EPhysicalQuantity::Signal) = liquid_level;

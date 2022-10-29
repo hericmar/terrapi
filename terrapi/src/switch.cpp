@@ -19,14 +19,13 @@ Switch::Switch(std::string name, int gpio, Expr rules, int oscillation_step)
     }
 
     pinMode(m_gpio, OUTPUT);
-    turn_off();
+    write_off();
 }
 
 bool Switch::turn_on()
 {
     if (!m_is_on) {
-        log::info("{}: Switching ON GPIO {}.", m_name, m_gpio);
-        digitalWrite(m_gpio, GPIO_ON);
+        write_on();
         m_is_on = true;
 
         return true;
@@ -36,16 +35,12 @@ bool Switch::turn_on()
 
     if ((int) std::floor(k) % 2 == 0) {
         if (!m_is_upper) {
-            // log::info("{}: UP GPIO {}.", m_name, m_gpio);
-
-            digitalWrite(m_gpio, GPIO_ON);
+            write_on();
             m_is_upper = true;
         }
     } else {
         if (m_is_upper) {
-            // log::info("{}: DOWN GPIO {}.", m_name, m_gpio);
-
-            digitalWrite(m_gpio, GPIO_OFF);
+            write_off();
             m_is_upper = false;
         }
     }
@@ -56,8 +51,7 @@ bool Switch::turn_on()
 bool Switch::turn_off()
 {
     if (m_is_on) {
-        log::info("{}: Switching OFF GPIO {}.", m_name, m_gpio);
-        digitalWrite(m_gpio, GPIO_ON);
+        write_off();
         m_is_on = false;
 
         return true;
@@ -72,17 +66,18 @@ void Switch::update(int delta_ms)
         return;
     }
 
-    /*
-    float k = (float) m_elapsed_ms / (float) m_oscillation_step;
-
-    std::cerr << (int) std::floor(k) << std::endl;
-    if ((int) std::floor(k) % 2 == 0) {
-        turn_on();
-    } else {
-        turn_off();
-    }
-     */
-
     m_elapsed_ms += (unsigned) delta_ms;
+}
+
+void Switch::write_on()
+{
+    log::info("{}: Switching ON GPIO {}.", m_name, m_gpio);
+    digitalWrite(m_gpio, GPIO_ON);
+}
+
+void Switch::write_off()
+{
+    log::info("{}: Switching OFF GPIO {}.", m_name, m_gpio);
+    digitalWrite(m_gpio, GPIO_OFF);
 }
 }
