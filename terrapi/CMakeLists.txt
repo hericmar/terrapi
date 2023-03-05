@@ -7,6 +7,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/target/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/target/bin)
 
 include_directories(lib/fmt/include)
+include_directories(lib/toml++)
 include_directories(lib/wiringPi/include)
 
 if (WIN32)
@@ -26,25 +27,23 @@ add_subdirectory(lib/fmt)
 
 set(TERRAPI_SOURCE
         src/config.cpp
-        src/controller.cpp
-        src/http.cpp
-        src/sensor.cpp
-        src/rule.cpp
-        src/switch.cpp
-        src/terrapi.cpp
-        src/utils.cpp)
+        src/context.cpp
+        src/datetime.cpp
+        src/expr.cpp
+        src/logger.cpp
+        src/sensor.cpp)
 
 add_executable(terrapi ${TERRAPI_SOURCE} src/main.cpp)
 
-target_compile_options(terrapi PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-lwiringPi>)
+# target_compile_options(terrapi PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-lwiringPi>)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	target_link_libraries(terrapi PRIVATE -lwiringPi)
 endif()
 
-target_include_directories(terrapi PRIVATE
-        include
-        src)
+# global includes, for app and tests
+include_directories(include src)
+
 target_link_libraries(terrapi PUBLIC
         "${CURL_LIBRARIES}"
         fmt)
@@ -63,25 +62,8 @@ target_compile_definitions(terrapi_test PRIVATE
         TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 target_include_directories(terrapi_test PRIVATE
         include
-        src)
+        src
+        lib/doctest)
 target_link_libraries(terrapi_test PUBLIC
-        "${CURL_LIBRARIES}"
-        fmt)
-
-# message(FATAL_ERROR ${CURL_LIBRARIES})
-
-################################################################################
-
-add_executable(terrapi_test_app
-        ${TERRAPI_SOURCE}
-        test/lib/wiringPi.c
-        test/terrapi/test_app.cpp)
-
-target_compile_definitions(terrapi_test_app PRIVATE
-        TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-target_include_directories(terrapi_test_app PRIVATE
-        include
-        src)
-target_link_libraries(terrapi_test_app PUBLIC
         "${CURL_LIBRARIES}"
         fmt)

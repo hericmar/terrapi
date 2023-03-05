@@ -1,19 +1,21 @@
+#include "expr.h"
+
 #include <ios>
 #include <stack>
 
-#include "app.h"
-#include "config.h"
-#include "rule.h"
-#include "chrono.h"
+#include "context.h"
+#include "datetime.h"
+#include "sensor.h"
+#include "utils.h"
 
 namespace terra
 {
-//------------------------------------------------------------------------------
-
 int Token::op_precedence() const
 {
     switch (id)
     {
+    case TokenID::LParen:
+        return 0;
     case TokenID::LessThan:
         return 2;
     default:
@@ -61,7 +63,7 @@ Token Tokenizer::next()
                     tm.tm_hour = (int) number;
                     tm.tm_min = min;
 
-                    number = (float) tm_to_seconds(tm);
+                    number = (float) to_seconds(tm);
                 }
             } else {
                 m_ss.clear(m_ss.rdstate() & ~std::ios::failbit);
@@ -100,7 +102,93 @@ Token Tokenizer::next()
     return result;
 }
 
-//------------------------------------------------------------------------------
+void create_operator(std::vector<Expr>& expr_queue, Token token);
+
+//----------------------------------------------------------------------------//
+
+std::optional<Expr> Expr::from(const std::string& str)
+{
+    Tokenizer t{str};
+
+    const auto tokens = t.parse();
+
+    std::stack<Token> operators = std::stack<Token>();
+    std::vector<Expr> exprs_queue;
+
+    for (const auto& token : tokens) {
+        switch (token.id)
+        {
+        case TokenID::End: {
+            break;
+        }
+
+        case TokenID::Number: {
+            exprs_queue.push_back(number(token.number));
+            break;
+        }
+        case TokenID::Identifier: {
+            exprs_queue.push_back(variable(token.identifier));
+            break;
+        }
+        case TokenID::LParen: {
+            operators.push(token);
+            break;
+        }
+        case TokenID::LessThan:
+        case TokenID::And:
+        case TokenID::Or:
+        case TokenID::Equal: {
+            Token popped_token;
+
+            while (!operators.empty()) {
+                popped_token = operators.top();
+                if (popped_token.op_precedence() > token.op_precedence()) {
+                    create_operator(exprs_queue, popped_token);
+                    operators.pop();
+                } else {
+                    break;
+                }
+            }
+            operators.push(token);
+            break;
+        }
+        case TokenID::RParen: {
+            /** while the operator at the top of the operator stack is not a left parenthesis:
+                pop the operator from the operator stack onto the output queue.
+                If the stack runs out without finding a left parenthesis, then there are mismatched parentheses.
+                if there is a left parenthesis at the top of the operator stack, then:
+                pop the operator from the operator stack and discard it */
+            Token popped_token;
+
+            while (!operators.empty()) {
+                popped_token = operators.top();
+                operators.pop();
+
+                if (popped_token.id == TokenID::LParen)
+                    break;
+                else
+                    create_operator(exprs_queue, popped_token);
+            }
+
+            break;
+        }
+        }
+    }
+
+    /** while there are still operator tokens on the stack:
+        If the operator token on the top of the stack is a parenthesis, then there are mismatched parentheses.
+    pop the operator from the operator stack onto the output queue. */
+    Token popped_token;
+    while (!operators.empty()) {
+        popped_token = operators.top();
+        operators.pop();
+        create_operator(exprs_queue, popped_token);
+    }
+    if (!exprs_queue.empty())
+        return exprs_queue.back();
+
+    throw parse_error("! parse error ");
+}
 
 Expr number(float num)
 {
@@ -109,39 +197,35 @@ Expr number(float num)
 
 Expr variable(const std::string& identifier)
 {
-    if (identifier == "water.signal") {
-        int i = 0;
-    }
-
     if (identifier == "time") {
-        return std::make_shared<Var>(identifier, EPhysicalQuantity::Time);
+        return std::make_shared<Var>(identifier, ValueType_Time);
     }
 
-    const auto name_pq_pair = string_utils::split(identifier, ".");
+    const auto name_pq_pair = split(identifier, ".");
 
     if (name_pq_pair.size() != 2) {
         throw parse_error("invalid format: expected sensor_name.physical_quantity");
     }
 
-    std::string sensor_name = std::string(name_pq_pair[0]);
-    if (ctx().get_sensor_idx(sensor_name) == -1) {
-        log::err("Sensor \"{}\" does not exists.", name_pq_pair[0]);
-        throw parse_error("invalid config: invalid rule");
-    }
+    const auto& sensor_name = name_pq_pair[0];
 
-    const auto& sensor = ctx().get_sensor(sensor_name);
-
-    auto maybe_pq = from_string(std::string(name_pq_pair[1]));
-    if (!maybe_pq.has_value()) {
+    if (value_type_to_str.count(name_pq_pair[1]) == 0) {
         throw parse_error("invalid format: invalid physical quantity name");
     }
 
-    if (sensor->get_sensor_properties().count(*maybe_pq) == 0) {
-        log::err(R"(Sensor "{}" does not measure "{}".)", sensor_name, name_pq_pair[1]);
+    const auto value_type = value_type_to_str.at(name_pq_pair[1]);
+
+    const auto* sensor = ctx().get_sensor(sensor_name);
+
+    if (sensor == nullptr) {
+        throw parse_error("no such sensor");
+    }
+
+    if (!sensor->measure_value(value_type)) {
         throw parse_error("invalid config: invalid rule");
     }
 
-    return std::make_shared<Var>(std::string(name_pq_pair[0]), maybe_pq.value());
+    return std::make_shared<Var>(sensor_name, value_type);
 }
 
 Expr operator<(Expr a, Expr b)
@@ -168,11 +252,11 @@ Expr operator==(Expr a, Expr b)
 
 float Var::get_value() const
 {
-    if (m_sensor_name == "time") {
-        return ctx().get_clock()->value(terra::EPhysicalQuantity::Time);
+    if (sensor_name == "time") {
+        return ctx().clock()->value(ValueType_Time);
     }
 
-    return ctx().get_sensor(m_sensor_name)->value(m_physical_quantity);
+    return ctx().get_sensor(sensor_name)->value(value_type);
 }
 
 //------------------------------------------------------------------------------
@@ -213,64 +297,5 @@ static void create_operator(std::vector<Expr>& expr_queue, Token token)
         break;
     }
 }
-
-Expr create_expr_tree(const std::string& expr)
-{
-    Tokenizer t{expr};
-
-    const auto tokens = t.parse();
-
-    std::stack<Token> operators = std::stack<Token>();
-    std::vector<Expr> exprs_queue;
-
-    for (const auto& token : tokens) {
-        switch (token.id)
-        {
-        case TokenID::End: {
-            break;
-        }
-
-        case TokenID::Number: {
-            exprs_queue.push_back(number(token.number));
-            break;
-        }
-        case TokenID::Identifier: {
-            exprs_queue.push_back(variable(token.identifier));
-            break;
-        }
-        case TokenID::LessThan:
-        case TokenID::And:
-        case TokenID::Or:
-        case TokenID::Equal: {
-            Token popped_token;
-
-            while (!operators.empty()) {
-                popped_token = operators.top();
-                if (popped_token.op_precedence() > token.op_precedence()) {
-                    create_operator(exprs_queue, popped_token);
-                    operators.pop();
-                } else {
-                    break;
-                }
-            }
-            operators.push(token);
-            break;
-        }
-        }
-    }
-
-    /** while there are still operator tokens on the stack:
-        If the operator token on the top of the stack is a parenthesis, then there are mismatched parentheses.
-    pop the operator from the operator stack onto the output queue. */
-    Token popped_token;
-    while (!operators.empty()) {
-        popped_token = operators.top();
-        operators.pop();
-        create_operator(exprs_queue, popped_token);
-    }
-    if (!exprs_queue.empty())
-        return exprs_queue.back();
-
-    throw parse_error("! parse error ");
 }
-}
+

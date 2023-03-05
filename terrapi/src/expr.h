@@ -1,13 +1,14 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 #include <cassert>
 #include <sstream>
 
-#include "terrapi/sensor.h"
+#include "sensor.h"
 
 namespace terra
 {
@@ -15,6 +16,8 @@ enum class TokenID : char
 {
     Number = '0',
     Identifier = 'a',
+    LParen = '(',
+    RParen = ')',
     Equal = '=',
     LessThan = '<',
     And = '&',
@@ -22,7 +25,7 @@ enum class TokenID : char
     End = 0
 };
 
-#define SYMBOL_TOKENS "<&|="
+#define SYMBOL_TOKENS "<&|=()"
 
 struct Token
 {
@@ -67,6 +70,8 @@ private:
 
 //------------------------------------------------------------------------------
 
+#define NONE_VALUE 9399999.0f
+
 struct ExprBase
 {
     virtual bool evaluate() const = 0;
@@ -96,6 +101,9 @@ public:
      */
     template <typename T, typename = std::enable_if_t<std::is_convertible<T*, const ExprBase*>::value>>
     Expr(std::shared_ptr<T> e) : m_ptr(std::static_pointer_cast<const ExprBase>(std::move(e))) {}
+
+    /// @throws parse_error
+    static std::optional<Expr> from(const std::string& str);
 
     // implicitly convertible to the internal shared ptr, implement operator->
     // that means you can call methods directly via `expr`, e.g. `e->simplify()`
@@ -139,33 +147,33 @@ private:
 struct Var : public ExprBase
 {
     /// \pre Sensor with \p sensor_name with \p physical_quantity must exists.
-    Var(std::string sensor_name, EPhysicalQuantity physical_quantity)
-        : m_sensor_name(std::move(sensor_name)), m_physical_quantity(physical_quantity) {}
+    Var(std::string sensor_name, ValueType value_type)
+        : sensor_name(std::move(sensor_name)), value_type(value_type) {}
 
     bool evaluate() const override { return false; }
     float get_value() const override;
 
 private:
-    std::string       m_sensor_name;
-    EPhysicalQuantity m_physical_quantity;
+    std::string sensor_name;
+    ValueType   value_type;
 };
 
 struct LessThan : public ExprBase
 {
     LessThan(Expr& lhs, Expr& rhs)
-        : m_lhs(lhs), m_rhs(rhs) {}
+        : lhs(lhs), rhs(rhs) {}
 
     bool evaluate() const override
     {
-        if (m_lhs->get_value() == NONE_VALUE || m_rhs->get_value() == NONE_VALUE) {
+        if (lhs->get_value() == NONE_VALUE || rhs->get_value() == NONE_VALUE) {
             return false;
         }
 
-        return m_lhs->get_value() < m_rhs->get_value();
+        return lhs->get_value() < rhs->get_value();
     }
 
 private:
-    Expr m_lhs, m_rhs;
+    Expr lhs, rhs;
 };
 
 struct And : public ExprBase
@@ -213,8 +221,4 @@ struct Equal : public ExprBase
 private:
     Expr m_lhs, m_rhs;
 };
-
-//------------------------------------------------------------------------------
-
-Expr create_expr_tree(const std::string& expr);
 }

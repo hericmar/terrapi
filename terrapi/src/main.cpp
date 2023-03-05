@@ -1,17 +1,23 @@
-#include "terrapi/terrapi.h"
+#include "config.h"
+#include "context.h"
+#include "logger.h"
+
+using namespace terra;
 
 int main(int argc, char** argv)
 {
-	if (wiringPiSetup() != 0) {
-		terra::log::err("Cannot setup wiring PI");
-		
-		return 1;
-	}
+    std::string config_path = "/etc/terrapi/config.toml";
+    if (argc >= 2) {
+        config_path = argv[1];
+    }
 
-	auto* app = terra::App::create("/etc/terrapi/config");
-	if (!app) {
-		return 1;
-	}
+    const auto maybe_config = Config::from_file(config_path.c_str());
+    if (!maybe_config) {
+        log_message("fatal", "unable to load config from" + config_path);
+        return 1;
+    }
 
-	terra::App::run();
+    Context::create(*maybe_config);
+
+    return 0;
 }

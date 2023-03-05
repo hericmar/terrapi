@@ -1,8 +1,10 @@
 #include "tests.h"
 
-#include <cassert>
+#include "doctest/doctest.h"
 
 #include "terrapi/terrapi.h"
+
+#include "config.h"
 
 //------------------------------------------------------------------------------
 
@@ -11,21 +13,18 @@ static constexpr const char* empty_config = R"(
 
 void test_empty_config()
 {
-    auto* app = terra::App::create_from_string(empty_config);
-    TEST_ASSERT(app);
+    // auto* app = terra::App::create_from_string(empty_config);
+    // TEST_ASSERT(app);
 }
 
-//------------------------------------------------------------------------------
-
-void test_basic_config()
+TEST_CASE("Test example config")
 {
-    auto* app = terra::App::create(TERRAPI_PROJECT_ROOT "/example/config");
-    TEST_ASSERT(app != nullptr);
+    auto result = terra::Config::from_file(TERRAPI_PROJECT_ROOT "/etc/terrapi/config.toml");
+    REQUIRE(result);
 
-    TEST_ASSERT(app->controllers().size() == 3);
-
-    // No duplicates.
-    TEST_ASSERT(app->sensors().size() == 1);
+    const auto config = std::move(result.value());
+    REQUIRE_EQ(config.sensors.size(), 2);
+    REQUIRE_EQ(config.switches.size(), 3);
 }
 
 //------------------------------------------------------------------------------
@@ -33,5 +32,5 @@ void test_basic_config()
 void test_config()
 {
     test_empty_config();
-    test_basic_config();
+    // test_basic_config();
 }

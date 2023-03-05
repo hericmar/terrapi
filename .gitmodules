@@ -8,3 +8,9 @@
 [submodule "terrapi/lib/curlcpp"]
 	path = terrapi/lib/curlcpp
 	url = https://github.com/JosephP91/curlcpp.git
+[submodule "terrapi/lib/toml++"]
+	path = terrapi/lib/toml++
+	url = https://github.com/marzer/tomlplusplus.git
+[submodule "terrapi/lib/doctest"]
+	path = terrapi/lib/doctest
+	url = https://github.com/doctest/doctest.git

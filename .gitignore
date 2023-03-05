@@ -4,3 +4,4 @@ cmake-build-*/
 out/
 terapi
 /premake5.exe
+pg_data/

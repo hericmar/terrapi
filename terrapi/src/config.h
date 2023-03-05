@@ -1,27 +1,53 @@
-#include <map>
-#include <string_view>
+#pragma once
+
+#include <optional>
+#include <string>
+#include <vector>
+
+#include "datetime.h"
+#include "expr.h"
 
 namespace terra
 {
-struct Section
+struct EnvironmentConfig
 {
-    std::string type;
-    std::string name;
+    Time     day_from;
+    Time     day_to;
+    /// in milliseconds
+    unsigned measure_step;
+    /// in milliseconds
+    unsigned publish_step;
 };
 
-using SectionBody = std::map<std::string, std::pair<std::string, int>>;  // key, { val, line }
+struct BrokerConfig
+{
+    std::string address;
+    std::string client_id;
+    std::string password;
+};
 
-//------------------------------------------------------------------------------
+struct SensorConfig
+{
+    std::string name;
+    int         gpio;
+    std::string sensor_type;
+};
 
-static std::vector<std::string> reserved_keywords = {"time"};
+struct SwitchConfig
+{
+    std::string name;
+    int         gpio;
+    Expr        rule;
+};
 
-bool is_str_literal(int c);
-bool is_time_char(int c);
+struct Config
+{
+    EnvironmentConfig         environment;
+    BrokerConfig              broker;
+    std::vector<SensorConfig> sensors;
+    std::vector<SwitchConfig> switches;
 
-//------------------------------------------------------------------------------
-
-bool read_switch(Context& ctx, const Section& section, const SectionBody& switch_config);
-
-/// Creates new configuration.
-bool parse_config(class Context& ctx, std::string_view str);
+    static std::optional<Config> from_file(const char* path);
+    static std::optional<Config> from_str(const char* str);
+};
 }

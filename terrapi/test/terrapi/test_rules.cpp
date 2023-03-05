@@ -1,5 +1,33 @@
-#include "tests.h"
+#include <string>
 
+#include "doctest/doctest.h"
+
+#include "context.h"
+#include "expr.h"
+
+using namespace terra;
+
+TEST_CASE("Can parse given expression")
+{
+    Config config{};
+
+    std::vector<SensorConfig> sensors = {
+        SensorConfig{"dht11", 1, "Dummy"},
+    };
+    config.sensors = sensors;
+
+    Context::create(config);
+    {
+        std::string str = "dht11.temperature < 22";
+        Expr::from(str);
+    }
+    {
+        std::string str = "(10:59 < time) & (time < 21:57)";
+        Expr::from(str);
+    }
+}
+
+/*
 #include "app.h"
 #include "chrono.h"
 #include "config.h"
@@ -180,3 +208,4 @@ void test_rules()
     test_tokenizer();
     test_basic_rules();
 }
+ */
