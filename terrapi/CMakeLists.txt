@@ -31,7 +31,8 @@ set(TERRAPI_SOURCE
         src/datetime.cpp
         src/expr.cpp
         src/logger.cpp
-        src/sensor.cpp)
+        src/sensor.cpp
+        src/switch.cpp)
 
 add_executable(terrapi ${TERRAPI_SOURCE} src/main.cpp)
 

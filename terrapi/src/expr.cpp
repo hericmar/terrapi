@@ -221,7 +221,7 @@ Expr variable(const std::string& identifier)
         throw parse_error("no such sensor");
     }
 
-    if (!sensor->measure_value(value_type)) {
+    if (!sensor->measures_value(value_type)) {
         throw parse_error("invalid config: invalid rule");
     }
 

@@ -30,7 +30,9 @@ public:
     virtual void measure() {}
     Value value(ValueType type);
 
-    bool measure_value(ValueType type) const { return values.count(type) != 0; }
+    void force_value(ValueType type, float value);
+
+    bool measures_value(ValueType type) const { return values.count(type) != 0; }
 
 protected:
     std::map<ValueType, Value> values;
@@ -48,7 +50,8 @@ class Signal : public Sensor
 
 class Clock : public Sensor
 {
-
+public:
+    Clock() { values[ValueType_Time]; }
 };
 
 class DummySensor : public Sensor
@@ -60,8 +63,6 @@ public:
         values[ValueType_Signal];
         values[ValueType_Temperature];
     }
-
-    void set_value(float value);
 };
 
 //----------------------------------------------------------------------------//

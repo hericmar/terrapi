@@ -15,8 +15,9 @@ Value Sensor::value(ValueType type)
     return values.at(type);
 }
 
-void DummySensor::set_value(float value)
+void Sensor::force_value(ValueType type, float value)
 {
-
+    log_message("info", "forcing value");
+    values[type] = value;
 }
 }

@@ -16,6 +16,10 @@ std::optional<Time> parse_time_from_str(const std::string& str, const char* form
         return std::nullopt;
     }
 
+    if (result.tm_sec <= 0) {
+        result.tm_sec = 0;
+    }
+
     return to_seconds(result);
 }
 

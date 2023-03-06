@@ -37,7 +37,7 @@ struct SwitchConfig
 {
     std::string name;
     int         gpio;
-    Expr        rule;
+    std::string rule;
 };
 
 struct Config

@@ -102,6 +102,7 @@ public:
     template <typename T, typename = std::enable_if_t<std::is_convertible<T*, const ExprBase*>::value>>
     Expr(std::shared_ptr<T> e) : m_ptr(std::static_pointer_cast<const ExprBase>(std::move(e))) {}
 
+    /// @pre Context is initialized
     /// @throws parse_error
     static std::optional<Expr> from(const std::string& str);
 

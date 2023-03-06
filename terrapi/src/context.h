@@ -17,6 +17,8 @@ public:
     /// @pre Configuration is validated!
     static void create(const Config& config);
 
+    void tick();
+
     Sensor* clock() const;
 
     Sensor* get_sensor(const std::string& name) const;
@@ -26,5 +28,5 @@ private:
 
 };
 
-const Context& ctx();
+Context& ctx();
 }

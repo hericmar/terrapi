@@ -45,13 +45,32 @@ void Context::create(const Config& config)
     }
 
     for (const auto& switch_config : config.switches) {
+        const auto maybe_expr = Expr::from(switch_config.rule);
+        if (!maybe_expr) {
+            log_message("error", "invalid rule for switch " + switch_config.name);
+            continue;
+        }
+
         switches.insert({
             switch_config.name,
-            new Switch(switch_config.rule)
+            new Switch(*maybe_expr)
         });
     }
 
     context = new Context();
+}
+
+void Context::tick()
+{
+    ctx_clock->measure();
+
+    for (const auto& [_, sensor] : sensors) {
+        sensor->measure();
+    }
+
+    for (const auto& [_, s] : switches) {
+        s->evaluate();
+    }
 }
 
 Sensor* Context::clock() const
@@ -77,7 +96,7 @@ Switch* Context::get_switch(const std::string& name) const
     return switches.at(name);
 }
 
-const Context& ctx()
+Context& ctx()
 {
     return *context;
 }

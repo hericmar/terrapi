@@ -108,11 +108,7 @@ std::optional<SwitchConfig> parse_switch_config(std::string name, const toml::ta
         RETURN_EMPTY("invalid value for gpio");
     }
 
-    if (auto maybe_value = Expr::from(table["rule"].ref<std::string>())) {
-        config.rule = *maybe_value;
-    } else {
-        RETURN_EMPTY("invalid value for rule for switch \"" + name + "\"");
-    }
+    config.rule = table["rule"].ref<std::string>();
 
     return config;
 }
