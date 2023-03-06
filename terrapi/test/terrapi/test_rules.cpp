@@ -93,7 +93,7 @@ TEST_CASE("Can evaluate given expression")
             // inactive time
 
             auto time = parse_time_from_str("04:00").value();
-            ctx().clock()->force_value(ValueType_Time, time);
+            ctx().clock()->force_value(time);
 
             // ctx().tick();
             lights->evaluate();
@@ -104,7 +104,7 @@ TEST_CASE("Can evaluate given expression")
             // active time
 
             auto time = parse_time_from_str("14:00").value();
-            ctx().clock()->force_value(ValueType_Time, time);
+            ctx().clock()->force_value(time);
 
             // ctx().tick();
             lights->evaluate();
@@ -115,7 +115,7 @@ TEST_CASE("Can evaluate given expression")
             // inactive time
 
             auto time = parse_time_from_str("23:30").value();
-            ctx().clock()->force_value(ValueType_Time, time);
+            ctx().clock()->force_value(time);
 
             // ctx().tick();
             lights->evaluate();

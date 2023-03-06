@@ -198,7 +198,8 @@ Expr number(float num)
 Expr variable(const std::string& identifier)
 {
     if (identifier == "time") {
-        return std::make_shared<Var>(identifier, ValueType_Time);
+        // value handled inside
+        return std::make_shared<Var>(identifier);
     }
 
     const auto name_pq_pair = split(identifier, ".");
@@ -253,7 +254,7 @@ Expr operator==(Expr a, Expr b)
 float Var::get_value() const
 {
     if (sensor_name == "time") {
-        return ctx().clock()->value(ValueType_Time);
+        return ctx().clock()->value();
     }
 
     return ctx().get_sensor(sensor_name)->value(value_type);

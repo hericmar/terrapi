@@ -147,6 +147,9 @@ private:
 
 struct Var : public ExprBase
 {
+    Var(std::string sensor_name)
+        : sensor_name(std::move(sensor_name)) {}
+
     /// \pre Sensor with \p sensor_name with \p physical_quantity must exists.
     Var(std::string sensor_name, ValueType value_type)
         : sensor_name(std::move(sensor_name)), value_type(value_type) {}

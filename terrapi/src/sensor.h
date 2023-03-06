@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "datetime.h"
+
 namespace terra
 {
 using Value = float;
@@ -14,7 +16,6 @@ enum ValueType
     ValueType_Humidity = 0,
     ValueType_Signal,
     ValueType_Temperature,
-    ValueType_Time,  /// time is reserved name
     ValueType_None,
 };
 
@@ -35,29 +36,39 @@ public:
     bool measures_value(ValueType type) const { return values.count(type) != 0; }
 
 protected:
+    int                        gpio;
     std::map<ValueType, Value> values;
 };
 
 class DHT11 : public Sensor
 {
+public:
+    DHT11(int gpio)
+    {
+        this->gpio = gpio;
+        values[ValueType_Humidity];
+        values[ValueType_Temperature];
+    }
 
+    void measure() override;
 };
 
 class Signal : public Sensor
 {
-
-};
-
-class Clock : public Sensor
-{
 public:
-    Clock() { values[ValueType_Time]; }
+    Signal(int gpio)
+    {
+        this->gpio = gpio;
+        values[ValueType_Signal];
+    }
+
+    void measure() override;
 };
 
 class DummySensor : public Sensor
 {
 public:
-    DummySensor()
+    DummySensor(int gpio)
     {
         values[ValueType_Humidity];
         values[ValueType_Signal];
@@ -65,16 +76,30 @@ public:
     }
 };
 
+/// Low resolution clock!
+class Clock
+{
+public:
+    void measure();
+
+    Time value() const { return m_value; }
+
+    void force_value(Time value) { m_value = value; }
+
+private:
+    Time m_value;
+};
+
 //----------------------------------------------------------------------------//
 
-using CreateSensorFn  = std::function<Sensor*()>;
+using CreateSensorFn  = std::function<Sensor*(int)>;
 using CreateSensorMap = std::map<std::string, CreateSensorFn>;
 
 /// Caller takes the ownership.
 template <typename T>
-Sensor* create_sensor()
+Sensor* create_sensor(int gpio)
 {
-    return new T;
+    return new T(gpio);
 }
 
 inline static CreateSensorMap sensor_types = {

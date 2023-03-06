@@ -19,7 +19,7 @@ public:
 
     void tick();
 
-    Sensor* clock() const;
+    Clock* clock() const;
 
     Sensor* get_sensor(const std::string& name) const;
     Switch* get_switch(const std::string& name) const;

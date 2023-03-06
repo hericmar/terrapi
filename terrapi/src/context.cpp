@@ -40,7 +40,7 @@ void Context::create(const Config& config)
     for (const auto& sensor_config : config.sensors) {
         sensors.insert({
             sensor_config.name,
-            sensor_types.at(sensor_config.sensor_type)()
+            sensor_types.at(sensor_config.sensor_type)(sensor_config.gpio)
         });
     }
 
@@ -73,7 +73,7 @@ void Context::tick()
     }
 }
 
-Sensor* Context::clock() const
+Clock* Context::clock() const
 {
     return ctx_clock;
 }
