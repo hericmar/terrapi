@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/target/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/target/bin)
 
-include_directories(lib/fmt/include)
 include_directories(lib/toml++)
 include_directories(lib/wiringPi/include)
 
@@ -20,8 +19,6 @@ if (WIN32)
 endif()
 
 find_package(CURL)
-
-add_subdirectory(lib/fmt)
 
 ################################################################################
 
@@ -46,9 +43,7 @@ endif()
 # global includes, for app and tests
 include_directories(include src)
 
-target_link_libraries(terrapi PUBLIC
-        "${CURL_LIBRARIES}"
-        fmt)
+target_link_libraries(terrapi PUBLIC "${CURL_LIBRARIES}")
 
 ################################################################################
 
