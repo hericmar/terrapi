@@ -1,3 +1,1 @@
-env
-terrapi
-*.exe
+target/

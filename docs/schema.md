@@ -1,5 +1,5 @@
 # Schema
-## POST /api/v1/config
+## PUT /api/v1/config
 ```json
 {
   "client_id": "EXAMPLE",
