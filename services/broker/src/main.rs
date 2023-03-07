@@ -1,9 +1,13 @@
-mod rest;
 mod cache;
 mod error;
+mod model;
 mod repo;
+mod rest;
+mod service;
+mod schema;
 
 use actix_web::{App, HttpServer, web};
+use actix_web::cookie::time;
 use actix_web::middleware::Logger;
 use clap::Parser;
 use dotenv;
@@ -19,10 +23,11 @@ struct Args {
 }
 
 /// Deserialized from environment variables using `envy` crate.
-#[derive(Deserialize, Debug)]
-struct Config {
-    port: u16,
-    database_url: String,
+#[derive(Clone, Deserialize, Debug)]
+pub struct Config {
+    pub password: String,
+    pub port: u16,
+    pub database_url: String,
 }
 
 #[actix_web::main]
@@ -42,13 +47,28 @@ async fn main() -> std::io::Result<()> {
     };
 
     let context = Context{
+        config: config.clone(),
         db: create_conn_pool(&config.database_url),
     };
 
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(context.clone()))
-            .wrap(Logger::new("%a"))
+            // .wrap(Logger::new("%a"))
+            .wrap(Logger::default())
+            .service(
+                web::scope("/api/v1")
+                    .service(
+                        web::resource("/client")
+                            .route(web::get().to(rest::list_clients))
+                            .route(web::post().to(rest::create_client))
+                    )
+                    .service(
+                        web::resource("/client/{client_id}")
+                            .route(web::get().to(rest::get_client))
+                            .route(web::delete().to(rest::delete_client))
+                    )
+            )
     })
         .bind(("localhost", config.port))?
         .run()

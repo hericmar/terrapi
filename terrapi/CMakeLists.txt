@@ -61,6 +61,4 @@ target_include_directories(terrapi_test PRIVATE
         include
         src
         lib/doctest)
-target_link_libraries(terrapi_test PUBLIC
-        "${CURL_LIBRARIES}"
-        fmt)
+target_link_libraries(terrapi_test PUBLIC "${CURL_LIBRARIES}")

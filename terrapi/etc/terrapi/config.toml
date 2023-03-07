@@ -7,8 +7,8 @@ measure_step = 5000
 publish_step = 600000
 
 [broker]
-address = "http://localhost:8000"
-client_id = "aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
+address = "http://localhost:8091"
+client_id = "SgNsB9v5leS6yDj8"
 password = "password"
 
 ### SENSORS ###

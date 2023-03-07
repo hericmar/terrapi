@@ -2,12 +2,15 @@ use std::fmt::{Display, Formatter};
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use actix_web::body::BoxBody;
+use serde_json::json;
 
 #[derive(Debug)]
 pub enum ErrorType {
     DatabaseError,
     InternalError,
+    NotFound,
     BadRequest,
+    Unauthorized
 }
 
 #[derive(Debug)]
@@ -17,8 +20,11 @@ pub struct Error {
 }
 
 impl Error {
-    fn new(what: String, err_type: ErrorType) -> Self {
-        Error{what, err_type}
+    pub fn new(what: &str, err_type: ErrorType) -> Self {
+        Error{
+            what: what.to_string(),
+            err_type
+        }
     }
 }
 
@@ -35,6 +41,8 @@ impl ResponseError for Error {
             ErrorType::DatabaseError => StatusCode::INTERNAL_SERVER_ERROR,
             ErrorType::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             ErrorType::BadRequest => StatusCode::BAD_REQUEST,
+            ErrorType::NotFound => StatusCode::NOT_FOUND,
+            ErrorType::Unauthorized => StatusCode::UNAUTHORIZED
         }
     }
     fn error_response(&self) -> HttpResponse<BoxBody> {
@@ -45,6 +53,12 @@ impl ResponseError for Error {
         };
 
         HttpResponse::build(self.status_code())
-            .json(json!( { "error": message } ))
+            .json(json!({ "error": message }))
+    }
+}
+
+impl From<r2d2::Error> for Error {
+    fn from(value: r2d2::Error) -> Self {
+        Error::new(&value.to_string(), ErrorType::DatabaseError)
     }
 }
