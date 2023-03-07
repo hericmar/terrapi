@@ -38,6 +38,10 @@ struct SwitchConfig
     std::string name;
     int         gpio;
     std::string rule;
+    /// not set by default
+    int         oscillation_high = -1;
+    /// not set by default
+    int         oscillation_low = -1;
 };
 
 struct Config
@@ -46,6 +50,8 @@ struct Config
     BrokerConfig              broker;
     std::vector<SensorConfig> sensors;
     std::vector<SwitchConfig> switches;
+
+    std::string raw;
 
     static std::optional<Config> from_file(const char* path);
     static std::optional<Config> from_str(const char* str);

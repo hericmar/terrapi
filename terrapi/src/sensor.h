@@ -35,6 +35,8 @@ public:
 
     bool measures_value(ValueType type) const { return values.count(type) != 0; }
 
+    const std::map<ValueType, Value>& measured_values() { return values; }
+
 protected:
     int                        gpio;
     std::map<ValueType, Value> values;

@@ -1,5 +1,3 @@
-#include "tests.h"
-
 #include "doctest/doctest.h"
 
 #include "config.h"

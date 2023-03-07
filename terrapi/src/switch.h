@@ -4,17 +4,36 @@
 
 namespace terra
 {
+struct SwitchConfig;
+
 class Switch
 {
 public:
-    Switch(const Expr& expr) : rule(expr) {}
+    /// @pre \p gpio is empty
+    Switch(SwitchConfig* config, const Expr& expr);
 
-    void evaluate();
+    /// called each tick
+    void update(Time time);
 
+    ///
     bool is_on() const;
 
+    void switch_on();
+    void switch_off();
+
 private:
+    void write_on();
+    void write_off();
+
+    SwitchConfig* config;
+
     Expr rule;
-    bool state;
+
+    /// ON/OFF
+    bool state = false;
+
+    bool oscillate   = false;
+    bool is_high     = false;
+    Time next_toggle = -1;
 };
 }

@@ -29,7 +29,7 @@ TEST_CASE("Can parse given expression")
     }
 }
 
-TEST_CASE("Can evaluate given expression")
+TEST_CASE("Can update given expression")
 {
     Config config{};
 
@@ -96,7 +96,7 @@ TEST_CASE("Can evaluate given expression")
             ctx().clock()->force_value(time);
 
             // ctx().tick();
-            lights->evaluate();
+            lights->update(time);
 
             REQUIRE(!lights->is_on());
         }
@@ -107,7 +107,7 @@ TEST_CASE("Can evaluate given expression")
             ctx().clock()->force_value(time);
 
             // ctx().tick();
-            lights->evaluate();
+            lights->update(time);
 
             REQUIRE(lights->is_on());
         }
@@ -118,7 +118,7 @@ TEST_CASE("Can evaluate given expression")
             ctx().clock()->force_value(time);
 
             // ctx().tick();
-            lights->evaluate();
+            lights->update(time);
 
             REQUIRE(!lights->is_on());
         }

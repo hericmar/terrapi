@@ -65,6 +65,10 @@ std::optional<BrokerConfig> parse_broker_config(const toml::table& table)
 
     /// @todo Validate inet address before use.
     config.address = table["address"].ref<std::string>();
+    if (config.address.back() != '/') {
+        config.address.push_back('/');
+    }
+
     config.client_id = table["client_id"].ref<std::string>();
     config.password = table["password"].ref<std::string>();
 
@@ -186,7 +190,10 @@ std::optional<Config> Config::from_str(const char* str)
     try {
         toml::table table = toml::parse(str);
 
-        return parse_config(table);
+        auto config = parse_config(table);
+        config->raw = str;
+
+        return config;
     }
     catch (const toml::parse_error& err) {
         std::stringstream stream;

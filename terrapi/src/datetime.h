@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ctime>
+#include <cstdlib>
 #include <optional>
 #include <string_view>
 
@@ -8,7 +9,7 @@
 
 namespace terra
 {
-using Time = unsigned;
+using Time = uint64_t;
 
 std::optional<Time> parse_time_from_str(const std::string& str, const char* format = "%H:%M");
 

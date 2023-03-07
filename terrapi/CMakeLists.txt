@@ -30,6 +30,7 @@ set(TERRAPI_SOURCE
         src/context.cpp
         src/datetime.cpp
         src/expr.cpp
+        src/http.cpp
         src/logger.cpp
         src/sensor.cpp
         src/switch.cpp)

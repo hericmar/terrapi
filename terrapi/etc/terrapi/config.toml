@@ -3,8 +3,8 @@
 [environment]
 day_from = "09:00:00"
 day_to = "17:00:00"
-measure_step = 10
-publish_step = 15
+measure_step = 5000
+publish_step = 600000
 
 [broker]
 address = "http://localhost:8000"
@@ -33,5 +33,6 @@ rule = "dht11.temperature < 22"
 
 [switch."humidifier"]
 gpio = 3
-oscillation_step = 5000
+oscillation_high = 2000
+oscillation_low = 8000
 rule = "(dht11.humidity < 60) & (water.signal = 1)"
