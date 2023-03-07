@@ -53,6 +53,7 @@ add_executable(terrapi_test
         test/lib/wiringPi.c
         test/terrapi/main.cpp
         test/terrapi/test_config.cpp
+        test/terrapi/test_device.cpp
         test/terrapi/test_rules.cpp)
 
 target_compile_definitions(terrapi_test PRIVATE

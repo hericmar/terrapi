@@ -1,6 +1,6 @@
 use chrono::{DateTime, FixedOffset};
 use diesel::{Insertable, Queryable};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use crate::schema::*;
 
 #[derive(Queryable, Insertable, Serialize)]
@@ -9,6 +9,12 @@ pub struct Client {
     pub password: String,
     pub name: String,
     pub timezone_offset: i32,
+}
+
+#[derive(Queryable, Insertable, Serialize, Deserialize)]
+pub struct Config {
+    pub client_id: String,
+    pub config: String,
 }
 
 #[derive(Queryable)]

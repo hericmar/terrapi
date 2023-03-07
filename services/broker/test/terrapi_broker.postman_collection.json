@@ -1,263 +1,294 @@
 {
 	"info": {
 		"_postman_id": "d3145112-d947-465f-a5d8-066e009eca8b",
-		"name": "Terra",
+		"name": "terrapi_broker",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Put config",
-			"request": {
-				"method": "PUT",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "password",
-						"type": "default"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"clientID\": \"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr\",\r\n    \"config\": \"[general]\\nclient_id: aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr\\n\\n[sensor \\\"dht11.humidity\\\"]\\nphysical_quantity:humidity\\n[sensor \\\"dht11.temperature\\\"]\\nphysical_quantity:temperature\\n[switch \\\"lights\\\"]\\nsensor=day\\ngpio=27\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8000/api/config",
-					"host": [
-						"localhost"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"config"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Create new client",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"name\": \"terárko\",\r\n    \"password\": \"password\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "localhost:8080/api/client",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"api",
-						"client"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "List clients",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "password",
-						"type": "default"
-					}
-				],
-				"url": {
-					"raw": "127.0.0.1:8000/api/client",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"client"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get config",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "127.0.0.1:8080/api/config/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8080",
-					"path": [
-						"api",
-						"config",
-						"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "List configs",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "127.0.0.1:8000/api/config",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"config"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Measurements",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"measurement",
-						"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Measurements with paging",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr?limit=200&offset=0",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"measurement",
-						"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
-					],
-					"query": [
-						{
-							"key": "limit",
-							"value": "200"
+			"name": "client",
+			"item": [
+				{
+					"name": "Create new client",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic password",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"terárko\",\r\n    \"timezone_offset\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
-						{
-							"key": "offset",
-							"value": "0"
+						"url": {
+							"raw": "localhost:8091/api/v1/client",
+							"host": [
+								"localhost"
+							],
+							"port": "8091",
+							"path": [
+								"api",
+								"v1",
+								"client"
+							]
 						}
-					]
+					},
+					"response": []
+				},
+				{
+					"name": "List clients",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic password",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "127.0.0.1:8091/api/v1/client",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8091",
+							"path": [
+								"api",
+								"v1",
+								"client"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "Measurements",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "password",
-						"type": "default"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"value\": \"10\",\r\n    \"timestamp\": \"2022-07-10T04:02:56Z\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+			"name": "record",
+			"item": [
+				{
+					"name": "Measurements",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"measurement",
+								"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
+							]
 						}
-					}
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr/dht11.temperature",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"measurement",
-						"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
-						"dht11.temperature"
-					]
+				{
+					"name": "Measurements with paging",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr?limit=200&offset=0",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"measurement",
+								"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "200"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Measurements",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "password",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"value\": \"10\",\r\n    \"timestamp\": \"2022-07-10T04:02:56Z\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr/dht11.temperature",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"measurement",
+								"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
+								"dht11.temperature"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
+		},
+		{
+			"name": "config",
+			"item": [
+				{
+					"name": "Put config",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "password",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"clientID\": \"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr\",\r\n    \"config\": \"[general]\\nclient_id: aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr\\n\\n[sensor \\\"dht11.humidity\\\"]\\nphysical_quantity:humidity\\n[sensor \\\"dht11.temperature\\\"]\\nphysical_quantity:temperature\\n[switch \\\"lights\\\"]\\nsensor=day\\ngpio=27\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8091/api/v1/config",
+							"host": [
+								"localhost"
+							],
+							"port": "8091",
+							"path": [
+								"api",
+								"v1",
+								"config"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get config",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic password",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "127.0.0.1:8091/api/v1/config/GGcv1919",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8091",
+							"path": [
+								"api",
+								"v1",
+								"config",
+								"GGcv1919"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List configs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "127.0.0.1:8000/api/config",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"config"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }

@@ -68,6 +68,14 @@ async fn main() -> std::io::Result<()> {
                             .route(web::get().to(rest::get_client))
                             .route(web::delete().to(rest::delete_client))
                     )
+                    .service(
+                        web::resource("/config")
+                            .route(web::put().to(rest::put_config))
+                    )
+                    .service(
+                        web::resource("/config/{client_id}")
+                        .route(web::get().to(rest::get_config))
+                )
             )
     })
         .bind(("localhost", config.port))?

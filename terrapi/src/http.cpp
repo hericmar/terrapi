@@ -43,11 +43,11 @@ bool HttpClient::put_config(const std::string& config_body)
 
     std::string request_body =
         "{"
-        "  \"clientID\": \"" + config.client_id + "\","
+        "  \"client_id\": \"" + config.client_id + "\","
         "  \"config\": \"" + sanitized_config_body + "\""
         "}";
 
-    return make_request("PUT", config.address + "api/config", request_body);
+    return make_request("PUT", config.address + "api/v1/config", request_body);
 }
 
 bool HttpClient::post_records(
@@ -99,7 +99,7 @@ bool HttpClient::post_records(
         "  ]"
         "}";
 
-    return make_request("POST", config.address + "api/records/", request_body);
+    return make_request("POST", config.address + "api/v1/records/", request_body);
 }
 
 bool HttpClient::make_request(const char* method, const std::string& url, const std::string& body)

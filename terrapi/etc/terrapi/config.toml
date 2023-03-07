@@ -8,8 +8,8 @@ publish_step = 600000
 
 [broker]
 address = "http://localhost:8091"
-client_id = "SgNsB9v5leS6yDj8"
-password = "password"
+client_id = "GGcv1919"
+password = "s3ShpZ0YHebsaywa3H4n7yGPWUt3rZwb"
 
 ### SENSORS ###
 
@@ -18,7 +18,7 @@ type = "DHT11"
 gpio = 7
 
 [sensor."water"]
-type = "WaterLevel"
+type = "Signal"
 gpio = 25
 
 ### SWITCHES AND THEIR RULES ###

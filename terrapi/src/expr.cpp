@@ -5,6 +5,7 @@
 
 #include "context.h"
 #include "datetime.h"
+#include "logger.h"
 #include "sensor.h"
 #include "utils.h"
 
@@ -106,7 +107,8 @@ void create_operator(std::vector<Expr>& expr_queue, Token token);
 
 //----------------------------------------------------------------------------//
 
-std::optional<Expr> Expr::from(const std::string& str)
+/// @throws parse_error
+Expr expr_from_impl(const std::string& str)
 {
     Tokenizer t{str};
 
@@ -188,6 +190,17 @@ std::optional<Expr> Expr::from(const std::string& str)
         return exprs_queue.back();
 
     throw parse_error("! parse error ");
+}
+
+std::optional<Expr> Expr::from(const std::string& str)
+{
+    try {
+        return expr_from_impl(str);
+    } catch (std::exception& ex) {
+        log_message("error", ex.what());
+
+        return std::nullopt;
+    }
 }
 
 Expr number(float num)

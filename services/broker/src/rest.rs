@@ -1,13 +1,14 @@
+use std::collections::HashMap;
 use actix_web::{HttpRequest, HttpResponse, web};
 use actix_web::http::header::HeaderValue;
 use actix_web::http::StatusCode;
+use chrono::{DateTime, FixedOffset, Utc};
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 use crate::error::{Error, ErrorType};
 use crate::model::Client;
-use crate::{Config, repo};
+use crate::{Config, model, repo};
 use crate::repo::PostgresPool;
-use crate::schema::clients::client_id;
 
 #[derive(Clone, Debug)]
 pub struct Context {
@@ -87,27 +88,27 @@ pub async fn delete_client(
 
 //----------------------------------------------------------------------------//
 
-pub struct ConfigRequest {
-    pub client_id: String,
-    pub config: String,
-}
-
 /// GET /api/v1/config/{client_id}
 pub async fn get_config(
     request: HttpRequest, ctx: web::Data<Context>, client_id: web::Path<String>
 ) -> Result<HttpResponse, Error> {
     let client = repo::read_client(&ctx.db, &client_id.into_inner())?;
 
-    authorize(&client.password, &request)?;
+    authorize(&ctx.config.password, &request)?;
 
-    Ok(HttpResponse::new(StatusCode::NO_CONTENT))
+    Ok(HttpResponse::Ok().json(repo::read_config(&ctx.db, &client.client_id)?))
 }
 
 /// PUT /api/v1/config
 pub async fn put_config(
-    ctx: web::Data<Context>, payload: web::Json<ConfigRequest>
+    request: HttpRequest, ctx: web::Data<Context>, payload: web::Json<model::Config>
 ) -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::new(StatusCode::NO_CONTENT))
+    let config = payload.into_inner();
+    let client = repo::read_client(&ctx.db, &config.client_id)?;
+
+    authorize(&client.password, &request)?;
+
+    Ok(HttpResponse::Ok().json(repo::insert_config(&ctx.db, &config)?))
 }
 
 //----------------------------------------------------------------------------//
@@ -129,6 +130,82 @@ pub struct RecordsRequest {
     pub client_id: String,
     pub measurements: Vec<MeasurementRecord>,
     pub events: Vec<EventRecord>
+}
+
+#[derive(Deserialize)]
+struct QueryParams {
+    from: Option<String>,
+    to: Option<String>,
+}
+
+pub struct MeasurementResponse {
+    pub value: f32,
+    pub timestamp: u64,
+}
+
+pub struct EventResponse {
+    pub state: bool,
+    pub timestamp: u64,
+}
+
+#[derive(Serialize)]
+struct RecordsResponse {
+    measurements: HashMap<String, Vec<MeasurementRecord>>,
+    events: HashMap<String, Vec<EventRecord>>
+}
+
+/// GET /api/v1/records/{client_id}?from={f}&to={t}
+///
+/// param `from` and `to` in format 2017-08-07T12:09:23.555+01:00
+pub async fn get_records(
+    ctx: web::Data<Context>, client_id: web::Path<String>, query: web::Query<QueryParams>
+) -> Result<HttpResponse, Error> {
+    let from = match &query.from {
+        None => {
+            let fixed_offset = FixedOffset::west_opt(0);
+            fixed_offset.now()
+        },
+        Some(value) => DateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S%z")?,
+    };
+
+    let to = match &query.to {
+        None => {
+            let fixed_offset = FixedOffset::west_opt(0);
+            fixed_offset.now()
+        },
+        Some(value) => DateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S%z")?,
+    };
+
+    /*
+        let age_map: HashMap<i32, Vec<&Person>> = people
+        .iter()
+        .group_by(|person| person.age)
+        .into_iter()
+        .map(|(age, group)| (age, group.collect()))
+        .collect();
+     */
+
+    let measurements = repo::read_measurement_records(&ctx.db, &client_id.into_inner()?, from, to, 200)?
+        .iter()
+        .map(|record| MeasurementResponse{
+            value: record.value, timestamp: record.timestamp
+        });
+
+    /*
+    let measurements = repo::read_measurement_records(&ctx.db, &client_id.into_inner()?, from, to, 200)?
+        .iter()
+        .map(|record| MeasurementResponse{
+            value: record.value, timestamp: record.timestamp
+        });
+    let events = repo::read_event_records(&ctx.db, &client_id.into_inner()?, from, to, 200)?
+        .iter()
+        .map(|event| EventResponse{
+            state: event.state,
+            timestamp: event.timestamp,
+        });
+     */
+
+    Ok(HttpResponse::new(StatusCode::NO_CONTENT))
 }
 
 /// POST /api/v1/records

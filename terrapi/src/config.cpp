@@ -86,6 +86,9 @@ std::optional<SensorConfig> parse_sensor_config(std::string name, const toml::ta
     }
 
     config.sensor_type = table["type"].ref<std::string>();
+    if (sensor_types.count(config.sensor_type) == 0) {
+        RETURN_EMPTY("unknown sensor type " + config.sensor_type);
+    }
 
     if (auto maybe_value = table["gpio"].value<int>()) {
         config.gpio = *maybe_value;
@@ -190,10 +193,14 @@ std::optional<Config> Config::from_str(const char* str)
     try {
         toml::table table = toml::parse(str);
 
-        auto config = parse_config(table);
-        config->raw = str;
+        if (auto maybe_config = parse_config(table)) {
+            auto config = *maybe_config;
+            config.raw = str;
 
-        return config;
+            return config;
+        } else {
+            return std::nullopt;
+        }
     }
     catch (const toml::parse_error& err) {
         std::stringstream stream;
