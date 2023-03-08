@@ -3,12 +3,12 @@ use std::ops::SubAssign;
 use actix_web::{HttpRequest, HttpResponse, web};
 use actix_web::http::header::HeaderValue;
 use actix_web::http::StatusCode;
-use chrono::{DateTime, Duration, FixedOffset, ParseResult, Utc};
+use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, ParseResult, TimeZone, Utc};
 use diesel::Queryable;
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 use crate::error::{Error, ErrorType};
-use crate::model::Client;
+use crate::model::{Client, Event, EventInsert, Measurement, MeasurementInsert};
 use crate::{Config, model, repo};
 use crate::repo::PostgresPool;
 
@@ -22,7 +22,12 @@ pub fn authorize(password: &String, request: &HttpRequest) -> Result<(), Error> 
     match request.headers().get("Authorization") {
         None => return Err(Error::new("unauthorized", ErrorType::Unauthorized)),
         Some(auth_header) => {
-            let split: Vec<&str> = auth_header.to_str().unwrap_or("").split("Basic").collect();
+            let split: Vec<&str> = auth_header
+                .to_str()
+                .unwrap_or("")
+                .split("Basic")
+                .collect();
+
             if split.len() != 2 {
                 return Err(Error::new("missing Basic value", ErrorType::Unauthorized));
             }
@@ -111,7 +116,9 @@ pub async fn list_configs(
 
 /// PUT /api/v1/config
 pub async fn put_config(
-    request: HttpRequest, ctx: web::Data<Context>, payload: web::Json<model::Config>
+    request: HttpRequest,
+    ctx: web::Data<Context>,
+    payload: web::Json<model::Config>
 ) -> Result<HttpResponse, Error> {
     let config = payload.into_inner();
     let client = repo::read_client(&ctx.db, &config.client_id)?;
@@ -123,7 +130,7 @@ pub async fn put_config(
 
 //----------------------------------------------------------------------------//
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct MeasurementRecord {
     pub sensor_name: String,
     pub value: f32,
@@ -131,13 +138,14 @@ pub struct MeasurementRecord {
     pub timestamp: u64,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct EventRecord {
     pub switch_name: String,
     pub state: bool,
     pub timestamp: u64,
 }
 
+#[derive(Deserialize)]
 pub struct RecordsRequest {
     pub client_id: String,
     pub measurements: Vec<MeasurementRecord>,
@@ -181,6 +189,10 @@ fn default_datetime(hours_to_subtract: i64) -> DateTime<Utc> {
 pub async fn get_records(
     ctx: web::Data<Context>, client_id: web::Path<String>, query: web::Query<QueryParams>
 ) -> Result<HttpResponse, Error> {
+    let client_id = client_id.into_inner();
+
+    let client = repo::read_client(&ctx.db, &client_id)?;
+
     let from = match &query.from {
         None => {
             default_datetime(24)
@@ -204,8 +216,6 @@ pub async fn get_records(
             }
         },
     };
-
-    let client_id = client_id.into_inner();
 
     let measurements = repo::read_measurement_records(&ctx.db, &client_id, from, to, 200)?
         .into_iter()
@@ -234,9 +244,41 @@ pub async fn get_records(
 
 /// POST /api/v1/records
 pub async fn post_records(
-    ctx: web::Data<Context>, payload: web::Json<RecordsRequest>
+    request: HttpRequest, ctx: web::Data<Context>, payload: web::Json<RecordsRequest>
 ) -> Result<HttpResponse, Error> {
+    let client = repo::read_client(&ctx.db, &payload.client_id)?;
 
+    authorize(&client.password, &request)?;
 
-    Ok(HttpResponse::new(StatusCode::NO_CONTENT))
+    repo::create_measurement_records(
+        &ctx.db, 
+        &payload.measurements.iter().map(|item| {
+            let naive = NaiveDateTime::from_timestamp_opt(item.timestamp as i64, 0).unwrap();
+            let mut datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+            datetime.sub_assign(Duration::hours(client.timezone_offset as i64));
+            MeasurementInsert{
+                client_id: client.client_id.clone(),
+                sensor_name: item.sensor_name.clone(),
+                value: item.value,
+                physical_quantity: item.physical_quantity,
+                datetime,
+            }
+        }).collect()
+    )?;
+    repo::create_event_records(
+        &ctx.db, 
+        &payload.events.iter().map(|item| {
+            let naive = NaiveDateTime::from_timestamp_opt(item.timestamp as i64, 0).unwrap();
+            let mut datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+            datetime.sub_assign(Duration::hours(client.timezone_offset as i64));
+            EventInsert{
+                client_id: client.client_id.clone(),
+                switch_name: item.switch_name.clone(),
+                state: if item.state {1} else {0},
+                datetime,
+            }
+        }).collect()
+    )?;
+
+    Ok(HttpResponse::new(StatusCode::CREATED))
 }

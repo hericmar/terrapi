@@ -3,7 +3,6 @@ mod error;
 mod model;
 mod repo;
 mod rest;
-mod service;
 mod schema;
 
 use actix_web::{App, HttpServer, web};
@@ -78,9 +77,12 @@ async fn main() -> std::io::Result<()> {
                         .route(web::get().to(rest::get_config))
                     )
                     .service(
-                        web::resource("/record/{client_id}")
-                            .route(web::get().to(rest::get_records)
+                        web::resource("/record")
+                            .route(web::post().to(rest::post_records))
                     )
+                    .service(
+                        web::resource("/record/{client_id}")
+                            .route(web::get().to(rest::get_records))
                 )
             )
     })

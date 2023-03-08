@@ -3,7 +3,7 @@ use diesel::pg::PgConnection;
 use diesel::{ExpressionMethods, insert_into, QueryDsl, RunQueryDsl};
 use diesel::r2d2::{ConnectionManager, Pool};
 use crate::error::{Error, ErrorType};
-use crate::model::{Client, Config, Event, Measurement};
+use crate::model::{Client, Config, Event, EventInsert, Measurement, MeasurementInsert};
 use crate::schema;
 
 pub type PostgresPool = Pool<ConnectionManager<PgConnection>>;
@@ -105,11 +105,22 @@ pub fn read_measurement_records(
     let result: Vec<Measurement> = schema::measurements::dsl::measurements
         .limit(limit_value)
         // .offset(offset_value)
+        .filter(schema::measurements::dsl::client_id.eq(client_id))
         .filter(schema::measurements::dsl::datetime.gt(from))
         .filter(schema::measurements::dsl::datetime.lt(to))
         .load::<Measurement>(&mut conn)?;
 
     Ok(result)
+}
+
+pub fn create_measurement_records(
+    db: &PostgresPool, payload: &Vec<MeasurementInsert>
+) -> Result<usize, Error> {
+    let mut conn = db.get()?;
+
+    Ok(insert_into(schema::measurements::dsl::measurements)
+        .values(payload)
+        .execute(&mut conn)?)
 }
 
 pub fn read_event_records(
@@ -124,9 +135,20 @@ pub fn read_event_records(
     let result: Vec<Event> = schema::events::dsl::events
         .limit(limit_value)
         // .offset(offset_value)
+        .filter(schema::events::dsl::client_id.eq(client_id))
         .filter(schema::events::dsl::datetime.gt(from))
         .filter(schema::events::dsl::datetime.lt(to))
         .load::<Event>(&mut conn)?;
 
     Ok(result)
+}
+
+pub fn create_event_records(
+    db: &PostgresPool, payload: &Vec<EventInsert>
+) -> Result<usize, Error> {
+    let mut conn = db.get()?;
+
+    Ok(insert_into(schema::events::dsl::events)
+        .values(payload)
+        .execute(&mut conn)?)
 }

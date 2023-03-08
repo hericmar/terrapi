@@ -19,6 +19,7 @@ diesel::table! {
 diesel::table! {
     events (id) {
         id -> Int4,
+        client_id -> Bpchar,
         switch_name -> Varchar,
         state -> Int4,
         datetime -> Timestamptz,
@@ -28,6 +29,7 @@ diesel::table! {
 diesel::table! {
     measurements (id) {
         id -> Int4,
+        client_id -> Bpchar,
         sensor_name -> Varchar,
         value -> Float4,
         physical_quantity -> Int4,
