@@ -4,6 +4,7 @@ mod model;
 mod repo;
 mod rest;
 mod schema;
+mod utils;
 
 use actix_web::{App, HttpServer, web};
 use actix_web::cookie::time;

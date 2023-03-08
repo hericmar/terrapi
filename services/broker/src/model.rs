@@ -9,7 +9,7 @@ pub struct Client {
     pub client_id: String,
     pub password: String,
     pub name: String,
-    pub timezone_offset: i32,
+    // pub timezone_offset: i32,
 }
 
 #[derive(Queryable, Insertable, Serialize, Deserialize)]

@@ -11,6 +11,7 @@ use crate::error::{Error, ErrorType};
 use crate::model::{Client, Event, EventInsert, Measurement, MeasurementInsert};
 use crate::{Config, model, repo};
 use crate::repo::PostgresPool;
+use crate::utils::local_tz_offset;
 
 #[derive(Clone, Debug)]
 pub struct Context {
@@ -57,7 +58,7 @@ pub async fn get_client(
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NewClientRequest {
     pub name: String,
-    pub timezone_offset: i32,
+    // pub timezone_offset: i32,
 }
 
 /// GET /api/v1/client
@@ -79,7 +80,7 @@ pub async fn create_client(
         client_id: Alphanumeric.sample_string(&mut rand::thread_rng(), 8),
         password: Alphanumeric.sample_string(&mut rand::thread_rng(), 32),
         name: payload.name.clone(),
-        timezone_offset: payload.timezone_offset,
+        // timezone_offset: payload.timezone_offset,
     };
     Ok(HttpResponse::Ok().json(repo::create_client(&ctx.db, &new_client)?))
 }
@@ -185,13 +186,17 @@ fn default_datetime(hours_to_subtract: i64) -> DateTime<Utc> {
 
 /// GET /api/v1/records/{client_id}?from={f}&to={t}
 ///
-/// param `from` and `to` in format 2017-08-07T12:09:23.555+01:00
+/// param `from` and `to` in format 2017-08-07T12:09:23.555+01:00, keep in mind, that these values
+/// must be URL encoded, e.g.
+/// ```
+/// /api/v1/record/yFBgI2YP?from=2023-03-06T23%3A59%3A01%2B01%3A00&to=2023-03-16T23%3A39%3A25%2B01%3A00
+/// ```
 pub async fn get_records(
     ctx: web::Data<Context>, client_id: web::Path<String>, query: web::Query<QueryParams>
 ) -> Result<HttpResponse, Error> {
     let client_id = client_id.into_inner();
 
-    let client = repo::read_client(&ctx.db, &client_id)?;
+    let _ = repo::read_client(&ctx.db, &client_id)?;
 
     let from = match &query.from {
         None => {
@@ -255,7 +260,7 @@ pub async fn post_records(
         &payload.measurements.iter().map(|item| {
             let naive = NaiveDateTime::from_timestamp_opt(item.timestamp as i64, 0).unwrap();
             let mut datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-            datetime.sub_assign(Duration::hours(client.timezone_offset as i64));
+            // datetime.sub_assign(Duration::hours(local_tz_offset() as i64));
             MeasurementInsert{
                 client_id: client.client_id.clone(),
                 sensor_name: item.sensor_name.clone(),
@@ -270,7 +275,7 @@ pub async fn post_records(
         &payload.events.iter().map(|item| {
             let naive = NaiveDateTime::from_timestamp_opt(item.timestamp as i64, 0).unwrap();
             let mut datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-            datetime.sub_assign(Duration::hours(client.timezone_offset as i64));
+            // datetime.sub_assign(Duration::hours(local_tz_offset() as i64));
             EventInsert{
                 client_id: client.client_id.clone(),
                 switch_name: item.switch_name.clone(),

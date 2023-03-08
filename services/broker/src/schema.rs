@@ -5,7 +5,6 @@ diesel::table! {
         client_id -> Bpchar,
         password -> Varchar,
         name -> Varchar,
-        timezone_offset -> Int4,
     }
 }
 
