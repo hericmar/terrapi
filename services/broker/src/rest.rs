@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+use std::ops::SubAssign;
 use actix_web::{HttpRequest, HttpResponse, web};
 use actix_web::http::header::HeaderValue;
 use actix_web::http::StatusCode;
-use chrono::{DateTime, FixedOffset, Utc};
+use chrono::{DateTime, Duration, FixedOffset, ParseResult, Utc};
+use diesel::Queryable;
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 use crate::error::{Error, ErrorType};
@@ -99,6 +101,14 @@ pub async fn get_config(
     Ok(HttpResponse::Ok().json(repo::read_config(&ctx.db, &client.client_id)?))
 }
 
+pub async fn list_configs(
+    request: HttpRequest, ctx: web::Data<Context>
+) -> Result<HttpResponse, Error> {
+    authorize(&ctx.config.password, &request)?;
+
+    Ok(HttpResponse::Ok().json(repo::read_all_configs(&ctx.db)?))
+}
+
 /// PUT /api/v1/config
 pub async fn put_config(
     request: HttpRequest, ctx: web::Data<Context>, payload: web::Json<model::Config>
@@ -113,6 +123,7 @@ pub async fn put_config(
 
 //----------------------------------------------------------------------------//
 
+#[derive(Serialize)]
 pub struct MeasurementRecord {
     pub sensor_name: String,
     pub value: f32,
@@ -120,6 +131,7 @@ pub struct MeasurementRecord {
     pub timestamp: u64,
 }
 
+#[derive(Serialize)]
 pub struct EventRecord {
     pub switch_name: String,
     pub state: bool,
@@ -133,16 +145,18 @@ pub struct RecordsRequest {
 }
 
 #[derive(Deserialize)]
-struct QueryParams {
+pub struct QueryParams {
     from: Option<String>,
     to: Option<String>,
 }
 
+#[derive(Serialize)]
 pub struct MeasurementResponse {
     pub value: f32,
     pub timestamp: u64,
 }
 
+#[derive(Serialize)]
 pub struct EventResponse {
     pub state: bool,
     pub timestamp: u64,
@@ -150,8 +164,15 @@ pub struct EventResponse {
 
 #[derive(Serialize)]
 struct RecordsResponse {
-    measurements: HashMap<String, Vec<MeasurementRecord>>,
-    events: HashMap<String, Vec<EventRecord>>
+    measurements: HashMap<String, Vec<MeasurementResponse>>,
+    events: HashMap<String, Vec<EventResponse>>
+}
+
+fn default_datetime(hours_to_subtract: i64) -> DateTime<Utc> {
+    let mut value = Utc::now();
+    value.sub_assign(Duration::hours(hours_to_subtract));
+
+    value
 }
 
 /// GET /api/v1/records/{client_id}?from={f}&to={t}
@@ -162,50 +183,53 @@ pub async fn get_records(
 ) -> Result<HttpResponse, Error> {
     let from = match &query.from {
         None => {
-            let fixed_offset = FixedOffset::west_opt(0);
-            fixed_offset.now()
+            default_datetime(24)
         },
-        Some(value) => DateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S%z")?,
+        Some(value) => {
+            match DateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S%z") {
+                Ok(value) => value.with_timezone(&Utc),
+                Err(_) => default_datetime(24)
+            }
+        },
     };
 
     let to = match &query.to {
         None => {
-            let fixed_offset = FixedOffset::west_opt(0);
-            fixed_offset.now()
+            default_datetime(0)
         },
-        Some(value) => DateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S%z")?,
+        Some(value) => {
+            match DateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S%z") {
+                Ok(value) => value.with_timezone(&Utc),
+                Err(_) => default_datetime(0)
+            }
+        },
     };
 
-    /*
-        let age_map: HashMap<i32, Vec<&Person>> = people
-        .iter()
-        .group_by(|person| person.age)
+    let client_id = client_id.into_inner();
+
+    let measurements = repo::read_measurement_records(&ctx.db, &client_id, from, to, 200)?
         .into_iter()
-        .map(|(age, group)| (age, group.collect()))
-        .collect();
-     */
-
-    let measurements = repo::read_measurement_records(&ctx.db, &client_id.into_inner()?, from, to, 200)?
-        .iter()
-        .map(|record| MeasurementResponse{
-            value: record.value, timestamp: record.timestamp
+        .fold(HashMap::new(), |mut map, item| {
+            map.entry(item.sensor_name.clone()).or_insert(vec![]).push(MeasurementResponse{
+                value: item.value,
+                timestamp: item.datetime.timestamp() as u64,
+            });
+            map
         });
 
-    /*
-    let measurements = repo::read_measurement_records(&ctx.db, &client_id.into_inner()?, from, to, 200)?
-        .iter()
-        .map(|record| MeasurementResponse{
-            value: record.value, timestamp: record.timestamp
+    let events = repo::read_event_records(&ctx.db, &client_id, from, to, 100)?
+        .into_iter()
+        .fold(HashMap::new(), |mut map, item| {
+            map.entry(item.switch_name.clone()).or_insert(vec![]).push(EventResponse{
+                state: if item.state == 1 {true} else {false},
+                timestamp: item.datetime.timestamp() as u64,
+            });
+            map
         });
-    let events = repo::read_event_records(&ctx.db, &client_id.into_inner()?, from, to, 200)?
-        .iter()
-        .map(|event| EventResponse{
-            state: event.state,
-            timestamp: event.timestamp,
-        });
-     */
 
-    Ok(HttpResponse::new(StatusCode::NO_CONTENT))
+    Ok(HttpResponse::Ok().json(RecordsResponse{
+        measurements, events
+    }))
 }
 
 /// POST /api/v1/records

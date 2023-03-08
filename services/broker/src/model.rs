@@ -1,5 +1,6 @@
-use chrono::{DateTime, FixedOffset};
-use diesel::{Insertable, Queryable};
+use chrono::{DateTime, FixedOffset, Utc};
+use diesel::{AsExpression, Insertable, Queryable};
+use diesel::sql_types::Timestamptz;
 use serde::{Deserialize, Serialize};
 use crate::schema::*;
 
@@ -17,17 +18,19 @@ pub struct Config {
     pub config: String,
 }
 
-#[derive(Queryable)]
-struct MeasurementRecord {
+#[derive(Queryable, Insertable, Serialize)]
+pub struct Measurement {
+    pub id: i32,
     pub sensor_name: String,
     pub value: f32,
     pub physical_quantity: i32,
-    pub timestamp: DateTime<FixedOffset>,
+    pub datetime: DateTime<Utc>,
 }
 
-#[derive(Queryable)]
-struct EventRecord {
+#[derive(Queryable, Insertable, Serialize)]
+pub struct Event {
+    pub id: i32,
     pub switch_name: String,
-    pub state: bool,
-    pub timestamp: DateTime<FixedOffset>,
+    pub state: i32,
+    pub datetime: DateTime<Utc>,
 }

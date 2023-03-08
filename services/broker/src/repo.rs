@@ -1,10 +1,9 @@
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime, FixedOffset, Utc};
 use diesel::pg::PgConnection;
 use diesel::{ExpressionMethods, insert_into, QueryDsl, RunQueryDsl};
 use diesel::r2d2::{ConnectionManager, Pool};
 use crate::error::{Error, ErrorType};
-use crate::model::{Client, Config};
-use crate::rest::{EventRecord, MeasurementRecord};
+use crate::model::{Client, Config, Event, Measurement};
 use crate::schema;
 
 pub type PostgresPool = Pool<ConnectionManager<PgConnection>>;
@@ -73,6 +72,16 @@ pub fn read_config(db: &PostgresPool, client_id: &String) -> Result<Config, Erro
     )
 }
 
+pub fn read_all_configs(db: &PostgresPool) -> Result<Vec<Config>, Error> {
+    let mut conn = db.get()?;
+
+    let result: Vec<Config> = schema::configs::dsl::configs
+        .select(schema::configs::all_columns)
+        .load::<Config>(&mut conn)?;
+
+    Ok(result)
+}
+
 pub fn insert_config(db: &PostgresPool, config: &Config) -> Result<usize, Error> {
     let mut conn = db.get()?;
     Ok(
@@ -87,35 +96,37 @@ pub fn insert_config(db: &PostgresPool, config: &Config) -> Result<usize, Error>
 pub fn read_measurement_records(
     db: &PostgresPool,
     client_id: &String,
-    from: DateTime<FixedOffset>,
-    to: DateTime<FixedOffset>,
+    from: DateTime<Utc>,
+    to: DateTime<Utc>,
     limit_value: i64
-) -> Result<Vec<MeasurementRecord>, Error> {
+) -> Result<Vec<Measurement>, Error> {
     let mut conn = db.get()?;
-    Ok(
-        schema::measurements::dsl::measurements
-            .limit(limit_value)
-            // .offset(offset_value)
-            .filter(schema::measurements::dsl::datetime.gt(from))
-            .filter(schema::measurements::dsl::datetime.lt(to))
-            .load::<MeasurementRecord>(&conn)?
-    )
+
+    let result: Vec<Measurement> = schema::measurements::dsl::measurements
+        .limit(limit_value)
+        // .offset(offset_value)
+        .filter(schema::measurements::dsl::datetime.gt(from))
+        .filter(schema::measurements::dsl::datetime.lt(to))
+        .load::<Measurement>(&mut conn)?;
+
+    Ok(result)
 }
 
 pub fn read_event_records(
     db: &PostgresPool,
     client_id: &String,
-    from: DateTime<FixedOffset>,
-    to: DateTime<FixedOffset>,
+    from: DateTime<Utc>,
+    to: DateTime<Utc>,
     limit_value: i64
-) -> Result<Vec<EventRecord>, Error> {
+) -> Result<Vec<Event>, Error> {
     let mut conn = db.get()?;
-    Ok(
-        schema::events::dsl::events
-            .limit(limit_value)
-            // .offset(offset_value)
-            .filter(schema::events::dsl::datetime.gt(from))
-            .filter(schema::events::dsl::datetime.lt(to))
-            .load::<EventRecord>(&conn)?
-    )
+
+    let result: Vec<Event> = schema::events::dsl::events
+        .limit(limit_value)
+        // .offset(offset_value)
+        .filter(schema::events::dsl::datetime.gt(from))
+        .filter(schema::events::dsl::datetime.lt(to))
+        .load::<Event>(&mut conn)?;
+
+    Ok(result)
 }

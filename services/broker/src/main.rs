@@ -70,11 +70,17 @@ async fn main() -> std::io::Result<()> {
                     )
                     .service(
                         web::resource("/config")
+                            .route(web::get().to(rest::list_configs))
                             .route(web::put().to(rest::put_config))
                     )
                     .service(
                         web::resource("/config/{client_id}")
                         .route(web::get().to(rest::get_config))
+                    )
+                    .service(
+                        web::resource("/record/{client_id}")
+                            .route(web::get().to(rest::get_records)
+                    )
                 )
             )
     })
