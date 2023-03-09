@@ -6,7 +6,8 @@ mod rest;
 mod schema;
 mod utils;
 
-use actix_web::{App, HttpServer, web};
+use std::path::PathBuf;
+use actix_web::{App, HttpRequest, HttpServer, web};
 use actix_web::cookie::time;
 use actix_web::middleware::Logger;
 use clap::Parser;
@@ -25,8 +26,10 @@ struct Args {
 /// Deserialized from environment variables using `envy` crate.
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
-    pub password: String,
+    pub admin_password: String,
     pub port: u16,
+    pub base_url: String,
+    pub static_root: String,
     pub database_url: String,
 }
 
@@ -38,7 +41,10 @@ async fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
     if let Some(env_file) = args.env_file {
-        dotenv::from_filename(env_file).ok();
+        match dotenv::from_filename(&env_file) {
+            Ok(_) => {}
+            Err(_) => panic!("cannot read config from: {}", env_file)
+        };
     }
 
     let config = match envy::from_env::<Config>() {
@@ -86,6 +92,7 @@ async fn main() -> std::io::Result<()> {
                             .route(web::get().to(rest::get_records))
                 )
             )
+            .service(actix_files::Files::new("/", config.static_root.clone()).index_file("index.html"))
     })
         .bind(("localhost", config.port))?
         .run()

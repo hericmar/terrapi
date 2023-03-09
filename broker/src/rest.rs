@@ -65,7 +65,7 @@ pub struct NewClientRequest {
 pub async fn list_clients(
     request: HttpRequest, ctx: web::Data<Context>
 ) -> Result<HttpResponse, Error> {
-    authorize(&ctx.config.password, &request)?;
+    authorize(&ctx.config.admin_password, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::read_all_clients(&ctx.db)?))
 }
@@ -74,7 +74,7 @@ pub async fn list_clients(
 pub async fn create_client(
     request: HttpRequest, ctx: web::Data<Context>, payload: web::Json<NewClientRequest>
 ) -> Result<HttpResponse, Error> {
-    authorize(&ctx.config.password, &request)?;
+    authorize(&ctx.config.admin_password, &request)?;
 
     let new_client = Client{
         client_id: Alphanumeric.sample_string(&mut rand::thread_rng(), 8),
@@ -89,7 +89,7 @@ pub async fn create_client(
 pub async fn delete_client(
     request: HttpRequest, ctx: web::Data<Context>, client_id: web::Path<String>
 ) -> Result<HttpResponse, Error> {
-    authorize(&ctx.config.password, &request)?;
+    authorize(&ctx.config.admin_password, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::delete_client(&ctx.db, &client_id.into_inner())?))
 }
@@ -102,7 +102,7 @@ pub async fn get_config(
 ) -> Result<HttpResponse, Error> {
     let client = repo::read_client(&ctx.db, &client_id.into_inner())?;
 
-    authorize(&ctx.config.password, &request)?;
+    authorize(&ctx.config.admin_password, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::read_config(&ctx.db, &client.client_id)?))
 }
@@ -110,7 +110,7 @@ pub async fn get_config(
 pub async fn list_configs(
     request: HttpRequest, ctx: web::Data<Context>
 ) -> Result<HttpResponse, Error> {
-    authorize(&ctx.config.password, &request)?;
+    authorize(&ctx.config.admin_password, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::read_all_configs(&ctx.db)?))
 }

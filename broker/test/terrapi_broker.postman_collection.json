@@ -95,18 +95,19 @@
 							}
 						},
 						"url": {
-							"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
+							"raw": "127.0.0.1:8091/api/v1/record/yFBgI2YP",
 							"host": [
 								"127",
 								"0",
 								"0",
 								"1"
 							],
-							"port": "8000",
+							"port": "8091",
 							"path": [
 								"api",
-								"measurement",
-								"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
+								"v1",
+								"record",
+								"yFBgI2YP"
 							]
 						}
 					},
@@ -130,27 +131,30 @@
 							}
 						},
 						"url": {
-							"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr?limit=200&offset=0",
+							"raw": "127.0.0.1:8091/api/v1/record/yFBgI2YP?from=2023-03-06T23%3A59%3A01%2B01%3A00&to=2023-03-16T23%3A39%3A25%2B01%3A00",
 							"host": [
 								"127",
 								"0",
 								"0",
 								"1"
 							],
-							"port": "8000",
+							"port": "8091",
 							"path": [
 								"api",
-								"measurement",
-								"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr"
+								"v1",
+								"record",
+								"yFBgI2YP"
 							],
 							"query": [
 								{
-									"key": "limit",
-									"value": "200"
+									"key": "from",
+									"value": "2023-03-06T23%3A59%3A01%2B01%3A00",
+									"description": "2023-03-06T23:59:01+01:00"
 								},
 								{
-									"key": "offset",
-									"value": "0"
+									"key": "to",
+									"value": "2023-03-16T23%3A39%3A25%2B01%3A00",
+									"description": "2023-03-06T23:39:25+01:00"
 								}
 							]
 						}
@@ -164,13 +168,13 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "password",
+								"value": "Basic okaUbDf4apVzyKII0YdbODi4YwnM9GYU",
 								"type": "default"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"value\": \"10\",\r\n    \"timestamp\": \"2022-07-10T04:02:56Z\"\r\n}",
+							"raw": "{\r\n    \"client_id\": \"yFBgI2YP\",\r\n    \"measurements\": [\r\n        {\r\n            \"sensor_name\": \"dht11\",\r\n            \"value\": 12.0,\r\n            \"physical_quantity\": 0,\r\n            \"timestamp\": 1678311203\r\n        },\r\n        {\r\n            \"sensor_name\": \"dht11\",\r\n            \"value\": 14.0,\r\n            \"physical_quantity\": 0,\r\n            \"timestamp\": 1678307416\r\n        }\r\n    ],\r\n    \"events\": [\r\n        {\r\n            \"switch_name\": \"humidifier\",\r\n            \"state\": false,\r\n            \"timestamp\": 1678311169\r\n        },\r\n        {\r\n            \"switch_name\": \"humidifier\",\r\n            \"state\": true,\r\n            \"timestamp\": 1678311186\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -178,19 +182,18 @@
 							}
 						},
 						"url": {
-							"raw": "127.0.0.1:8000/api/measurement/aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr/dht11.temperature",
+							"raw": "127.0.0.1:8091/api/v1/record",
 							"host": [
 								"127",
 								"0",
 								"0",
 								"1"
 							],
-							"port": "8000",
+							"port": "8091",
 							"path": [
 								"api",
-								"measurement",
-								"aoRkHPRIXwdHqpcpxpQhacbmFyWkKXwr",
-								"dht11.temperature"
+								"v1",
+								"record"
 							]
 						}
 					},
@@ -208,7 +211,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "password",
+								"value": "Basic password",
 								"type": "default"
 							}
 						],
@@ -270,18 +273,25 @@
 					"name": "List configs",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic password",
+								"type": "default"
+							}
+						],
 						"url": {
-							"raw": "127.0.0.1:8000/api/config",
+							"raw": "127.0.0.1:8091/api/v1/config",
 							"host": [
 								"127",
 								"0",
 								"0",
 								"1"
 							],
-							"port": "8000",
+							"port": "8091",
 							"path": [
 								"api",
+								"v1",
 								"config"
 							]
 						}

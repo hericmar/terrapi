@@ -1,5 +1,9 @@
-PASSWORD=password
+ADMIN_PASSWORD=password
+
+BASE_URL=localhost:8091
 
 PORT=8091
+
+STATIC_ROOT=static
 
 DATABASE_URL=postgres://terrapi:password@localhost/terrapi

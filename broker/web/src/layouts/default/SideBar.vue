@@ -10,6 +10,6 @@
   </v-navigation-drawer>
 </template>
 
-<script lang="ts">
+<script lang="ts" setup>
 
 </script>
