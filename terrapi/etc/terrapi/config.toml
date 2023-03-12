@@ -3,13 +3,13 @@
 [environment]
 day_from = "09:00:00"
 day_to = "17:00:00"
-measure_step = 5000
+measure_step = 60000
 publish_step = 600000
 
 [broker]
 address = "http://localhost:8091"
-client_id = "GGcv1919"
-password = "s3ShpZ0YHebsaywa3H4n7yGPWUt3rZwb"
+client_id = "yFBgI2YP"
+password = "okaUbDf4apVzyKII0YdbODi4YwnM9GYU"
 
 ### SENSORS ###
 

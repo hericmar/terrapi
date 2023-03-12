@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::format;
 use std::ops::SubAssign;
 use actix_web::{HttpRequest, HttpResponse, web};
 use actix_web::http::header::HeaderValue;
@@ -16,7 +17,7 @@ use crate::utils::local_tz_offset;
 #[derive(Clone, Debug)]
 pub struct Context {
     pub config: Config,
-    pub db: PostgresPool
+    pub db: PostgresPool,
 }
 
 pub fn authorize(password: &String, request: &HttpRequest) -> Result<(), Error> {
@@ -85,6 +86,18 @@ pub async fn create_client(
     Ok(HttpResponse::Ok().json(repo::create_client(&ctx.db, &new_client)?))
 }
 
+/// GET /api/v1/client/preview
+pub async fn list_client_preview(
+    request: HttpRequest, ctx: web::Data<Context>
+) -> Result<HttpResponse, Error> {
+    let mut clients = repo::read_all_clients(&ctx.db)?;
+    for client in &mut clients {
+        client.password = "".to_string();
+    }
+
+    Ok(HttpResponse::Ok().json(clients))
+}
+
 /// POST /api/v1/client/{client_id}
 pub async fn delete_client(
     request: HttpRequest, ctx: web::Data<Context>, client_id: web::Path<String>
@@ -126,7 +139,7 @@ pub async fn put_config(
 
     authorize(&client.password, &request)?;
 
-    Ok(HttpResponse::Ok().json(repo::insert_config(&ctx.db, &config)?))
+    Ok(HttpResponse::Ok().json(repo::put_config(&ctx.db, &config)?))
 }
 
 //----------------------------------------------------------------------------//
@@ -203,19 +216,21 @@ pub async fn get_records(
             default_datetime(24)
         },
         Some(value) => {
-            match DateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S%z") {
+            match Utc.datetime_from_str(value, "%Y-%m-%dT%H:%M:%S%.3fZ") {
                 Ok(value) => value.with_timezone(&Utc),
                 Err(_) => default_datetime(24)
             }
         },
     };
 
+    println!("{}", &query.to.clone().unwrap());
+
     let to = match &query.to {
         None => {
             default_datetime(0)
         },
         Some(value) => {
-            match DateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S%z") {
+            match Utc.datetime_from_str(value, "%Y-%m-%dT%H:%M:%S%.3fZ") {
                 Ok(value) => value.with_timezone(&Utc),
                 Err(_) => default_datetime(0)
             }
@@ -225,7 +240,8 @@ pub async fn get_records(
     let measurements = repo::read_measurement_records(&ctx.db, &client_id, from, to, 200)?
         .into_iter()
         .fold(HashMap::new(), |mut map, item| {
-            map.entry(item.sensor_name.clone()).or_insert(vec![]).push(MeasurementResponse{
+            let key = format!("{} {}", item.sensor_name, item.physical_quantity);
+            map.entry(key).or_insert(vec![]).push(MeasurementResponse{
                 value: item.value,
                 timestamp: item.datetime.timestamp() as u64,
             });

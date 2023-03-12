@@ -9,6 +9,7 @@ specifiers:
   chart.js: ^4.2.1
   chartjs-adapter-moment: ^1.0.1
   core-js: ^3.8.3
+  cross-env: ^7.0.3
   eslint: ^8.22.0
   eslint-plugin-vue: ^9.3.0
   moment: ^2.29.4
@@ -40,6 +41,7 @@ devDependencies:
   '@types/webfontloader': 1.6.35
   '@vitejs/plugin-vue': 3.2.0_vite@3.2.5+vue@3.2.47
   '@vue/eslint-config-typescript': 11.0.2_mwzft5yawf6e3vmm364a6avhx4
+  cross-env: 7.0.3
   eslint: 8.35.0
   eslint-plugin-vue: 9.9.0_eslint@8.35.0
   sass: 1.58.3
@@ -612,6 +614,14 @@ packages:
     resolution: {integrity: sha512-VG23vuEisJNkGl6XQmFJd3rEG/so/CNatqeE+7uZAwTSwFeB/qaO0be8xZYUNWprJ/GIwL8aMt9cj1kvbpTZhg==}
     requiresBuild: true
     dev: false
+
+  /cross-env/7.0.3:
+    resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
+    engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
+    hasBin: true
+    dependencies:
+      cross-spawn: 7.0.3
+    dev: true
 
   /cross-spawn/7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}

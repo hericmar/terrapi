@@ -1,6 +1,6 @@
 use chrono::{DateTime, FixedOffset, Utc};
 use diesel::pg::PgConnection;
-use diesel::{debug_query, ExpressionMethods, insert_into, QueryDsl, RunQueryDsl};
+use diesel::{debug_query, ExpressionMethods, insert_into, QueryDsl, RunQueryDsl, update};
 use diesel::r2d2::{ConnectionManager, Pool};
 use crate::error::{Error, ErrorType};
 use crate::model::{Client, Config, Event, EventInsert, Measurement, MeasurementInsert};
@@ -82,13 +82,29 @@ pub fn read_all_configs(db: &PostgresPool) -> Result<Vec<Config>, Error> {
     Ok(result)
 }
 
-pub fn insert_config(db: &PostgresPool, config: &Config) -> Result<usize, Error> {
+pub fn put_config(db: &PostgresPool, config: &Config) -> Result<(), Error> {
     let mut conn = db.get()?;
-    Ok(
-        insert_into(schema::configs::dsl::configs)
-            .values(config)
-            .execute(&mut conn)?
-    )
+
+    let existing_config = schema::configs::dsl::configs
+        .filter(schema::configs::client_id.eq(&config.client_id))
+        .get_result::<Config>(&mut conn);
+
+    match existing_config {
+        Ok(_) => {
+            // update
+            update(schema::configs::table)
+                .set(config)
+                .execute(&mut conn)?;
+        }
+        Err(_) => {
+            // create
+            insert_into(schema::configs::dsl::configs)
+                .values(config)
+                .execute(&mut conn)?;
+        }
+    }
+
+    Ok(())
 }
 
 //

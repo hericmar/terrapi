@@ -6,13 +6,21 @@ mod rest;
 mod schema;
 mod utils;
 
-use std::path::PathBuf;
-use actix_web::{App, HttpRequest, HttpServer, web};
+use std::fmt::format;
+use std::fs;
+use std::fs::OpenOptions;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use actix_cors::Cors;
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, web};
 use actix_web::cookie::time;
+use actix_web::http::StatusCode;
 use actix_web::middleware::Logger;
 use clap::Parser;
+use diesel::QueryDsl;
 use dotenv;
 use serde::Deserialize;
+use crate::error::Error;
 use crate::repo::create_conn_pool;
 use crate::rest::Context;
 
@@ -52,22 +60,45 @@ async fn main() -> std::io::Result<()> {
         Err(err) => { panic!("cannot read config: {}", err); }
     };
 
+    {
+        // set API URL
+        let index = Path::new(&config.static_root.clone()).join("index.html");
+        let contents = fs::read_to_string(&index)?;
+        let new = contents.replace(
+            "const API_URL = 'http://localhost:8091'",
+            &format!("const API_URL = '{}'", &config.base_url)
+        );
+
+        let mut file = OpenOptions::new().write(true).truncate(true).open(&index)?;
+        file.write(new.as_bytes())?;
+    }
+
+    // create web server
     let context = Context{
         config: config.clone(),
         db: create_conn_pool(&config.database_url),
     };
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://127.0.0.1:3000")
+            .allowed_origin(&config.base_url.clone());
+
         App::new()
             .app_data(web::Data::new(context.clone()))
             // .wrap(Logger::new("%a"))
             .wrap(Logger::default())
+            .wrap(cors)
             .service(
                 web::scope("/api/v1")
                     .service(
                         web::resource("/client")
                             .route(web::get().to(rest::list_clients))
                             .route(web::post().to(rest::create_client))
+                    )
+                    .service(
+                        web::resource("/client/preview")
+                            .route(web::get().to(rest::list_client_preview))
                     )
                     .service(
                         web::resource("/client/{client_id}")
@@ -92,7 +123,9 @@ async fn main() -> std::io::Result<()> {
                             .route(web::get().to(rest::get_records))
                 )
             )
-            .service(actix_files::Files::new("/", config.static_root.clone()).index_file("index.html"))
+            .service(actix_files::Files::new("/", config.static_root.clone())
+                .index_file("index.html")
+            )
     })
         .bind(("localhost", config.port))?
         .run()

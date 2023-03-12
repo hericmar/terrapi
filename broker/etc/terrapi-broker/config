@@ -1,6 +1,6 @@
 ADMIN_PASSWORD=password
 
-BASE_URL=localhost:8091
+BASE_URL=http://localhost:801
 
 PORT=8091
 

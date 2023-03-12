@@ -1,5 +1,5 @@
 use chrono::{DateTime, FixedOffset, Utc};
-use diesel::{AsExpression, Insertable, Queryable};
+use diesel::{AsExpression, AsChangeset, Insertable, Queryable};
 use diesel::sql_types::Timestamptz;
 use serde::{Deserialize, Serialize};
 use crate::schema::*;
@@ -12,7 +12,7 @@ pub struct Client {
     // pub timezone_offset: i32,
 }
 
-#[derive(Queryable, Insertable, Serialize, Deserialize)]
+#[derive(Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
 pub struct Config {
     pub client_id: String,
     pub config: String,

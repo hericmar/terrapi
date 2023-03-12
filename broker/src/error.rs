@@ -62,3 +62,9 @@ impl From<r2d2::Error> for Error {
         Error::new(&value.to_string(), ErrorType::DatabaseError)
     }
 }
+
+impl From<tera::Error> for Error {
+    fn from(value: tera::Error) -> Self {
+        Error::new(&value.to_string(), ErrorType::InternalError)
+    }
+}

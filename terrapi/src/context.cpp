@@ -1,6 +1,7 @@
 #include "context.h"
 
 #include <chrono>
+#include <iostream>
 #include <memory>
 #include <thread>
 
@@ -73,10 +74,10 @@ void Context::create(const Config& config)
 
 void Context::reset()
 {
-    auto time_start = std::chrono::high_resolution_clock::now();
+    auto time_start = std::chrono::system_clock::now();
     auto time_start_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_start.time_since_epoch()).count();
-    context->next_measure_time = time_start_ms + config.environment.measure_step;
-    context->next_publish_time = time_start_ms + config.environment.publish_step;
+    context->next_measure_time = time_start_ms;
+    context->next_publish_time = time_start_ms;
 }
 
 void Context::run()
@@ -86,7 +87,9 @@ void Context::run()
 
     context->reset();
 
-    tick();
+    while (true) {
+        tick();
+    }
 }
 
 void Context::tick()
@@ -95,22 +98,22 @@ void Context::tick()
 
     const auto now = ctx_clock->value();
 
-    auto time_start = std::chrono::high_resolution_clock::now();
+    auto time_start = std::chrono::system_clock::now();
     auto time_start_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_start.time_since_epoch()).count();
 
-    if (time_start_ms > next_measure_time) {
-        measure(now);
+    if (time_start_ms >= next_measure_time) {
+        measure(now, time_start_ms);
         next_measure_time += config.environment.measure_step;
     }
 
-    update(now);
+    update(now, time_start_ms);
 
-    if (time_start_ms > next_publish_time) {
+    if (time_start_ms >= next_publish_time) {
         post_records();
         next_publish_time += config.environment.publish_step;
     }
 
-    auto time_end = std::chrono::high_resolution_clock::now();
+    auto time_end = std::chrono::system_clock::now();
     auto ms_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start).count();
 
     if (ms_elapsed < TICK_STEP_MS) {
@@ -144,7 +147,7 @@ Switch* Context::get_switch(const std::string& name) const
     return switches.at(name);
 }
 
-void Context::measure(Time now)
+void Context::measure(Time now, uint64_t timestamp)
 {
     for (const auto& [name, sensor] : sensors) {
         sensor->measure();
@@ -154,13 +157,13 @@ void Context::measure(Time now)
                 name.c_str(),
                 value,
                 (unsigned) type,
-                now
+                timestamp / 1000
             });
         }
     }
 }
 
-void Context::update(Time now)
+void Context::update(Time now, uint64_t timestamp)
 {
     for (const auto& [name, s] : switches) {
         const auto previous_state = s->is_on();
@@ -171,7 +174,7 @@ void Context::update(Time now)
             events.push_back(EventData{
                 name.c_str(),
                 new_state,
-                now
+                timestamp / 1000
             });
         }
     }

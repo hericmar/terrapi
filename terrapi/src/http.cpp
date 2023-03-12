@@ -55,7 +55,7 @@ bool HttpClient::post_records(
 {
     std::string request_body =
         "{"
-        "  \"client_id\": " + config.client_id + "\","
+        "  \"client_id\": \"" + config.client_id + "\", "
         "  \"measurements\": [";
 
     bool is_first = true;
@@ -66,10 +66,10 @@ bool HttpClient::post_records(
 
         request_body +=
             "{"
-            "  \"sensor_name\": " + std::string(measurement.sensor_name) + "\"," +
-            "  \"value\": " + std::to_string(measurement.value) + "\"," +
-            "  \"physical_quantity\": " + std::to_string(measurement.physical_quantity) + "\"," +
-            "  \"timestamp\": " + std::to_string(measurement.timestamp) + "\""
+            "  \"sensor_name\": \"" + std::string(measurement.sensor_name) + "\", " +
+            "  \"value\": " + std::to_string(measurement.value) + ", " +
+            "  \"physical_quantity\": " + std::to_string(measurement.physical_quantity) + ", " +
+            "  \"timestamp\": " + std::to_string(measurement.timestamp) +
             "}";
 
         is_first = false;
@@ -85,10 +85,12 @@ bool HttpClient::post_records(
             request_body += ",";
         }
 
+        const auto state = event.state ? std::string("true") : std::string("false");
+
         request_body +=
             "{"
-            "  \"switch_name\": " + std::string(event.switch_name) +
-            "  \"state\": " + std::to_string(event.state) +
+            "  \"switch_name\": \"" + std::string(event.switch_name) + "\", "
+            "  \"state\": " + state + ", "
             "  \"timestamp\": " + std::to_string(event.timestamp) +
             "}";
 
@@ -99,7 +101,7 @@ bool HttpClient::post_records(
         "  ]"
         "}";
 
-    return make_request("POST", config.address + "api/v1/records/", request_body);
+    return make_request("POST", config.address + "api/v1/record", request_body);
 }
 
 bool HttpClient::make_request(const char* method, const std::string& url, const std::string& body)

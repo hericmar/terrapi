@@ -28,8 +28,12 @@ public:
     Switch* get_switch(const std::string& name) const;
 
 private:
-    void measure(Time now);
-    void update(Time now);
+    /// @param now logical time
+    /// @param timestamp
+    void measure(Time now, uint64_t timestamp);
+
+    /// @param now logical time
+    void update(Time now, uint64_t timestamp);
 
     void post_records();
 

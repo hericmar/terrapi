@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer permanent>
+  <v-navigation-drawer permanent location="left">
     <v-list
       density="compact"
       nav
