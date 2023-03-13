@@ -1,7 +1,27 @@
+let apiPassword = ""
+
 const api = {
   getApiUrl: () => {
     // @ts-ignore
     return API_URL
+  },
+  setPassword(password: string) {
+    apiPassword = password
+  },
+  async login(password: String): Promise<boolean> {
+    const response = await fetch(`${api.getApiUrl()}/api/v1/login`, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      referrerPolicy: "origin-when-cross-origin",
+      body: JSON.stringify({
+        password: password
+      })
+    })
+
+    return response.status === 200
   },
   listClientPreview: async () => {
     const response = await fetch(`${api.getApiUrl()}/api/v1/client/preview`);

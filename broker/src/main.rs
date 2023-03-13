@@ -12,7 +12,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use actix_cors::Cors;
-use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, web};
+use actix_web::{App, http, HttpRequest, HttpResponse, HttpServer, Responder, web};
 use actix_web::cookie::time;
 use actix_web::http::StatusCode;
 use actix_web::middleware::Logger;
@@ -81,6 +81,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
+            // todo -> move this origin to config
             .allowed_origin("http://127.0.0.1:3000")
             .allowed_origin(&config.base_url.clone());
 
@@ -88,7 +89,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(context.clone()))
             // .wrap(Logger::new("%a"))
             .wrap(Logger::default())
-            .wrap(cors)
+            // .wrap(cors)
+            .wrap(Cors::permissive())
             .service(
                 web::scope("/api/v1")
                     .service(
@@ -121,6 +123,9 @@ async fn main() -> std::io::Result<()> {
                     .service(
                         web::resource("/record/{client_id}")
                             .route(web::get().to(rest::get_records))
+                    )
+                    .service(web::resource("/login")
+                        .route(web::post().to(rest::login))
                 )
             )
             .service(actix_files::Files::new("/", config.static_root.clone())

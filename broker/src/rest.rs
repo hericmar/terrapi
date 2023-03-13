@@ -303,3 +303,20 @@ pub async fn post_records(
 
     Ok(HttpResponse::new(StatusCode::CREATED))
 }
+
+//----------------------------------------------------------------------------//
+
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    pub password: String
+}
+
+/// POST /api/v1/login
+pub async fn login(
+    ctx: web::Data<Context>, payload: web::Json<LoginRequest>
+) -> Result<HttpResponse, Error> {
+    if ctx.config.admin_password != payload.password {
+        return Ok(HttpResponse::new(StatusCode::UNAUTHORIZED))
+    }
+    Ok(HttpResponse::new(StatusCode::OK))
+}

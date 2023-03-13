@@ -73,12 +73,25 @@ export default {
       chart = new Chart(ctx as ChartItem, {
         type: 'line',
         data: {
+          // datasets are set int updateChart function
           datasets: []
         },
         options: {
           parsing: {
             xAxisKey: 'timestamp',
             yAxisKey: 'value'
+          },
+          interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+          },
+          plugins: {
+            decimation: {
+              algorithm: 'lttb',
+              enabled: true,
+              samples: 2400
+            },
           },
           scales: {
             x: {
@@ -90,8 +103,8 @@ export default {
                 tooltipFormat: 'HH:mm:ss',
               },
               ticks: {
-                maxTicksLimit: 12,
-                stepSize: 50,
+                maxTicksLimit: 13,
+                stepSize: 2400,
                 callback: (value, index, ticks) => {
                   // https://www.youtube.com/watch?v=KBPOgUu882o
                   const date = new Date(value);
@@ -115,9 +128,12 @@ export default {
 
         datasets.push({
           label: key,
-          data: value
+          data: value,
+          radius: 0
         })
       }
+
+      // update chart
 
       // @ts-ignore
       chart.config.data.datasets = datasets
@@ -131,7 +147,7 @@ export default {
       const startOfDay = new Date(now.value.getFullYear(), now.value.getMonth(), now.value.getDate(), 0, 0, 0);
 
       // Set the time to one minute before midnight (23:59:59) for the current date
-      const endOfDay = new Date(now.value.getFullYear(), now.value.getMonth(), now.value.getDate(), 23, 59, 59);
+      const endOfDay = new Date(now.value.getFullYear(), now.value.getMonth(), now.value.getDate(), 24, 0, 0);
 
       api.listRecordsForClient(props.clientId, startOfDay, endOfDay)
         .then((response) => {
