@@ -5,7 +5,8 @@ export const useMainStore = defineStore({
   id: 'mainStore',
 
   state: () => ({
-    isLoggedIn: false
+    isLoggedIn: false,
+    clients: []
   }),
 
   actions: {
@@ -32,6 +33,23 @@ export const useMainStore = defineStore({
     logout() {
       this.isLoggedIn = false
       api.setPassword("")
+    },
+    async fetchClients() {
+      api.listClientPreview()
+        .then((result) => {
+          this.clients = result
+        })
+    },
+    async renameClient(clientId: string, newName: string) {
+      api.renameClient(clientId, newName)
+        .then(result => {
+          const client = this.clients.find(item => {
+            // @ts-ignore
+            return item.client_id === props.clientId
+          })
+          // @ts-ignore
+          client.name = newName
+        })
     }
   }
 })

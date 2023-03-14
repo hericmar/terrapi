@@ -55,16 +55,12 @@ Chart.register(...registerables);
 
 const createClientDialog = ref(false)
 
-const clients = ref([])
-
 const mainStore = useMainStore()
 const isLoggedIn = computed(() => mainStore.isLoggedIn)
+const clients = computed(() => mainStore.clients)
 
 onMounted(() => {
-  api.listClientPreview()
-    .then((result) => {
-      clients.value = result
-    })
+  mainStore.fetchClients()
 })
 </script>
 

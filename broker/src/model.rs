@@ -4,7 +4,7 @@ use diesel::sql_types::Timestamptz;
 use serde::{Deserialize, Serialize};
 use crate::schema::*;
 
-#[derive(Queryable, Insertable, Serialize)]
+#[derive(Queryable, AsChangeset, Insertable, Serialize)]
 pub struct Client {
     pub client_id: String,
     pub password: String,

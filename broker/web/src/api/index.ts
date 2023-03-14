@@ -42,9 +42,10 @@ const api = {
   },
   async renameClient(clientId: String, newName: String) {
     const response = await fetch(`${api.getApiUrl()}/api/v1/client/${clientId}/name`, {
-      method: "POST",
+      method: "PUT",
       mode: "cors",
       headers: {
+        "Authorization": `Basic ${apiPassword}`,
         "Content-Type": "application/json",
       },
       referrerPolicy: "origin-when-cross-origin",

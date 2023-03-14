@@ -1,23 +1,43 @@
 <template>
   <v-card
     :loading="loading"
+    min-width="400px"
   >
     <v-toolbar
       color="rgba(0, 0, 0, 0)"
     >
-      <v-toolbar-title
-        class="text-h6"
+      <div
+        v-if="!isEditing"
+        class="ml-6 text-h6"
       >
+        {{ client.name }}
+      </div>
 
-      </v-toolbar-title>
+      <v-text-field
+        class="ml-6"
+        ref="nameInputRef"
+        v-if="isEditing"
+        v-model="client.name"
+        variant="underlined"
+        @focusout="onEditEnd"
+        @keydown.enter="onEditEnd"
+      ></v-text-field>
 
-      <template v-slot:append>
-        <v-btn
-          icon="mdi-close"
-          color="grey-darken-1"
-          @click="onClose"
-        ></v-btn>
-      </template>
+      <v-btn
+        v-if="!isEditing"
+        class="ml-4"
+        icon="mdi-pencil"
+        color="grey-darken-1"
+        @click="onEditStart"
+      ></v-btn>
+
+      <v-spacer></v-spacer>
+
+      <v-btn
+        icon="mdi-close"
+        color="grey-darken-1"
+        @click="onClose"
+      ></v-btn>
     </v-toolbar>
 
     <v-card-text class="overflow-auto">
@@ -32,8 +52,9 @@
 import Prism from 'prismjs';
 import 'prismjs/components/prism-toml'
 import 'prismjs/themes/prism.css'
-import {onMounted, ref} from "vue";
+import {computed, nextTick, onMounted, ref} from "vue";
 import api from "@/api";
+import {useMainStore} from "@/store";
 
 export default {
   props: {
@@ -43,6 +64,28 @@ export default {
   setup(props: any) {
     const loading = ref(true)
     const config = ref("")
+
+    const mainStore = useMainStore();
+    const client = computed(() => {
+      return mainStore.clients.find(item => {
+        // @ts-ignore
+        return item.client_id === props.clientId
+      })
+    })
+
+    const nameInputRef = ref()
+    const isEditing = ref(false)
+    const onEditStart = () => {
+      isEditing.value = true
+      nextTick(() => {
+        nameInputRef.value.focus()
+      })
+    }
+    const onEditEnd = () => {
+      isEditing.value = false
+      // @ts-ignore
+      mainStore.renameClient(props.clientId, client.value.name)
+    }
 
     onMounted(() => {
       api.fetchConfig(props.clientId)
@@ -56,7 +99,12 @@ export default {
 
     return {
       loading,
-      config
+      config,
+      client,
+      isEditing,
+      onEditStart,
+      onEditEnd,
+      nameInputRef
     }
   }
 }

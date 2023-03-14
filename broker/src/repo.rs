@@ -57,7 +57,8 @@ pub fn update_client(db: &PostgresPool, client: &Client) -> Result<usize, Error>
     let mut conn = db.get()?;
     Ok(
         update(schema::clients::table)
-            .set(client)
+            .filter(schema::clients::dsl::client_id.eq(&client.client_id))
+            .set(schema::clients::dsl::name.eq(client.name.clone()))
             .execute(&mut conn)?
     )
 }

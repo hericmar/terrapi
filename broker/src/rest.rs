@@ -86,6 +86,7 @@ pub async fn create_client(
     Ok(HttpResponse::Ok().json(repo::create_client(&ctx.db, &new_client)?))
 }
 
+#[derive(Deserialize)]
 pub struct RenameClientRequest {
     pub name: String
 }
