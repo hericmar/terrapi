@@ -86,6 +86,25 @@ pub async fn create_client(
     Ok(HttpResponse::Ok().json(repo::create_client(&ctx.db, &new_client)?))
 }
 
+pub struct RenameClientRequest {
+    pub name: String
+}
+
+/// PUT /api/v1/client/{client_id}/name
+pub async fn rename_client(
+    request: HttpRequest,
+    ctx: web::Data<Context>,
+    client_id: web::Path<String>,
+    payload: web::Json<RenameClientRequest>
+) -> Result<HttpResponse, Error> {
+    authorize(&ctx.config.admin_password, &request)?;
+
+    let mut to_update = repo::read_client(&ctx.db, &client_id)?;
+    to_update.name = payload.name.clone();
+
+    Ok(HttpResponse::Ok().json(repo::update_client(&ctx.db, &to_update)?))
+}
+
 /// GET /api/v1/client/preview
 pub async fn list_client_preview(
     request: HttpRequest, ctx: web::Data<Context>

@@ -53,6 +53,15 @@ pub fn create_client(db: &PostgresPool, client: &Client) -> Result<Client, Error
     )
 }
 
+pub fn update_client(db: &PostgresPool, client: &Client) -> Result<usize, Error> {
+    let mut conn = db.get()?;
+    Ok(
+        update(schema::clients::table)
+            .set(client)
+            .execute(&mut conn)?
+    )
+}
+
 pub fn delete_client(db: &PostgresPool, client_id: &String) -> Result<usize, Error> {
     let mut conn = db.get()?;
     Ok(

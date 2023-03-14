@@ -1,16 +1,33 @@
 <template>
-  <v-app-bar elevation="1">
+  <v-app-bar
+    elevation="1"
+  >
     <v-app-bar-title>
       <v-icon icon="mdi-circle-slice-4" />
-        Terrapi Dashboard
+        Terrapi
     </v-app-bar-title>
     <v-spacer></v-spacer>
+
+    <span
+      class="mr-2"
+      v-if="isLoggedIn"
+    >
+      Admin
+    </span>
     <v-btn
+      v-if="isLoggedIn"
+      @click="mainStore.logout"
+    >
+      Logout
+    </v-btn>
+    <v-btn
+      v-else
       @click="dialog = true"
     >
       Login
     </v-btn>
   </v-app-bar>
+
   <v-dialog
     v-model="dialog"
     persistent
@@ -22,7 +39,7 @@
       :loading="loading"
     >
       <v-card-title>Login</v-card-title>
-      <v-card-subtitle>Fill the admin password.</v-card-subtitle>
+      <v-card-subtitle>Fill in the admin password.</v-card-subtitle>
       <v-container>
         <v-form
           ref="form"
@@ -62,14 +79,18 @@
 </template>
 
 <script lang="ts" setup>
-import {ref} from "vue";
-import api from "@/api";
+import {computed, ref} from "vue";
+import { useMainStore } from '@/store/index'
 
-const dialog = ref(true)
+const dialog = ref(false)
 const form =  ref(null)
 const loading = ref(false)
 const password = ref("")
 const errMessage = ref("")
+
+const mainStore = useMainStore()
+
+const isLoggedIn = computed(() => mainStore.isLoggedIn)
 
 const markPasswordAsWrong = async () => {
   errMessage.value = 'Invalid password'
@@ -80,13 +101,11 @@ const markPasswordAsWrong = async () => {
 const markPasswordAsOk = async () => {
   errMessage.value = ''
   password.value = ''
-  // @ts-ignore
-  await form.value.resetValidation();
 }
 
-const closeDialog = async () => {
-  errMessage.value = ''
-  password.value = ''
+const closeDialog = () => {
+  // @ts-ignore
+  form.value.reset();
   dialog.value = false
 }
 
@@ -94,24 +113,20 @@ const onLogin = async () => {
   // @ts-ignore
   let { valid } = await form.value.validate()
   if (valid) {
-    valid = false
     loading.value = true
-    api.login(password.value)
-      .then(async (isPasswordOk) => {
-        if (isPasswordOk) {
-          api.setPassword(password.value)
-          await markPasswordAsOk()
+    mainStore.login(password.value)
+      .then((result) => {
+        console.log("loading.value = false")
+        loading.value = false
 
-          // todo -> set password
+        if (result) {
           dialog.value = false
+          setTimeout(() => {
+            markPasswordAsOk()
+          }, 500)
         } else {
-          await markPasswordAsWrong()
+          markPasswordAsWrong()
         }
-        loading.value = false
-      })
-      .catch(async (err) => {
-        loading.value = false
-        await markPasswordAsWrong()
       })
   }
 }

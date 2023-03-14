@@ -1,12 +1,22 @@
 <template>
   <v-card
-    class="ma-4"
-    max-width="800px"
+    class="pa-2 mb-8"
+    width="100%"
     :loading="isLoading"
   >
-    <v-card-title>
-      {{ clientName }}
-    </v-card-title>
+    <v-toolbar
+      color="rgba(0, 0, 0, 0)"
+    >
+      <v-toolbar-title
+        class="text-h6"
+      >
+        {{ clientName }}
+      </v-toolbar-title>
+
+      <template v-slot:append>
+
+      </template>
+    </v-toolbar>
 
     <v-card-subtitle>
       {{ now.toLocaleDateString() }}
@@ -17,6 +27,11 @@
     </v-card-text>
 
     <v-card-actions>
+      <v-btn
+        v-if="isLoggedIn"
+        size="small"
+        @click="showConfig = true"
+      >Settings</v-btn>
       <v-spacer></v-spacer>
       <v-btn
         size="small"
@@ -34,14 +49,30 @@
       </v-btn>
     </v-card-actions>
   </v-card>
+
+  <v-row justify="center">
+    <v-dialog
+      v-model="showConfig"
+      width="auto"
+      persistent
+    >
+      <ConfigCard
+        :client-id="clientId"
+        :on-close="onConfigClose"
+      />
+    </v-dialog>
+  </v-row>
 </template>
 
 <script lang="ts">
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import api from "@/api";
 import {Chart, ChartItem} from "chart.js";
+import ConfigCard from "@/components/ConfigCard.vue";
+import {useMainStore} from "@/store";
 
 export default {
+  components: {ConfigCard},
   props: {
     clientId: String,
     clientName: String
@@ -49,9 +80,18 @@ export default {
   setup(props: any) {
     const now = ref(new Date())
     const isLoading = ref(true)
+    const showConfig = ref(false)
 
     let chart: Chart | null = null
     let records = null
+
+    const mainStore = useMainStore()
+
+    const isLoggedIn = computed(() => mainStore.isLoggedIn)
+
+    const onConfigClose = () => {
+      showConfig.value = false
+    }
 
     const onPrevClick = () => {
       now.value.setDate(now.value.getDate() - 1);
@@ -162,8 +202,13 @@ export default {
     })
 
     return {
+      isLoggedIn,
+
       now,
       isLoading,
+
+      showConfig,
+      onConfigClose,
 
       onPrevClick,
       onNextClick,

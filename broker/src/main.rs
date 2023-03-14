@@ -99,6 +99,10 @@ async fn main() -> std::io::Result<()> {
                             .route(web::post().to(rest::create_client))
                     )
                     .service(
+                        web::resource("/client/{client_id}/name")
+                            .route(web::put().to(rest::rename_client))
+                    )
+                    .service(
                         web::resource("/client/preview")
                             .route(web::get().to(rest::list_client_preview))
                     )
