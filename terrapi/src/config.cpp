@@ -117,6 +117,16 @@ std::optional<SwitchConfig> parse_switch_config(std::string name, const toml::ta
 
     config.rule = table["rule"].ref<std::string>();
 
+    if (table.contains("oscillation_high") && table.contains("oscillation_low")) {
+        auto maybe_high = table["oscillation_high"].value<int>();
+        auto maybe_low = table["oscillation_low"].value<int>();
+
+        if (!maybe_high.has_value() || !maybe_low.has_value()) {
+            config.oscillation_high = *maybe_high;
+            config.oscillation_low = *maybe_low;
+        }
+    }
+
     return config;
 }
 

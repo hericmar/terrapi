@@ -18,6 +18,8 @@ public:
     ///
     bool is_on() const;
 
+    bool is_on_high() const;
+
     void switch_on();
     void switch_off();
 

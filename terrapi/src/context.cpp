@@ -16,27 +16,35 @@
 namespace terra
 {
 static Context* context = nullptr;
-static Clock*   ctx_clock = nullptr;
 
-static std::map<std::string, Sensor*> sensors;
-static std::map<std::string, Switch*> switches;
+class ContextData
+{
+public:
+    ~ContextData()
+    {
+        for (const auto& [_, sensor] : sensors) {
+            delete sensor;
+        }
+        sensors.clear();
 
-static std::vector<MeasurementData> measurements;
-static std::vector<EventData>       events;
+        for (const auto& [_, s] : switches) {
+            delete s;
+        }
+        switches.clear();
+    }
+
+    Clock clock{};
+
+    std::map<std::string, Sensor*> sensors;
+    std::map<std::string, Switch*> switches;
+
+    std::vector<MeasurementData> measurements;
+    std::vector<EventData>       events;
+};
 
 Context::~Context()
 {
-    delete ctx_clock;
-
-    for (const auto& [_, sensor] : sensors) {
-        delete sensor;
-    }
-    sensors.clear();
-
-    for (const auto& [_, s] : switches) {
-        delete s;
-    }
-    switches.clear();
+    delete self;
 }
 
 void Context::create(const Config& config)
@@ -49,10 +57,11 @@ void Context::create(const Config& config)
     context = new Context();
     context->config = config;
 
-    ctx_clock = new Clock();
+    auto* self = new ContextData();
+    context->self = self;
 
     for (const auto& sensor_config : context->config.sensors) {
-        sensors.insert({
+        self->sensors.insert({
             sensor_config.name,
             sensor_types.at(sensor_config.sensor_type)(sensor_config.gpio)
         });
@@ -65,7 +74,7 @@ void Context::create(const Config& config)
             continue;
         }
 
-        switches.insert({
+        self->switches.insert({
             switch_config.name,
             new Switch((SwitchConfig*) &switch_config, *maybe_expr)
         });
@@ -94,9 +103,9 @@ void Context::run()
 
 void Context::tick()
 {
-    ctx_clock->measure();
+    self->clock.measure();
 
-    const auto now = ctx_clock->value();
+    const auto now = self->clock.value();
 
     auto time_start = std::chrono::system_clock::now();
     auto time_start_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_start.time_since_epoch()).count();
@@ -109,7 +118,9 @@ void Context::tick()
     update(now, time_start_ms);
 
     if (time_start_ms >= next_publish_time) {
-        post_records();
+        if (!config.broker.address.empty()) {
+            post_records();
+        }
         next_publish_time += config.environment.publish_step;
     }
 
@@ -126,34 +137,34 @@ void Context::tick()
 
 Clock* Context::clock() const
 {
-    return ctx_clock;
+    return &self->clock;
 }
 
 Sensor* Context::get_sensor(const std::string& name) const
 {
-    if (sensors.count(name) == 0) {
+    if (self->sensors.count(name) == 0) {
         return nullptr;
     }
 
-    return sensors.at(name);
+    return self->sensors.at(name);
 }
 
 Switch* Context::get_switch(const std::string& name) const
 {
-    if (switches.count(name) == 0) {
+    if (self->switches.count(name) == 0) {
         return nullptr;
     }
 
-    return switches.at(name);
+    return self->switches.at(name);
 }
 
 void Context::measure(Time now, uint64_t timestamp)
 {
-    for (const auto& [name, sensor] : sensors) {
+    for (const auto& [name, sensor] : self->sensors) {
         sensor->measure();
 
         for (const auto& [type, value] : sensor->measured_values()) {
-            measurements.push_back(MeasurementData{
+            self->measurements.push_back(MeasurementData{
                 name.c_str(),
                 value,
                 (unsigned) type,
@@ -165,13 +176,13 @@ void Context::measure(Time now, uint64_t timestamp)
 
 void Context::update(Time now, uint64_t timestamp)
 {
-    for (const auto& [name, s] : switches) {
+    for (const auto& [name, s] : self->switches) {
         const auto previous_state = s->is_on();
         s->update(now);
         const auto new_state = s->is_on();
 
         if (previous_state != new_state) {
-            events.push_back(EventData{
+            self->events.push_back(EventData{
                 name.c_str(),
                 new_state,
                 timestamp / 1000
@@ -183,10 +194,10 @@ void Context::update(Time now, uint64_t timestamp)
 void Context::post_records()
 {
     HttpClient client(config.broker);
-    client.post_records(measurements, events);
+    client.post_records(self->measurements, self->events);
 
-    measurements.clear();
-    events.clear();
+    self->measurements.clear();
+    self->events.clear();
 }
 
 Context& ctx()

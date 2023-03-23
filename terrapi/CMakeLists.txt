@@ -52,9 +52,11 @@ add_executable(terrapi_test
         ${TERRAPI_SOURCE}
         test/lib/wiringPi.c
         test/terrapi/main.cpp
+        test/terrapi/common.cpp
         test/terrapi/test_config.cpp
         test/terrapi/test_device.cpp
-        test/terrapi/test_rules.cpp)
+        test/terrapi/test_rules.cpp
+        test/terrapi/test_switch.cpp)
 
 target_compile_definitions(terrapi_test PRIVATE
         TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

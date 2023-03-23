@@ -4,6 +4,7 @@
 
 namespace terra
 {
+class ContextData;
 class Sensor;
 class Switch;
 
@@ -44,6 +45,7 @@ private:
     uint64_t next_publish_time = 0;
 
     Config config;
+    ContextData* self;
 };
 
 Context& ctx();

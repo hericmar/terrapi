@@ -7,6 +7,8 @@
 #include "expr.h"
 #include "switch.h"
 
+#include "common.h"
+
 using namespace terra;
 
 TEST_CASE("Can parse given expression")
@@ -31,21 +33,7 @@ TEST_CASE("Can parse given expression")
 
 TEST_CASE("Can update given expression")
 {
-    Config config{};
-
-    std::vector<SensorConfig> sensors = {
-        SensorConfig{"dht11", 1, "Dummy"},
-        SensorConfig{"water", 2, "Dummy"},
-    };
-    config.sensors = sensors;
-
-    std::vector<SwitchConfig> switches = {
-        SwitchConfig{"humidifier", 1, "(dht11.humidity < 60) & (dht11.temperature < 25) & (water.signal = 1)"},
-        SwitchConfig{"lights", 1, "09:00 < time & time < 20:12"}
-    };
-    config.switches = switches;
-
-    Context::create(config);
+    Context::create(create_test_config());
 
     auto* sensor_dht11 = (DummySensor*) ctx().get_sensor("dht11");
     REQUIRE(sensor_dht11);

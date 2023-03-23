@@ -3,7 +3,9 @@
 [environment]
 day_from = "09:00:00"
 day_to = "17:00:00"
-measure_step = 60000
+# How ofter perform measurements, default each 10 seconds.
+measure_step = 10000
+# How to agregate data, default each 10 minutes.
 publish_step = 600000
 
 [broker]

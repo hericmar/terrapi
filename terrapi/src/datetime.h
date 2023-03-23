@@ -3,7 +3,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <optional>
-#include <string_view>
+#include <string>
 
 /// @todo How to represent "each second day"
 
