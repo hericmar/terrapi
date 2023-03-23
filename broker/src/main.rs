@@ -11,6 +11,7 @@ use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use actix_cors::Cors;
 use actix_web::{App, http, HttpRequest, HttpResponse, HttpServer, Responder, web};
 use actix_web::cookie::time;
@@ -20,6 +21,7 @@ use clap::Parser;
 use diesel::QueryDsl;
 use dotenv;
 use serde::Deserialize;
+use crate::cache::Cache;
 use crate::error::Error;
 use crate::repo::create_conn_pool;
 use crate::rest::Context;
@@ -35,6 +37,7 @@ struct Args {
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
     pub admin_password: String,
+    pub token_expiration: u64,
     pub port: u16,
     pub base_url: String,
     pub static_root: String,
@@ -73,20 +76,23 @@ async fn main() -> std::io::Result<()> {
         file.write(new.as_bytes())?;
     }
 
-    // create web server
-    let context = Context{
-        config: config.clone(),
-        db: create_conn_pool(&config.database_url),
-    };
+    let listen_port = config.port;
 
+    // create web server
     HttpServer::new(move || {
+        let context = Context{
+            cache: Mutex::new(Cache::new()),
+            config: config.clone(),
+            db: create_conn_pool(&config.database_url),
+        };
+
         let cors = Cors::default()
             // todo -> move this origin to config
             .allowed_origin("http://127.0.0.1:3000")
             .allowed_origin(&config.base_url.clone());
 
         App::new()
-            .app_data(web::Data::new(context.clone()))
+            .app_data(web::Data::new(context))
             // .wrap(Logger::new("%a"))
             .wrap(Logger::default())
             // .wrap(cors)
@@ -130,13 +136,16 @@ async fn main() -> std::io::Result<()> {
                     )
                     .service(web::resource("/login")
                         .route(web::post().to(rest::login))
+                    )
+                    .service(web::resource("/logout")
+                        .route(web::post().to(rest::logout))
                 )
             )
             .service(actix_files::Files::new("/", config.static_root.clone())
                 .index_file("index.html")
             )
     })
-        .bind(("localhost", config.port))?
+        .bind(("localhost", listen_port))?
         .run()
         .await
 }

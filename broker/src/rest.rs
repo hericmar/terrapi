@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::format;
 use std::ops::SubAssign;
+use std::sync::Mutex;
 use actix_web::{HttpRequest, HttpResponse, web};
 use actix_web::http::header::HeaderValue;
 use actix_web::http::StatusCode;
@@ -11,18 +12,20 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Error, ErrorType};
 use crate::model::{Client, Event, EventInsert, Measurement, MeasurementInsert};
 use crate::{Config, model, repo};
+use crate::cache::Cache;
 use crate::repo::PostgresPool;
 use crate::utils::local_tz_offset;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Context {
+    pub cache: Mutex<Cache>,
     pub config: Config,
     pub db: PostgresPool,
 }
 
-pub fn authorize(password: &String, request: &HttpRequest) -> Result<(), Error> {
-    match request.headers().get("Authorization") {
-        None => return Err(Error::new("unauthorized", ErrorType::Unauthorized)),
+pub fn extract_auth(request: &HttpRequest) -> Result<&str, Error> {
+    return match request.headers().get("Authorization") {
+        None => Err(Error::new("unauthorized", ErrorType::Unauthorized)),
         Some(auth_header) => {
             let split: Vec<&str> = auth_header
                 .to_str()
@@ -34,14 +37,30 @@ pub fn authorize(password: &String, request: &HttpRequest) -> Result<(), Error> 
                 return Err(Error::new("missing Basic value", ErrorType::Unauthorized));
             }
 
-            let given_password = split[1].trim();
+            let value = split[1].trim();
 
-            if password != given_password {
-                return Err(Error::new("bad password", ErrorType::Unauthorized))
-            }
+            Ok(value)
         }
     };
+}
 
+/// Check value of the `Authorization` header.
+pub fn authorize(password: &String, request: &HttpRequest) -> Result<(), Error> {
+    let given_password = extract_auth(request)?;
+
+    if password != given_password {
+        return Err(Error::new("bad password", ErrorType::Unauthorized))
+    }
+
+    Ok(())
+}
+
+pub fn authorize_admin(config: &Config, cache: &mut Cache, request: &HttpRequest) -> Result<(), Error> {
+    let given_token = extract_auth(request)?;
+
+    if !cache.validate_token(&given_token.to_string(), config.token_expiration) {
+        return Err(Error::new("bad password", ErrorType::Unauthorized))
+    }
     Ok(())
 }
 
@@ -66,7 +85,7 @@ pub struct NewClientRequest {
 pub async fn list_clients(
     request: HttpRequest, ctx: web::Data<Context>
 ) -> Result<HttpResponse, Error> {
-    authorize(&ctx.config.admin_password, &request)?;
+    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::read_all_clients(&ctx.db)?))
 }
@@ -75,7 +94,7 @@ pub async fn list_clients(
 pub async fn create_client(
     request: HttpRequest, ctx: web::Data<Context>, payload: web::Json<NewClientRequest>
 ) -> Result<HttpResponse, Error> {
-    authorize(&ctx.config.admin_password, &request)?;
+    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
 
     let new_client = Client{
         client_id: Alphanumeric.sample_string(&mut rand::thread_rng(), 8),
@@ -98,7 +117,7 @@ pub async fn rename_client(
     client_id: web::Path<String>,
     payload: web::Json<RenameClientRequest>
 ) -> Result<HttpResponse, Error> {
-    authorize(&ctx.config.admin_password, &request)?;
+    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
 
     let mut to_update = repo::read_client(&ctx.db, &client_id)?;
     to_update.name = payload.name.clone();
@@ -122,7 +141,7 @@ pub async fn list_client_preview(
 pub async fn delete_client(
     request: HttpRequest, ctx: web::Data<Context>, client_id: web::Path<String>
 ) -> Result<HttpResponse, Error> {
-    authorize(&ctx.config.admin_password, &request)?;
+    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::delete_client(&ctx.db, &client_id.into_inner())?))
 }
@@ -135,7 +154,7 @@ pub async fn get_config(
 ) -> Result<HttpResponse, Error> {
     let client = repo::read_client(&ctx.db, &client_id.into_inner())?;
 
-    authorize(&ctx.config.admin_password, &request)?;
+    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::read_config(&ctx.db, &client.client_id)?))
 }
@@ -143,7 +162,7 @@ pub async fn get_config(
 pub async fn list_configs(
     request: HttpRequest, ctx: web::Data<Context>
 ) -> Result<HttpResponse, Error> {
-    authorize(&ctx.config.admin_password, &request)?;
+    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::read_all_configs(&ctx.db)?))
 }
@@ -295,7 +314,7 @@ pub async fn post_records(
         &ctx.db, 
         &payload.measurements.iter().map(|item| {
             let naive = NaiveDateTime::from_timestamp_opt(item.timestamp as i64, 0).unwrap();
-            let mut datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+            let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
             // datetime.sub_assign(Duration::hours(local_tz_offset() as i64));
             MeasurementInsert{
                 client_id: client.client_id.clone(),
@@ -331,6 +350,12 @@ pub struct LoginRequest {
     pub password: String
 }
 
+#[derive(Serialize)]
+pub struct LoginResponse {
+    pub token: String,
+    pub expiration: u64
+}
+
 /// POST /api/v1/login
 pub async fn login(
     ctx: web::Data<Context>, payload: web::Json<LoginRequest>
@@ -338,5 +363,24 @@ pub async fn login(
     if ctx.config.admin_password != payload.password {
         return Ok(HttpResponse::new(StatusCode::UNAUTHORIZED))
     }
+    let (token, expiration) = (&mut *ctx.cache.lock()?).create_token(ctx.config.token_expiration);
+
+    Ok(HttpResponse::Ok().json(LoginResponse{
+        token, expiration
+    }))
+}
+
+/// POST /api/v1/login
+pub async fn logout(
+    request: HttpRequest, ctx: web::Data<Context>, payload: web::Json<LoginRequest>
+) -> Result<HttpResponse, Error> {
+    let cache = &mut *ctx.cache.lock()?;
+    authorize_admin(&ctx.config, cache, &request)?;
+
+    let token = extract_auth(&request)?;
+    if !cache.revoke_token(&token.to_string()) {
+        return Ok(HttpResponse::new(StatusCode::BAD_REQUEST))
+    }
+
     Ok(HttpResponse::new(StatusCode::OK))
 }
