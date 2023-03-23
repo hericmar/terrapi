@@ -160,16 +160,20 @@ Switch* Context::get_switch(const std::string& name) const
 
 void Context::measure(Time now, uint64_t timestamp)
 {
+    auto should_publish = now >= next_publish_time;
+
     for (const auto& [name, sensor] : self->sensors) {
         sensor->measure();
 
-        for (const auto& [type, value] : sensor->measured_values()) {
-            self->measurements.push_back(MeasurementData{
-                name.c_str(),
-                value,
-                (unsigned) type,
-                timestamp / 1000
-            });
+        if (should_publish) {
+            for (const auto& [type, value] : sensor->measured_values()) {
+                self->measurements.push_back(MeasurementData{
+                    name.c_str(),
+                    value,
+                    (unsigned) type,
+                    timestamp / 1000
+                });
+            }
         }
     }
 }
