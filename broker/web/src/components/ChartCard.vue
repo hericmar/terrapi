@@ -1,6 +1,6 @@
 <template>
   <v-card
-    class="pa-2 mb-8"
+    class="pa-2 mb-6"
     width="100%"
     :loading="isLoading"
   >

@@ -1,6 +1,6 @@
 <template>
-  <v-container class="d-flex justify-center pa-2 mt-2">
-    <div class="d-inline-flex flex-wrap chart-cards">
+  <v-container class="d-flex justify-center">
+    <div class="d-flex flex-wrap chart-cards-container">
       <div
         class="chart-card"
         v-for="client in clients"
@@ -29,7 +29,7 @@
     </div>
   </v-container>
 
-  <v-row justify="center">
+  <div class="d-flex" justify="center">
     <v-dialog
       v-model="createClientDialog"
       width="auto"
@@ -39,7 +39,7 @@
         :on-close="() => { createClientDialog = false }"
       />
     </v-dialog>
-  </v-row>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -67,7 +67,10 @@ onMounted(() => {
 <style>
 
 .chart-card {
-  margin-bottom: 0.5rem;
+}
+
+.chart-cards-container {
+  gap: 1rem;
 }
 
 .add-new-card {
@@ -78,7 +81,7 @@ onMounted(() => {
 }
 
 @media (max-width: 600px) {
-  .chart-cards {
+  .chart-cards-container {
     width: 100%;
   }
 
@@ -88,13 +91,12 @@ onMounted(() => {
 }
 
 @media (min-width: 600px) and (max-width: 1300px) {
-  .chart-cards {
+  .chart-cards-container {
     width: 600px;
   }
 
   .chart-card {
     width: 550px;
-    margin: 0 0.5rem;
   }
 }
 
@@ -105,7 +107,6 @@ onMounted(() => {
 
   .chart-card {
     width: 550px;
-    margin: 0 0.5rem;
   }
 }
 </style>
