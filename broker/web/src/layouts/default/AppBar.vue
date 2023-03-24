@@ -49,6 +49,7 @@
           <v-text-field
             v-model="password"
             :error="!!errMessage"
+            type="password"
             label="Password"
             variant="outlined"
             required

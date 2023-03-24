@@ -16,20 +16,18 @@
 
         <v-text-field
           v-model="clientId"
-          v-if="!isEditing"
+          v-if="!!clientId"
           label="Client ID"
           variant="outlined"
           readonly
-          :disabled="!!clientId"
         ></v-text-field>
 
         <v-text-field
           v-model="token"
-          v-if="!isEditing"
+          v-if="!!token"
           label="Token"
           variant="outlined"
           readonly
-          :disabled="!!token"
         ></v-text-field>
       </v-form>
     </v-container>
@@ -51,7 +49,7 @@
 
 <script setup lang="ts">
 import {ref} from "vue";
-import api from "@/api";
+import {useMainStore} from "@/store";
 
 const props = defineProps({
   onClose: {
@@ -59,17 +57,12 @@ const props = defineProps({
     default() {
       return () => {}
     }
-  },
-  editModel: {
-    type: Object,
-    default() {
-      return null
-    }
   }
 })
 
+const store = useMainStore()
+
 const form = ref(null)
-const isEditing = ref(props.editModel !== null)
 
 const name = ref("")
 const clientId = ref("")
@@ -81,11 +74,14 @@ const onCreate = async () => {
   // @ts-ignore
   let { valid } = await form.value.validate()
   if (valid) {
-    api.createClient(name.value)
+    store.createClient(name.value)
       .then(result => {
         clientId.value = result.client_id
         token.value = result.password
       })
+      .catch(_ => {
+        props.onClose()
+      });
   }
 }
 

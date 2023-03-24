@@ -32,7 +32,9 @@
         size="small"
         @click="showConfig = true"
       >Settings</v-btn>
+
       <v-spacer></v-spacer>
+
       <v-btn
         size="small"
         color="surface-variant"

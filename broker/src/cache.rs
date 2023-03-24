@@ -1,13 +1,13 @@
-use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::time::SystemTime;
 use rand::{Rng, thread_rng};
 use rand::distributions::{Alphanumeric, DistString};
+use crate::error::{Error, ErrorType};
 
 const TOKEN_LEN: usize = 32;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Cache {
     /// hash value, expires in timestamp
     pub tokens: HashMap<String, u64>
@@ -30,9 +30,13 @@ impl Cache {
         (token, expires)
     }
 
-    pub fn validate_token(&mut self, token: &String, duration_seconds: u64) -> bool {
+    pub fn validate_token(&mut self, token: &String, duration_seconds: u64) -> Result<(), Error> {
+        for (token, _) in &self.tokens {
+            println!("{}", token)
+        }
+
         if !self.tokens.contains_key(token) {
-            return false;
+            return Err(Error::new("invalid token", ErrorType::Unauthorized))
         }
 
         let valid_until = self.tokens.get(token).unwrap();
@@ -40,10 +44,10 @@ impl Cache {
         if *valid_until < get_now() {
             // token is expired
             self.revoke_token(token);
-            return false;
+            return Err(Error::new("expired token", ErrorType::Unauthorized))
         }
 
-        return true;
+        Ok(())
     }
 
     pub fn revoke_token(&mut self, token: &String) -> bool {

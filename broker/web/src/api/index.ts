@@ -1,3 +1,5 @@
+import {useMainStore} from "@/store";
+
 let apiPassword = ""
 
 const api = {
@@ -5,10 +7,10 @@ const api = {
     // @ts-ignore
     return API_URL
   },
-  setPassword(password: string) {
-    apiPassword = password
+  setToken(token: string) {
+    apiPassword = token
   },
-  async login(password: String): Promise<boolean> {
+  async login(password: String) {
     const response = await fetch(`${api.getApiUrl()}/api/v1/login`, {
       method: "POST",
       mode: "cors",
@@ -21,11 +23,11 @@ const api = {
       })
     })
 
-    return response.status === 200
+    return response.json()
   },
   // client
   async createClient(name: String) {
-    const response = await fetch(`${api.getApiUrl()}/api/v1/client`, {
+    return fetch(`${api.getApiUrl()}/api/v1/client`, {
       method: "POST",
       mode: "cors",
       headers: {
@@ -37,11 +39,9 @@ const api = {
         name: name
       })
     })
-
-    return response.json()
   },
-  async renameClient(clientId: String, newName: String) {
-    const response = await fetch(`${api.getApiUrl()}/api/v1/client/${clientId}/name`, {
+  renameClient(clientId: String, newName: String) {
+    return fetch(`${api.getApiUrl()}/api/v1/client/${clientId}/name`, {
       method: "PUT",
       mode: "cors",
       headers: {
@@ -53,8 +53,17 @@ const api = {
         name: newName
       })
     })
-
-    return response.status === 200
+  },
+  deleteClient(clientId: string) {
+    return fetch(`${api.getApiUrl()}/api/v1/client/${clientId}`, {
+      method: "DELETE",
+      mode: "cors",
+      headers: {
+        "Authorization": `Basic ${apiPassword}`,
+        "Content-Type": "application/json",
+      },
+      referrerPolicy: "origin-when-cross-origin"
+    })
   },
   listClientPreview: async () => {
     const response = await fetch(`${api.getApiUrl()}/api/v1/client/preview`);
@@ -68,12 +77,11 @@ const api = {
   },
   // config
   async fetchConfig(clientId: string) {
-    const response = await fetch(`${api.getApiUrl()}/api/v1/config/${clientId}`, {
+    return await fetch(`${api.getApiUrl()}/api/v1/config/${clientId}`, {
       headers: {
         "Authorization": `Basic ${apiPassword}`
       }
-    });
-    return response.json()
+    })
   }
 }
 

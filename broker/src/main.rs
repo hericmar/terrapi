@@ -11,7 +11,7 @@ use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use actix_cors::Cors;
 use actix_web::{App, http, HttpRequest, HttpResponse, HttpServer, Responder, web};
 use actix_web::cookie::time;
@@ -77,11 +77,12 @@ async fn main() -> std::io::Result<()> {
     }
 
     let listen_port = config.port;
+    let cache = Arc::new(Mutex::new(Cache::new()));
 
     // create web server
     HttpServer::new(move || {
         let context = Context{
-            cache: Mutex::new(Cache::new()),
+            cache: cache.clone(),
             config: config.clone(),
             db: create_conn_pool(&config.database_url),
         };

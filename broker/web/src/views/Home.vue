@@ -46,7 +46,6 @@
 import {Chart, registerables} from 'chart.js';
 import {computed, onMounted, ref} from 'vue';
 import 'chartjs-adapter-moment';
-import api from "@/api";
 import ChartCard from "@/components/ChartCard.vue";
 import ClientCard from "@/components/ClientCard.vue";
 import {useMainStore} from "@/store";

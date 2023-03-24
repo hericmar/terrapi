@@ -41,10 +41,75 @@
     </v-toolbar>
 
     <v-card-text class="overflow-auto">
+      <h3 class="mb-6 font-weight-regular">Credentials</h3>
+      <v-text-field
+        v-model="client.client_id"
+        label="Client ID"
+        variant="outlined"
+        readonly
+      ></v-text-field>
+
+      <v-text-field
+        v-model="clientPassword"
+        label="Client password"
+        :type="showClientPassword ? 'text' : 'password'"
+        variant="outlined"
+        readonly
+      >
+        <template v-slot:append>
+          <v-btn
+            class="mt-n3"
+            variant="text"
+            icon="mdi-eye"
+            @click="showClientPassword = !showClientPassword"
+          ></v-btn>
+
+          <v-btn
+            class="mt-n3"
+            variant="text"
+            icon="mdi-plus"
+            disabled
+          ></v-btn>
+        </template>
+      </v-text-field>
+
+      <h3 class="my-6 font-weight-regular">Configuration</h3>
       <pre
-        class="language-toml border-b-md"
+        class="language-toml mb-8 border-b-md"
       >{{ config }}</pre>
+
+      <h3 class="my-6 font-weight-regular">Danger zone</h3>
+      <v-expansion-panels class="mb-8">
+        <v-expansion-panel>
+          <v-expansion-panel-title>Delete client</v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <div class="d-flex align-center mt-2">
+              <span>This action cannot be reverted.</span>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="red"
+                flat
+                @click="deleteDialog = true"
+              >Delete</v-btn>
+            </div>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
     </v-card-text>
+
+    <v-dialog v-model="deleteDialog" max-width="300px">
+      <v-card>
+        <v-card-text>Do you really want to delete <b>{{ client.name }}</b>?</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="red"
+            @click="onDelete"
+          >Yes</v-btn>
+          <v-btn @click="deleteDialog = false">No</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
@@ -65,10 +130,14 @@ export default {
     const loading = ref(true)
     const config = ref("")
 
+    const clientPassword = ref("asdf")
+    const showClientPassword = ref(false)
+
+    const deleteDialog = ref(false)
+
     const mainStore = useMainStore();
     const client = computed(() => {
       return mainStore.clients.find(item => {
-        // @ts-ignore
         return item.client_id === props.clientId
       })
     })
@@ -87,24 +156,49 @@ export default {
       mainStore.renameClient(props.clientId, client.value.name)
     }
 
+    const onDelete = () => {
+      mainStore.deleteClient(props.clientId)
+        .then(() => {
+          deleteDialog.value = false;
+          props.onClose()
+        })
+    }
+
     onMounted(() => {
-      api.fetchConfig(props.clientId)
-        .then((result) => {
+      mainStore.fetchConfig(props.clientId)
+        .then(result => {
           loading.value = false;
           config.value = result.config
+          clientPassword.value = result.token
+
+          if (!config.value) {
+            config.value = "# No client config uploaded.\n" +
+              "# Make sure your client is running,\n" +
+              "# and it has valid client id and token set."
+          }
 
           Prism.highlightAll()
+        })
+        .catch(_ => {
+          props.onClose()
         })
     })
 
     return {
       loading,
       config,
+
+      clientPassword,
+      showClientPassword,
+
       client,
       isEditing,
       onEditStart,
       onEditEnd,
-      nameInputRef
+      nameInputRef,
+
+      deleteDialog,
+      onDelete,
     }
   }
 }

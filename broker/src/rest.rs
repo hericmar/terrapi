@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::format;
 use std::ops::SubAssign;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use actix_web::{HttpRequest, HttpResponse, web};
 use actix_web::http::header::HeaderValue;
 use actix_web::http::StatusCode;
@@ -18,7 +18,7 @@ use crate::utils::local_tz_offset;
 
 #[derive(Debug)]
 pub struct Context {
-    pub cache: Mutex<Cache>,
+    pub cache: Arc<Mutex<Cache>>,
     pub config: Config,
     pub db: PostgresPool,
 }
@@ -58,10 +58,7 @@ pub fn authorize(password: &String, request: &HttpRequest) -> Result<(), Error> 
 pub fn authorize_admin(config: &Config, cache: &mut Cache, request: &HttpRequest) -> Result<(), Error> {
     let given_token = extract_auth(request)?;
 
-    if !cache.validate_token(&given_token.to_string(), config.token_expiration) {
-        return Err(Error::new("bad password", ErrorType::Unauthorized))
-    }
-    Ok(())
+    cache.validate_token(&given_token.to_string(), config.token_expiration)
 }
 
 //----------------------------------------------------------------------------//
@@ -148,6 +145,13 @@ pub async fn delete_client(
 
 //----------------------------------------------------------------------------//
 
+#[derive(Serialize)]
+struct GetConfigResponse {
+    pub client_id: String,
+    pub token: String,
+    pub config: String,
+}
+
 /// GET /api/v1/config/{client_id}
 pub async fn get_config(
     request: HttpRequest, ctx: web::Data<Context>, client_id: web::Path<String>
@@ -156,7 +160,16 @@ pub async fn get_config(
 
     authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
 
-    Ok(HttpResponse::Ok().json(repo::read_config(&ctx.db, &client.client_id)?))
+    let config = match repo::read_config(&ctx.db, &client.client_id) {
+        Ok(config) => config.config,
+        Err(_) => "".to_string()
+    };
+
+    Ok(HttpResponse::Ok().json(GetConfigResponse{
+        client_id: client.client_id,
+        token: client.password,
+        config,
+    }))
 }
 
 pub async fn list_configs(
