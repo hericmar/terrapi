@@ -22,7 +22,7 @@
     </v-btn>
     <v-btn
       v-else
-      @click="dialog = true"
+      @click="onOpenDialog"
     >
       Login
     </v-btn>
@@ -49,6 +49,7 @@
           <v-text-field
             v-model="password"
             :error="!!errMessage"
+            ref="passwordInputRef"
             type="password"
             label="Password"
             variant="outlined"
@@ -80,7 +81,7 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, ref} from "vue";
+import {computed, nextTick, ref} from "vue";
 import { useMainStore } from '@/store/index'
 
 const dialog = ref(false)
@@ -88,6 +89,8 @@ const form =  ref(null)
 const loading = ref(false)
 const password = ref("")
 const errMessage = ref("")
+
+const passwordInputRef = ref()
 
 const mainStore = useMainStore()
 
@@ -104,6 +107,13 @@ const markPasswordAsOk = async () => {
   password.value = ''
 }
 
+const onOpenDialog = () => {
+  dialog.value = true
+  nextTick(() => {
+    passwordInputRef.value.focus()
+  })
+}
+
 const closeDialog = () => {
   // @ts-ignore
   form.value.reset();
@@ -117,7 +127,6 @@ const onLogin = async () => {
     loading.value = true
     mainStore.login(password.value)
       .then((result) => {
-        console.log("loading.value = false")
         loading.value = false
 
         if (result) {
@@ -131,5 +140,4 @@ const onLogin = async () => {
       })
   }
 }
-
 </script>

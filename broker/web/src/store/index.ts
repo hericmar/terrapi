@@ -18,7 +18,6 @@ export const useMainStore = defineStore({
   actions: {
     init() {
       const token = localStorage.getItem("token");
-      console.log("get", token)
       if (token) {
         this.setToken(token)
       } else {
@@ -29,7 +28,6 @@ export const useMainStore = defineStore({
     setToken(token: string) {
       this.isLoggedIn = true;
       localStorage.setItem("token", token)
-      console.log("set", token)
       api.setToken(token)
     },
 
@@ -47,7 +45,6 @@ export const useMainStore = defineStore({
         })
     },
     logout() {
-      console.log("logout called")
       this.isLoggedIn = false
       localStorage.removeItem("token");
       api.setToken("")
@@ -56,7 +53,6 @@ export const useMainStore = defineStore({
       this.clients = this.clients.sort((lhs: Client, rhs: Client) => {
         return lhs.name.localeCompare(rhs.name)
       })
-      console.log(this.clients)
     },
     async fetchClients() {
       api.listClientPreview()
@@ -101,7 +97,9 @@ export const useMainStore = defineStore({
             return item.client_id === clientId
           })
 
-          client.name = newName
+          if (client) {
+            client.name = newName
+          }
         })
     },
     async deleteClient(clientId: string) {
@@ -121,7 +119,6 @@ export const useMainStore = defineStore({
       let result = { config: "", token: "" }
       await api.fetchConfig(clientId)
         .then(async response => {
-          console.log(response.status)
           if (response.status === 401) {
             this.logout()
             throw new Error("unauthorized");

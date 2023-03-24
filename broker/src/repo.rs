@@ -17,6 +17,21 @@ impl From<diesel::result::Error> for Error {
     }
 }
 
+//------------------------------------------------------------------------------------------------//
+
+pub fn run_migrations(db: &PostgresPool) -> Result<(), Error> {
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+
+    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
+    let mut conn = db.get()?;
+    conn.run_pending_migrations(MIGRATIONS).expect("diesel migrations");
+
+    Ok(())
+}
+
+//------------------------------------------------------------------------------------------------//
+
 pub fn create_conn_pool(url: &String) -> PostgresPool {
     let manager = ConnectionManager::<PgConnection>::new(url);
     Pool::builder()

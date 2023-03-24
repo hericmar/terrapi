@@ -5,9 +5,13 @@
   >
     <v-card-title>Create client</v-card-title>
     <v-container>
-      <v-form ref="form">
+      <v-form
+        ref="form"
+        @submit.prevent="onCreate"
+      >
         <v-text-field
           v-model="name"
+          ref="nameInputRef"
           style="min-width: 300px"
           label="Client name"
           variant="outlined"
@@ -48,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from "vue";
+import {nextTick, onMounted, ref} from "vue";
 import {useMainStore} from "@/store";
 
 const props = defineProps({
@@ -68,6 +72,8 @@ const name = ref("")
 const clientId = ref("")
 const token = ref("")
 
+const nameInputRef = ref()
+
 // Create
 
 const onCreate = async () => {
@@ -85,6 +91,10 @@ const onCreate = async () => {
   }
 }
 
-// Edit
+onMounted(() => {
+  nextTick(() => {
+    nameInputRef.value.focus()
+  })
+})
 
 </script>

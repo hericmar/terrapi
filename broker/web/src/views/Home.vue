@@ -1,4 +1,11 @@
 <template>
+  <div
+    v-if="clients.length === 0"
+    class="d-flex mt-8 w-100 text-center bg-grey-lighten-4 text-grey-darken-2 justify-center align-center chart-card"
+  >
+    No clients configured, {{ !isLoggedIn ? "login and " : "" }}create a new one.
+  </div>
+
   <v-container class="d-flex justify-center">
     <div class="d-flex flex-wrap chart-cards-container">
       <div

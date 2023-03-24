@@ -73,12 +73,20 @@ async fn main() -> std::io::Result<()> {
     let listen_port = config.port;
     let cache = Arc::new(Mutex::new(Cache::new()));
 
+    let conn_pool = create_conn_pool(&config.database_url);
+    match repo::run_migrations(&conn_pool) {
+        Err(err) => {
+            panic!("cannot run migrations: {}", err);
+        }
+        Ok(_) => {}
+    }
+
     // create web server
     HttpServer::new(move || {
         let context = Context{
             cache: cache.clone(),
             config: config.clone(),
-            db: create_conn_pool(&config.database_url),
+            db: conn_pool.clone(),
         };
 
         // replaced by Cors::permissive()
