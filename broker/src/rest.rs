@@ -1,20 +1,16 @@
 use std::collections::HashMap;
-use std::fmt::format;
 use std::ops::SubAssign;
 use std::sync::{Arc, Mutex};
 use actix_web::{HttpRequest, HttpResponse, web};
-use actix_web::http::header::HeaderValue;
 use actix_web::http::StatusCode;
-use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, ParseResult, TimeZone, Utc};
-use diesel::Queryable;
+use chrono::{DateTime, Duration, NaiveDateTime, TimeZone, Utc};
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 use crate::error::{Error, ErrorType};
-use crate::model::{Client, Event, EventInsert, Measurement, MeasurementInsert};
+use crate::model::{Client, EventInsert, MeasurementInsert};
 use crate::{Config, model, repo};
 use crate::cache::Cache;
 use crate::repo::PostgresPool;
-use crate::utils::local_tz_offset;
 
 #[derive(Debug)]
 pub struct Context {
@@ -55,10 +51,10 @@ pub fn authorize(password: &String, request: &HttpRequest) -> Result<(), Error> 
     Ok(())
 }
 
-pub fn authorize_admin(config: &Config, cache: &mut Cache, request: &HttpRequest) -> Result<(), Error> {
+pub fn authorize_admin(cache: &mut Cache, request: &HttpRequest) -> Result<(), Error> {
     let given_token = extract_auth(request)?;
 
-    cache.validate_token(&given_token.to_string(), config.token_expiration)
+    cache.validate_token(&given_token.to_string())
 }
 
 //----------------------------------------------------------------------------//
@@ -82,7 +78,7 @@ pub struct NewClientRequest {
 pub async fn list_clients(
     request: HttpRequest, ctx: web::Data<Context>
 ) -> Result<HttpResponse, Error> {
-    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
+    authorize_admin(&mut *ctx.cache.lock()?, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::read_all_clients(&ctx.db)?))
 }
@@ -91,7 +87,7 @@ pub async fn list_clients(
 pub async fn create_client(
     request: HttpRequest, ctx: web::Data<Context>, payload: web::Json<NewClientRequest>
 ) -> Result<HttpResponse, Error> {
-    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
+    authorize_admin(&mut *ctx.cache.lock()?, &request)?;
 
     let new_client = Client{
         client_id: Alphanumeric.sample_string(&mut rand::thread_rng(), 8),
@@ -114,7 +110,7 @@ pub async fn rename_client(
     client_id: web::Path<String>,
     payload: web::Json<RenameClientRequest>
 ) -> Result<HttpResponse, Error> {
-    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
+    authorize_admin(&mut *ctx.cache.lock()?, &request)?;
 
     let mut to_update = repo::read_client(&ctx.db, &client_id)?;
     to_update.name = payload.name.clone();
@@ -123,9 +119,7 @@ pub async fn rename_client(
 }
 
 /// GET /api/v1/client/preview
-pub async fn list_client_preview(
-    request: HttpRequest, ctx: web::Data<Context>
-) -> Result<HttpResponse, Error> {
+pub async fn list_client_preview(ctx: web::Data<Context>) -> Result<HttpResponse, Error> {
     let mut clients = repo::read_all_clients(&ctx.db)?;
     for client in &mut clients {
         client.password = "".to_string();
@@ -138,7 +132,7 @@ pub async fn list_client_preview(
 pub async fn delete_client(
     request: HttpRequest, ctx: web::Data<Context>, client_id: web::Path<String>
 ) -> Result<HttpResponse, Error> {
-    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
+    authorize_admin(&mut *ctx.cache.lock()?, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::delete_client(&ctx.db, &client_id.into_inner())?))
 }
@@ -158,7 +152,7 @@ pub async fn get_config(
 ) -> Result<HttpResponse, Error> {
     let client = repo::read_client(&ctx.db, &client_id.into_inner())?;
 
-    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
+    authorize_admin(&mut *ctx.cache.lock()?, &request)?;
 
     let config = match repo::read_config(&ctx.db, &client.client_id) {
         Ok(config) => config.config,
@@ -175,7 +169,7 @@ pub async fn get_config(
 pub async fn list_configs(
     request: HttpRequest, ctx: web::Data<Context>
 ) -> Result<HttpResponse, Error> {
-    authorize_admin(&ctx.config, &mut *ctx.cache.lock()?, &request)?;
+    authorize_admin(&mut *ctx.cache.lock()?, &request)?;
 
     Ok(HttpResponse::Ok().json(repo::read_all_configs(&ctx.db)?))
 }
@@ -342,7 +336,7 @@ pub async fn post_records(
         &ctx.db, 
         &payload.events.iter().map(|item| {
             let naive = NaiveDateTime::from_timestamp_opt(item.timestamp as i64, 0).unwrap();
-            let mut datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+            let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
             // datetime.sub_assign(Duration::hours(local_tz_offset() as i64));
             EventInsert{
                 client_id: client.client_id.clone(),
@@ -385,10 +379,10 @@ pub async fn login(
 
 /// POST /api/v1/login
 pub async fn logout(
-    request: HttpRequest, ctx: web::Data<Context>, payload: web::Json<LoginRequest>
+    request: HttpRequest, ctx: web::Data<Context>
 ) -> Result<HttpResponse, Error> {
     let cache = &mut *ctx.cache.lock()?;
-    authorize_admin(&ctx.config, cache, &request)?;
+    authorize_admin(cache, &request)?;
 
     let token = extract_auth(&request)?;
     if !cache.revoke_token(&token.to_string()) {

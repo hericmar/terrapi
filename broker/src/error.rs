@@ -65,12 +65,6 @@ impl From<r2d2::Error> for Error {
     }
 }
 
-impl From<tera::Error> for Error {
-    fn from(value: tera::Error) -> Self {
-        Error::new(&value.to_string(), ErrorType::InternalError)
-    }
-}
-
 impl From<PoisonError<MutexGuard<'_, Cache>>> for Error {
     fn from(value: PoisonError<MutexGuard<'_, Cache>>) -> Self {
         Error::new(&value.to_string(), ErrorType::InternalError)

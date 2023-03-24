@@ -1,6 +1,5 @@
-use chrono::{DateTime, FixedOffset, Utc};
-use diesel::{AsExpression, AsChangeset, Insertable, Queryable};
-use diesel::sql_types::Timestamptz;
+use chrono::{DateTime, Utc};
+use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 use crate::schema::*;
 

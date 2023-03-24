@@ -1,7 +1,5 @@
 use std::collections::HashMap;
-use std::hash::BuildHasher;
 use std::time::SystemTime;
-use rand::{Rng, thread_rng};
 use rand::distributions::{Alphanumeric, DistString};
 use crate::error::{Error, ErrorType};
 
@@ -30,11 +28,7 @@ impl Cache {
         (token, expires)
     }
 
-    pub fn validate_token(&mut self, token: &String, duration_seconds: u64) -> Result<(), Error> {
-        for (token, _) in &self.tokens {
-            println!("{}", token)
-        }
-
+    pub fn validate_token(&mut self, token: &String) -> Result<(), Error> {
         if !self.tokens.contains_key(token) {
             return Err(Error::new("invalid token", ErrorType::Unauthorized))
         }

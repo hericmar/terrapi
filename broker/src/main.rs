@@ -4,25 +4,19 @@ mod model;
 mod repo;
 mod rest;
 mod schema;
-mod utils;
 
-use std::fmt::format;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::sync::{Arc, Mutex};
 use actix_cors::Cors;
-use actix_web::{App, http, HttpRequest, HttpResponse, HttpServer, Responder, web};
-use actix_web::cookie::time;
-use actix_web::http::StatusCode;
+use actix_web::{App, HttpServer, web};
 use actix_web::middleware::Logger;
 use clap::Parser;
-use diesel::QueryDsl;
 use dotenv;
 use serde::Deserialize;
 use crate::cache::Cache;
-use crate::error::Error;
 use crate::repo::create_conn_pool;
 use crate::rest::Context;
 
@@ -87,14 +81,16 @@ async fn main() -> std::io::Result<()> {
             db: create_conn_pool(&config.database_url),
         };
 
+        // replaced by Cors::permissive()
+        /*
         let cors = Cors::default()
             // todo -> move this origin to config
             .allowed_origin("http://127.0.0.1:3000")
             .allowed_origin(&config.base_url.clone());
+         */
 
         App::new()
             .app_data(web::Data::new(context))
-            // .wrap(Logger::new("%a"))
             .wrap(Logger::default())
             // .wrap(cors)
             .wrap(Cors::permissive())

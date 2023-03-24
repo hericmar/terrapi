@@ -1,6 +1,6 @@
-use chrono::{DateTime, FixedOffset, Utc};
+use chrono::{DateTime, Utc};
 use diesel::pg::PgConnection;
-use diesel::{debug_query, ExpressionMethods, insert_into, QueryDsl, RunQueryDsl, update};
+use diesel::{ExpressionMethods, insert_into, QueryDsl, RunQueryDsl, update};
 use diesel::r2d2::{ConnectionManager, Pool};
 use crate::error::{Error, ErrorType};
 use crate::model::{Client, Config, Event, EventInsert, Measurement, MeasurementInsert};
