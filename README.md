@@ -1,22 +1,12 @@
 # TerraPi
-Jednoduchý manažer terárií, akvárií a jiných prostředí s měřitelnými
-fyzikálními veličinami.
+Simple manager of environments such as terrariums, aquariums, or greenhouses.
+The project consists of Raspberry Pi client implementation, 
+a broker server that collects data, 
+and a web interface that plots the data into graphs. 
+
+## Requirements
+- Raspberry Pi computer for client control unit (tested on Raspberry Pi Zero).
+- Optional: PostgreSQL database server for the broker.
 
 ## Instalace
-````shell
-git clone --recursive URL
-cd lib/catch2
-git checkout v2.x
-
-mkdir out && cd out
-cmake ..
-make
-````
-
-## Doporučení
-I přes to, že projekt obsahuje CMakeLists.txt, je doporučeno verzovat
-vygenerovaný Makefile.
-
-## Ce je třeba ještě udělat
-- [ ] Konfigurace den/noc
-    - [ ] Nastavitelná délka noci (UTC)
+TODO
