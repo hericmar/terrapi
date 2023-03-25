@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.11.9",
+    "@types/prismjs": "^1.26.0",
     "@types/webfontloader": "^1.6.35",
     "@vitejs/plugin-vue": "^3.0.3",
     "@vue/eslint-config-typescript": "^11.0.0",

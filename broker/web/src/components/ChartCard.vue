@@ -179,7 +179,9 @@ export default {
 
       // @ts-ignore
       chart.config.data.datasets = datasets
+      // @ts-ignore
       chart.config.options.scales.x.min = start.getTime()
+      // @ts-ignore
       chart.config.options.scales.x.max = end.getTime()
 
       chart?.update()

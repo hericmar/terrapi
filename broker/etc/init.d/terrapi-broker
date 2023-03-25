@@ -1,7 +1,7 @@
 #!/sbin/openrc-run
 
-command="/usr/bin/terrapi"
-command_args="/etc/terrapi/env"
+command="/usr/bin/terrapi-broker"
+command_args="/etc/terrapi-broker/config"
 command_background=true
 command_user="terra"
 pidfile="/run/${RC_SVCNAME}.pid"

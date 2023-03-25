@@ -137,9 +137,13 @@ export default {
 
     const mainStore = useMainStore();
     const client = computed(() => {
-      return mainStore.clients.find(item => {
+      let found = mainStore.clients.find(item => {
         return item.client_id === props.clientId
       })
+      if (!found) {
+        found = { client_id: "", password: "", name: ""}
+      }
+      return found
     })
 
     const nameInputRef = ref()

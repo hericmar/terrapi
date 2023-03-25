@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@mdi/font': 7.0.96
   '@types/node': ^18.11.9
+  '@types/prismjs': ^1.26.0
   '@types/webfontloader': ^1.6.35
   '@vitejs/plugin-vue': ^3.0.3
   '@vue/eslint-config-typescript': ^11.0.0
@@ -42,6 +43,7 @@ dependencies:
 
 devDependencies:
   '@types/node': 18.14.6
+  '@types/prismjs': 1.26.0
   '@types/webfontloader': 1.6.35
   '@vitejs/plugin-vue': 3.2.0_vite@3.2.5+vue@3.2.47
   '@vue/eslint-config-typescript': 11.0.2_mwzft5yawf6e3vmm364a6avhx4
@@ -172,6 +174,10 @@ packages:
 
   /@types/node/18.14.6:
     resolution: {integrity: sha512-93+VvleD3mXwlLI/xASjw0FzKcwzl3OdTCzm1LaRfqgS21gfFtK3zDXM5Op9TeeMsJVOaJ2VRDpT9q4Y3d0AvA==}
+
+  /@types/prismjs/1.26.0:
+    resolution: {integrity: sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==}
+    dev: true
 
   /@types/semver/7.3.13:
     resolution: {integrity: sha512-21cFJr9z3g5dW8B0CVI9g2O9beqaThGQ6ZFBqHfwhzLDKUxaqTIy3vnfah/UPkfOiF2pLq+tGz+W8RyCskuslw==}
