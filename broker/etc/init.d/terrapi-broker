@@ -1,9 +1,11 @@
 #!/sbin/openrc-run
 
 command="/usr/bin/terrapi-broker"
-command_args="/etc/terrapi-broker/config"
+command_args="--env-file /etc/terrapi-broker/config"
 command_background=true
 command_user="terra"
+output_log="/var/log/terrapi-broker.log"
+error_log="/var/log/terrapi-broker.log"
 pidfile="/run/${RC_SVCNAME}.pid"
 
 depend() {

@@ -3,7 +3,7 @@ ADMIN_PASSWORD=password
 # In seconds
 TOKEN_EXPIRATION=3600
 
-BASE_URL=http://localhost:801
+BASE_URL=http://localhost:8091
 
 PORT=8091
 
