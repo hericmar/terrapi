@@ -35,6 +35,7 @@ pub fn run_migrations(db: &PostgresPool) -> Result<(), Error> {
 pub fn create_conn_pool(url: &String) -> PostgresPool {
     let manager = ConnectionManager::<PgConnection>::new(url);
     Pool::builder()
+        .max_size(4)
         .build(manager)
         .expect("could not build connection pool")
 }
