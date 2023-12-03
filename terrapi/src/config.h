@@ -7,6 +7,8 @@
 #include "datetime.h"
 #include "expr.h"
 
+const auto DEFAULT_CONFIG_PATH = "/etc/terrapi/config.toml";
+
 namespace terra
 {
 struct EnvironmentConfig

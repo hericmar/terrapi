@@ -21,7 +21,7 @@ std::size_t now_ms()
 std::size_t tick()
 {
     auto t1 = now_ms();
-    ctx().tick();
+    curr_ctx().tick();
     auto t2 = now_ms();
 
     return t2 - t1;
@@ -33,17 +33,18 @@ TEST_CASE("Test switch oscillation")
 
     Context::create(create_test_config());
 
-    auto* sensor_dht11 = (DummySensor*) ctx().get_sensor("dht11");
+    auto* sensor_dht11 = (DummySensor*) curr_ctx().get_sensor("dht11");
     REQUIRE(sensor_dht11);
 
-    auto* sensor_water = (DummySensor*) ctx().get_sensor("water");
+    auto* sensor_water = (DummySensor*) curr_ctx().get_sensor("water");
     REQUIRE(sensor_water);
 
     // make humidifier switch active
     sensor_dht11->force_value(ValueType_Humidity, 50.0f);
+    sensor_dht11->force_value(ValueType_Temperature, 20.0f);
     sensor_water->force_value(ValueType_Signal, 1.0f);
 
-    auto* humidifier = ctx().get_switch("humidifier");
+    auto* humidifier = curr_ctx().get_switch("humidifier");
 
     // at create_test_config
     auto high_ms = 1000;
@@ -59,7 +60,8 @@ TEST_CASE("Test switch oscillation")
         REQUIRE(humidifier->is_on_high());
     }
     {
-        std::this_thread::sleep_for(1500ms);
+        // ???
+        std::this_thread::sleep_for(2500ms);
 
         tick();
         REQUIRE(humidifier->is_on());

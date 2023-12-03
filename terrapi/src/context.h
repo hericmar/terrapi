@@ -15,15 +15,16 @@ private:
     ~Context();
 
 public:
-    /// @pre Configuration is validated!
-    static void create(const Config& config);
+    /// @pre Configuration is valid!
+    /// @returns Non-owned pointer to the context, or nullptr if context is not created.
+    static Context* create(const Config& config);
 
     void reset();
 
     void run();
     void tick();
 
-    Clock* clock() const;
+    Clock& clock() const;
 
     Sensor* get_sensor(const std::string& name) const;
     Switch* get_switch(const std::string& name) const;
@@ -45,8 +46,8 @@ private:
     uint64_t next_publish_time = 0;
 
     Config config;
-    ContextData* self;
+    ContextData* data{};
 };
 
-Context& ctx();
+Context& curr_ctx();
 }

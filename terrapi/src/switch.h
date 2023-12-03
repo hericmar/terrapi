@@ -6,7 +6,7 @@ namespace terra
 {
 struct SwitchConfig;
 
-class Switch
+class Switch final
 {
 public:
     /// @pre \p gpio is empty

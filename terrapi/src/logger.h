@@ -3,7 +3,13 @@
 
 namespace terra
 {
-void log_message(const char* level, const std::string& message);
-void log_message(const char* level, const std::string_view& message);
-void log_message(const char* level, const char* message);
+const int TRACE = 0;
+const int INFO  = 1;
+const int WARN  = 2;
+const int ERR   = 3;
+const int FATAL = 4;
+
+void log_message(int level, const std::string& message);
+void log_message(int level, const std::string_view& message);
+void log_message(int level, const char* message);
 }

@@ -1,5 +1,6 @@
 #include "expr.h"
 
+#include <cstring>
 #include <ios>
 #include <stack>
 
@@ -103,7 +104,7 @@ Token Tokenizer::next()
     return result;
 }
 
-void create_operator(std::vector<Expr>& expr_queue, Token token);
+static void create_operator(std::vector<Expr>& expr_queue, Token token);
 
 //----------------------------------------------------------------------------//
 
@@ -197,7 +198,7 @@ std::optional<Expr> Expr::from(const std::string& str)
     try {
         return expr_from_impl(str);
     } catch (std::exception& ex) {
-        log_message("error", ex.what());
+        log_message(ERR, ex.what());
 
         return std::nullopt;
     }
@@ -229,7 +230,7 @@ Expr variable(const std::string& identifier)
 
     const auto value_type = value_type_to_str.at(name_pq_pair[1]);
 
-    const auto* sensor = ctx().get_sensor(sensor_name);
+    const auto* sensor = curr_ctx().get_sensor(sensor_name);
 
     if (sensor == nullptr) {
         throw parse_error("no such sensor");
@@ -267,10 +268,10 @@ Expr operator==(Expr a, Expr b)
 float Var::get_value() const
 {
     if (sensor_name == "time") {
-        return ctx().clock()->value();
+        return curr_ctx().clock().value();
     }
 
-    return ctx().get_sensor(sensor_name)->value(value_type);
+    return curr_ctx().get_sensor(sensor_name)->value(value_type);
 }
 
 //------------------------------------------------------------------------------

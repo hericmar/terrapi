@@ -6,18 +6,19 @@ using namespace terra;
 
 int main(int argc, char** argv)
 {
-    std::string config_path = "/etc/terrapi/config.toml";
+    std::string config_path = DEFAULT_CONFIG_PATH;
     if (argc >= 2) {
         config_path = argv[1];
     }
 
     const auto maybe_config = Config::from_file(config_path.c_str());
     if (!maybe_config) {
-        log_message("fatal", "unable to load config from" + config_path);
+        log_message(FATAL, "unable to load config from" + config_path);
         return 1;
     }
 
-    Context::create(*maybe_config);
+    auto* ctx = Context::create(*maybe_config);
+    ctx->run();
 
     return 0;
 }

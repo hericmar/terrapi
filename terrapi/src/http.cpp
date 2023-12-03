@@ -134,7 +134,7 @@ bool HttpClient::make_request(const char* method, const std::string& url, const 
 
         CURLcode result = curl_easy_perform(curl);
         if (result != CURLE_OK) {
-            log_message("error", "curl failed: " + std::string(curl_easy_strerror(result)));
+            log_message(ERR, "curl failed: " + std::string(curl_easy_strerror(result)));
             curl_result = false;
         }
 
@@ -142,7 +142,7 @@ bool HttpClient::make_request(const char* method, const std::string& url, const 
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
         if ((http_code - 200) > 99) {
-            log_message("error", "HTTP request to " + url + " failed with code " + std::to_string(http_code));
+            log_message(ERR, "HTTP request to " + url + " failed with code " + std::to_string(http_code));
             curl_result = false;
         }
 
@@ -150,7 +150,7 @@ bool HttpClient::make_request(const char* method, const std::string& url, const 
 
         curl_slist_free_all(headers);
     } else {
-        log_message("error", "cannot initialize CURL, no data will be loaded to the server");
+        log_message(ERR, "cannot initialize CURL, no data will be loaded to the server");
         curl_result = false;
     }
 

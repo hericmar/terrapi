@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -38,7 +39,7 @@ public:
     const std::map<ValueType, Value>& measured_values() { return values; }
 
 protected:
-    int                        gpio;
+    int                        gpio = -1;
     std::map<ValueType, Value> values;
 };
 
@@ -94,17 +95,18 @@ private:
 
 //----------------------------------------------------------------------------//
 
-using CreateSensorFn  = std::function<Sensor*(int)>;
-using CreateSensorMap = std::map<std::string, CreateSensorFn>;
+// Sensor factory
+
+using CreateSensorFn = std::function<std::unique_ptr<Sensor>(int)>;
 
 /// Caller takes the ownership.
 template <typename T>
-Sensor* create_sensor(int gpio)
+auto create_sensor(int gpio)
 {
-    return new T(gpio);
+    return std::make_unique<T>(gpio);
 }
 
-inline static CreateSensorMap sensor_types = {
+inline static std::map<std::string, CreateSensorFn> sensor_factory = {
     { "DHT11", create_sensor<DHT11> },
     { "Signal", create_sensor<Signal> },
     { "Dummy", create_sensor<DummySensor> }

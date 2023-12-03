@@ -4,7 +4,7 @@
 
 #include "logger.h"
 
-#define RETURN_EMPTY(message) log_message("fatal", message); return std::nullopt
+#define RETURN_EMPTY(message) log_message(FATAL, message); return std::nullopt
 
 namespace terra
 {
@@ -86,7 +86,7 @@ std::optional<SensorConfig> parse_sensor_config(std::string name, const toml::ta
     }
 
     config.sensor_type = table["type"].ref<std::string>();
-    if (sensor_types.count(config.sensor_type) == 0) {
+    if (sensor_factory.count(config.sensor_type) == 0) {
         RETURN_EMPTY("unknown sensor type " + config.sensor_type);
     }
 
@@ -161,11 +161,11 @@ std::optional<Config> parse_config(const toml::table& table)
             if (auto maybe_sensor = parse_sensor_config(name, *value.as_table())) {
                 config.sensors.push_back(*maybe_sensor);
             } else {
-                log_message("error", "unable to process sensor config");
+                log_message(ERR, "unable to process sensor config");
             }
         }
     } else {
-        log_message("warn", "no sensors specified");
+        log_message(WARN, "no sensors specified");
     }
 
     if (const toml::table* switches = table["switch"].as_table()) {
@@ -174,11 +174,11 @@ std::optional<Config> parse_config(const toml::table& table)
             if (auto maybe_switch = parse_switch_config(name, *value.as_table())) {
                 config.switches.push_back(*maybe_switch);
             } else {
-                log_message("error", "unable to process switch config");
+                log_message(ERR, "unable to process switch config");
             }
         }
     } else {
-        log_message("warn", "no switches specified");
+        log_message(WARN, "no switches specified");
     }
 
     return config;
@@ -188,8 +188,7 @@ std::optional<Config> Config::from_file(const char* path)
 {
     std::ifstream t(path);
     if (!t.good()) {
-        log_message("fatal", "cannot open file " + std::string(path));
-        return std::nullopt;
+        RETURN_EMPTY("cannot open file " + std::string(path));
     }
 
     std::string str((std::istreambuf_iterator<char>(t)),
@@ -215,9 +214,7 @@ std::optional<Config> Config::from_str(const char* str)
     catch (const toml::parse_error& err) {
         std::stringstream stream;
         stream << err;
-        log_message("fatal", "config parsing failed: " + stream.str());
-
-        return std::nullopt;
+        RETURN_EMPTY("config parsing failed: " + stream.str());
     }
 }
 }

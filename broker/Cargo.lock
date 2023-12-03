@@ -317,27 +317,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "broker"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-files",
- "actix-web",
- "chrono",
- "clap",
- "diesel",
- "diesel_migrations",
- "dotenv",
- "env_logger",
- "envy",
- "r2d2",
- "rand",
- "serde",
- "serde_json",
- "toml 0.7.2",
-]
-
-[[package]]
 name = "brotli"
 version = "3.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1447,6 +1426,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be55cf8942feac5c765c2c993422806843c9a9a45d4d5c407ad6dd2ea95eb9b6"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "terrapi-broker"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-files",
+ "actix-web",
+ "chrono",
+ "clap",
+ "diesel",
+ "diesel_migrations",
+ "dotenv",
+ "env_logger",
+ "envy",
+ "r2d2",
+ "rand",
+ "serde",
+ "serde_json",
+ "toml 0.7.2",
 ]
 
 [[package]]

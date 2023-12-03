@@ -20,7 +20,7 @@ terra::Config create_test_config()
             1000 / 1000,
             2000 / 1000
         },
-        // SwitchConfig{"lights", 1, "09:00 < time & time < 20:12"}
+        SwitchConfig{"lights", 1, "09:00 < time & time < 20:12"}
     };
     config.switches = switches;
 

@@ -12,7 +12,7 @@ namespace terra
 Value Sensor::value(ValueType type)
 {
     if (values.count(type) == 0) {
-        log_message("error", "invalid value");
+        log_message(ERR, "invalid value");
 
         return 0;
     }
@@ -22,7 +22,7 @@ Value Sensor::value(ValueType type)
 
 void Sensor::force_value(ValueType type, float value)
 {
-    log_message("info", "forcing value");
+    log_message(INFO, "forcing value");
     values[type] = value;
 }
 
@@ -93,12 +93,12 @@ void DHT11::measure()
         values[ValueType_Temperature] = c;
         values[ValueType_Humidity]    = h;
 
-        log_message("trace", "temperature: " + std::to_string(c));
-        log_message("trace", "humidity: " + std::to_string(h));
+        log_message(TRACE, "temperature: " + std::to_string(c));
+        log_message(TRACE, "humidity: " + std::to_string(h));
     }
     else
     {
-        log_message("error", "DHT11: data not good, skip.");
+        log_message(ERR, "DHT11: data not good, skip.");
     }
 }
 
@@ -110,7 +110,7 @@ void Signal::measure()
     // printf("GPIO#%d %d\n", gpio, liquid_level);
     values[ValueType_Signal] = liquid_level;
 
-    log_message("trace", "signal: " + std::to_string(liquid_level));
+    log_message(TRACE, "signal: " + std::to_string(liquid_level));
 }
 
 void Clock::measure()

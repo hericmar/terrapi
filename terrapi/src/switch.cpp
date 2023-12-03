@@ -62,7 +62,7 @@ bool Switch::is_on_high() const
 void Switch::switch_on()
 {
     if (state == false) {
-        log_message("trace", "switching ON switch " + config->name);
+        log_message(TRACE, "switching ON switch " + config->name);
 
         write_on();
         state = true;
@@ -72,7 +72,7 @@ void Switch::switch_on()
 void Switch::switch_off()
 {
     if (state == true) {
-        log_message("trace", "switching OFF switch " + config->name);
+        log_message(TRACE, "switching OFF switch " + config->name);
 
         write_off();
         state = false;
@@ -81,7 +81,7 @@ void Switch::switch_off()
 
 void Switch::write_on()
 {
-    log_message("trace", "switching switch " + config->name + " to HIGH");
+    log_message(TRACE, "switching switch " + config->name + " to HIGH");
 
     digitalWrite(config->gpio, HIGH);
     is_high = true;
@@ -89,7 +89,7 @@ void Switch::write_on()
 
 void Switch::write_off()
 {
-    log_message("trace", "switching switch " + config->name + " to LOW");
+    log_message(TRACE, "switching switch " + config->name + " to LOW");
 
     digitalWrite(config->gpio, LOW);
     is_high = false;

@@ -9,16 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/target/bin)
 include_directories(lib/toml++)
 include_directories(lib/wiringPi/include)
 
-if (WIN32)
-    set(CURL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/lib/curl/windows/include")
-    set(CURL_LIBRARIES "${CMAKE_SOURCE_DIR}/lib/curl/windows/lib/LIBCURL.lib")
-    set(CURL_VERSION_STRING 7.84.0)
-
-    include_directories(lib/curl/windows/include)
-    link_directories(lib/curl/windows/lib)
-endif()
-
-find_package(CURL)
+find_package(CURL REQUIRED)
 
 ################################################################################
 
@@ -61,7 +52,16 @@ add_executable(terrapi_test
 target_compile_definitions(terrapi_test PRIVATE
         TERRAPI_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 target_include_directories(terrapi_test PRIVATE
-        include
-        src
         lib/doctest)
 target_link_libraries(terrapi_test PUBLIC "${CURL_LIBRARIES}")
+
+# Test client
+add_executable(terrapi_test_client
+		${TERRAPI_SOURCE}
+		test/lib/wiringPi.c
+		test/terrapi/common.cpp
+		test/terrapi_test_client/main.cpp)
+
+target_include_directories(terrapi_test_client PRIVATE
+		test/terrapi)
+target_link_libraries(terrapi_test_client PUBLIC "${CURL_LIBRARIES}")

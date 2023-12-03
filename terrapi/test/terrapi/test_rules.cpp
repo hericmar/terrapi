@@ -35,13 +35,13 @@ TEST_CASE("Can update given expression")
 {
     Context::create(create_test_config());
 
-    auto* sensor_dht11 = (DummySensor*) ctx().get_sensor("dht11");
+    auto* sensor_dht11 = (DummySensor*) curr_ctx().get_sensor("dht11");
     REQUIRE(sensor_dht11);
 
-    auto* sensor_water = (DummySensor*) ctx().get_sensor("water");
+    auto* sensor_water = (DummySensor*) curr_ctx().get_sensor("water");
     REQUIRE(sensor_water);
 
-    auto* humidifier = ctx().get_switch("humidifier");
+    auto* humidifier = curr_ctx().get_switch("humidifier");
 
     {
         // only one rule is valid
@@ -49,7 +49,7 @@ TEST_CASE("Can update given expression")
         sensor_dht11->force_value(ValueType_Humidity, 50.0f);
         sensor_dht11->force_value(ValueType_Temperature, 30.0f);
 
-        ctx().tick();
+        curr_ctx().tick();
 
         REQUIRE(!humidifier->is_on());
     }
@@ -59,7 +59,7 @@ TEST_CASE("Can update given expression")
         sensor_dht11->force_value(ValueType_Humidity, 90.0f);
         sensor_dht11->force_value(ValueType_Temperature, 20.0f);
 
-        ctx().tick();
+        curr_ctx().tick();
 
         REQUIRE(!humidifier->is_on());
     }
@@ -70,18 +70,18 @@ TEST_CASE("Can update given expression")
         sensor_dht11->force_value(ValueType_Temperature, 20.0f);
         sensor_water->force_value(ValueType_Signal, 1.0f);
 
-        ctx().tick();
+        curr_ctx().tick();
 
         REQUIRE(humidifier->is_on());
     }
     {
-        auto* lights = ctx().get_switch("lights");
+        auto* lights = curr_ctx().get_switch("lights");
 
         {
             // inactive time
 
             auto time = parse_time_from_str("04:00").value();
-            ctx().clock()->force_value(time);
+            curr_ctx().clock().force_value(time);
 
             // ctx().tick();
             lights->update(time);
@@ -92,7 +92,7 @@ TEST_CASE("Can update given expression")
             // active time
 
             auto time = parse_time_from_str("14:00").value();
-            ctx().clock()->force_value(time);
+            curr_ctx().clock().force_value(time);
 
             // ctx().tick();
             lights->update(time);
@@ -103,7 +103,7 @@ TEST_CASE("Can update given expression")
             // inactive time
 
             auto time = parse_time_from_str("23:30").value();
-            ctx().clock()->force_value(time);
+            curr_ctx().clock().force_value(time);
 
             // ctx().tick();
             lights->update(time);
