@@ -8,8 +8,8 @@ struct SwitchConfig;
 
 enum SwitchState
 {
-    SwitchOff = 0,
-    SwitchOn  = 1,
+    SWITCH_OFF = 0,
+    SWITCH_ON  = 1,
 };
 
 class Switch final
@@ -40,7 +40,7 @@ private:
 
     Expr rule;
 
-    SwitchState state = SwitchOff;
+    SwitchState state = SWITCH_OFF;
 
     bool oscillate   = false;
     bool is_high     = false;

@@ -4,17 +4,14 @@
 #include <string>
 #include <vector>
 
-#include "datetime.h"
-#include "expr.h"
-
 inline const char* DEFAULT_CONFIG_PATH = "/etc/terrapi/config.toml";
 
 namespace terra
 {
 struct EnvironmentConfig
 {
-    Time     day_from;
-    Time     day_to;
+    uint64_t day_from;
+    uint64_t day_to;
     /// in milliseconds
     unsigned measure_step;
     /// in milliseconds

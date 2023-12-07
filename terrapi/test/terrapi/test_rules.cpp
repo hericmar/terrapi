@@ -3,9 +3,9 @@
 #include "doctest/doctest.h"
 
 #include "core/core.h"
-#include "datetime.h"
-#include "expr.h"
-#include "switch.h"
+#include "core/expr.h"
+#include "core/switch.h"
+#include "utils.h"
 
 #include "common.h"
 
@@ -46,8 +46,8 @@ TEST_CASE("Can update given expression")
     {
         // only one rule is valid
 
-        sensor_dht11->force_value(ValueType_Humidity, 50.0f);
-        sensor_dht11->force_value(ValueType_Temperature, 30.0f);
+        sensor_dht11->force_value(HUMIDITY, 50.0f);
+        sensor_dht11->force_value(TEMPERATURE, 30.0f);
 
         humidifier->update(0);
 
@@ -56,8 +56,8 @@ TEST_CASE("Can update given expression")
     {
         // only one rule is valid
 
-        sensor_dht11->force_value(ValueType_Humidity, 90.0f);
-        sensor_dht11->force_value(ValueType_Temperature, 20.0f);
+        sensor_dht11->force_value(HUMIDITY, 90.0f);
+        sensor_dht11->force_value(TEMPERATURE, 20.0f);
 
         humidifier->update(0);
 
@@ -66,9 +66,9 @@ TEST_CASE("Can update given expression")
     {
         // both rules are valid
 
-        sensor_dht11->force_value(ValueType_Humidity, 50.0f);
-        sensor_dht11->force_value(ValueType_Temperature, 20.0f);
-        sensor_water->force_value(ValueType_Signal, 1.0f);
+        sensor_dht11->force_value(HUMIDITY, 50.0f);
+        sensor_dht11->force_value(TEMPERATURE, 20.0f);
+        sensor_water->force_value(SIGNAL, 1.0f);
 
         humidifier->update(0);
 

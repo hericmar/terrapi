@@ -29,7 +29,7 @@ void Switch::update(uint64_t time)
 
     if (new_state) {
         // first switch
-        if (state == SwitchOff && oscillate) {
+        if (state == SWITCH_OFF && oscillate) {
             next_toggle = time + config->oscillation_low;
         }
 
@@ -38,7 +38,7 @@ void Switch::update(uint64_t time)
         switch_off();
     }
 
-    if (state == SwitchOn && oscillate) {
+    if (state == SWITCH_ON && oscillate) {
         // Is already on, check if it's time to toggle.
         if (time >= next_toggle) {
             // toggle
@@ -69,21 +69,21 @@ bool Switch::is_on_high() const
 
 void Switch::switch_on()
 {
-    if (state == SwitchOff) {
+    if (state == SWITCH_OFF) {
         log_message(TRACE, "switching ON switch " + config->name);
 
         write_on();
-        state = SwitchOn;
+        state = SWITCH_ON;
     }
 }
 
 void Switch::switch_off()
 {
-    if (state == SwitchOn) {
+    if (state == SWITCH_ON) {
         log_message(TRACE, "switching OFF switch " + config->name);
 
         write_off();
-        state = SwitchOff;
+        state = SWITCH_OFF;
     }
 }
 

@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 
-#include "datetime.h"
-
 namespace terra
 {
 using Value = float;
@@ -15,18 +13,18 @@ using Value = float;
 /// Insert new value types at the end of the enum and update the map value_type_to_str.
 enum ValueType
 {
-    ValueType_Humidity = 0,
-    ValueType_Signal,
-    ValueType_Temperature,
-    ValueType_Time,
-    ValueType_None,
+    HUMIDITY = 0,
+    SIGNAL,
+    TEMPERATURE,
+    TIME,
+    NONE,
 };
 
 inline static const std::map<std::string, ValueType> value_type_to_str = {
-    { "humidity", ValueType_Humidity },
-    { "signal", ValueType_Signal },
-    { "temperature", ValueType_Temperature },
-    { "time", ValueType_Time },
+    { "humidity", HUMIDITY },
+    { "signal", SIGNAL },
+    { "temperature", TEMPERATURE },
+    { "time", TIME },
 };
 
 class Sensor
@@ -48,39 +46,14 @@ protected:
 
 using SensorMap = std::map<std::string, std::unique_ptr<Sensor>>;
 
-class DHT11 : public Sensor
-{
-public:
-    DHT11(int gpio)
-    {
-        this->gpio = gpio;
-        values[ValueType_Humidity];
-        values[ValueType_Temperature];
-    }
-
-    void measure() override;
-};
-
-class Signal : public Sensor
-{
-public:
-    Signal(int gpio)
-    {
-        this->gpio = gpio;
-        values[ValueType_Signal];
-    }
-
-    void measure() override;
-};
-
 class DummySensor : public Sensor
 {
 public:
-    DummySensor(int gpio)
+    explicit DummySensor(int gpio)
     {
-        values[ValueType_Humidity];
-        values[ValueType_Signal];
-        values[ValueType_Temperature];
+        values[HUMIDITY];
+        values[SIGNAL];
+        values[TEMPERATURE];
     }
 };
 
@@ -92,7 +65,7 @@ class Clock : public Sensor
 public:
     Clock()
     {
-        values[ValueType_Time];
+        values[TIME];
     }
 
     void measure() override;
@@ -102,29 +75,10 @@ public:
     void force_value(uint64_t value)
     {
         m_value = value;
-        values[ValueType_Time] = (float) m_value;
+        values[TIME] = (float) m_value;
     }
 
 private:
     uint64_t m_value = 0;
-};
-
-//----------------------------------------------------------------------------//
-
-// Sensor factory
-
-using CreateSensorFn = std::function<std::unique_ptr<Sensor>(int)>;
-
-/// Caller takes the ownership.
-template <typename T>
-auto create_sensor(int gpio)
-{
-    return std::make_unique<T>(gpio);
-}
-
-inline static std::map<std::string, CreateSensorFn> sensor_factory = {
-    { "DHT11", create_sensor<DHT11> },
-    { "Signal", create_sensor<Signal> },
-    { "Dummy", create_sensor<DummySensor> }
 };
 }

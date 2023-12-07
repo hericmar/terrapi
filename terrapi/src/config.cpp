@@ -2,7 +2,9 @@
 
 #include "toml.hpp"
 
+#include "sensor/factory.h"
 #include "logger.h"
+#include "utils.h"
 
 #define RETURN_EMPTY(message) log_message(FATAL, message); return std::nullopt
 

@@ -6,7 +6,6 @@
 
 #include "core/context.h"
 #include "core/sensor.h"
-#include "datetime.h"
 #include "logger.h"
 #include "utils.h"
 #include "core/core.h"
@@ -212,8 +211,6 @@ Expr number(float num)
 
 Expr variable(const SensorMap& sensors, const std::string& identifier)
 {
-    auto& ctx = core().context();
-
     auto name_pq_pair = split(identifier, ".");
     if (identifier == "time") {
         name_pq_pair = { "time", "time" };

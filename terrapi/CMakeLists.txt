@@ -17,15 +17,17 @@ set(TERRAPI_SOURCE
 		src/core/bus.cpp
 		src/core/context.cpp
 		src/core/core.cpp
+		src/core/expr.cpp
         src/core/sensor.cpp
+		src/core/switch.cpp
         src/core/timer.cpp
+        src/sensor/dht11.cpp
+        src/sensor/signal.cpp
         src/config.cpp
-        src/datetime.cpp
-        src/expr.cpp
         # src/http.cpp
         src/logger.cpp
-        src/switch.cpp
-        src/terra.cpp)
+        src/terra.cpp
+        src/utils.cpp)
 
 add_executable(terrapi ${TERRAPI_SOURCE} src/main.cpp)
 

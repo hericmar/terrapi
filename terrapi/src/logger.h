@@ -3,11 +3,14 @@
 
 namespace terra
 {
-const int TRACE = 0;
-const int INFO  = 1;
-const int WARN  = 2;
-const int ERR   = 3;
-const int FATAL = 4;
+enum LogLevel
+{
+    TRACE,
+    INFO,
+    WARN,
+    ERR,
+    FATAL,
+};
 
 void log_message(int level, const std::string& message);
 void log_message(int level, const std::string_view& message);

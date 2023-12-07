@@ -4,7 +4,7 @@
 #include "doctest/doctest.h"
 
 #include "core/core.h"
-#include "switch.h"
+#include "core/switch.h"
 
 #include "common.h"
 
@@ -40,9 +40,9 @@ TEST_CASE("Test switch oscillation")
     REQUIRE(sensor_water);
 
     // make humidifier switch active
-    sensor_dht11->force_value(ValueType_Humidity, 50.0f);
-    sensor_dht11->force_value(ValueType_Temperature, 20.0f);
-    sensor_water->force_value(ValueType_Signal, 1.0f);
+    sensor_dht11->force_value(HUMIDITY, 50.0f);
+    sensor_dht11->force_value(TEMPERATURE, 20.0f);
+    sensor_water->force_value(SIGNAL, 1.0f);
 
     auto* humidifier = core().context().get_switch("humidifier");
 

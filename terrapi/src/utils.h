@@ -1,7 +1,15 @@
 #pragma once
 
 #include <charconv>
+#include <optional>
+#include <ctime>
+#include <cctype>
+#include <string>
+#include <vector>
+#include <iomanip>
 
+namespace terra
+{
 inline bool is_str_literal(int c)
 {
     return std::isalnum(c) || c == '.';
@@ -27,4 +35,9 @@ inline std::vector<std::string> split(const std::string& str, const std::string&
     result.push_back(s);
 
     return result;
+}
+
+std::optional<uint64_t> parse_time_from_str(const std::string& str, const char* format = "%H:%M");
+
+uint64_t to_seconds(const std::tm& tm);
 }

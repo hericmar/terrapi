@@ -1,12 +1,8 @@
-#include "datetime.h"
-
-#include <iomanip>
-#include <sstream>
-#include <string>
+#include "utils.h"
 
 namespace terra
 {
-std::optional<Time> parse_time_from_str(const std::string& str, const char* format)
+std::optional<uint64_t> parse_time_from_str(const std::string& str, const char* format)
 {
     std::tm result;
 
@@ -23,7 +19,7 @@ std::optional<Time> parse_time_from_str(const std::string& str, const char* form
     return to_seconds(result);
 }
 
-Time to_seconds(const std::tm& tm)
+uint64_t to_seconds(const std::tm& tm)
 {
     return tm.tm_hour * 3600 + tm.tm_min * 60 + tm.tm_sec;
 }

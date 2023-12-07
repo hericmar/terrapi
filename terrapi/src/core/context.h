@@ -1,11 +1,12 @@
 #pragma once
 
+#include <map>
 #include <memory>
-
-#include "config.h"
 
 namespace terra
 {
+class Clock;
+class Config;
 class Sensor;
 class Switch;
 
