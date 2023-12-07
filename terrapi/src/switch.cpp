@@ -4,6 +4,7 @@
 
 #include "config.h"
 #include "logger.h"
+#include "core/core.h"
 
 namespace terra
 {
@@ -20,13 +21,15 @@ Switch::Switch(SwitchConfig* config, const Expr& expr)
     }
 }
 
-void Switch::update(Time time)
+void Switch::update(uint64_t time)
 {
-    const auto new_state = rule->evaluate();
+    const auto previous_state = state;
+    // Test if the switch should be on or off.
+    const auto new_state = SwitchState(rule->evaluate());
 
     if (new_state) {
         // first switch
-        if (state == false && oscillate) {
+        if (state == SwitchOff && oscillate) {
             next_toggle = time + config->oscillation_low;
         }
 
@@ -35,7 +38,8 @@ void Switch::update(Time time)
         switch_off();
     }
 
-    if (state && oscillate) {
+    if (state == SwitchOn && oscillate) {
+        // Is already on, check if it's time to toggle.
         if (time >= next_toggle) {
             // toggle
             if (is_high) {
@@ -46,6 +50,10 @@ void Switch::update(Time time)
                 next_toggle = next_toggle + config->oscillation_high;
             }
         }
+    }
+
+    if (previous_state != new_state) {
+        core().record_event(EventSwitch{ config->name.c_str(), time, new_state });
     }
 }
 
@@ -61,21 +69,21 @@ bool Switch::is_on_high() const
 
 void Switch::switch_on()
 {
-    if (state == false) {
+    if (state == SwitchOff) {
         log_message(TRACE, "switching ON switch " + config->name);
 
         write_on();
-        state = true;
+        state = SwitchOn;
     }
 }
 
 void Switch::switch_off()
 {
-    if (state == true) {
+    if (state == SwitchOn) {
         log_message(TRACE, "switching OFF switch " + config->name);
 
         write_off();
-        state = false;
+        state = SwitchOff;
     }
 }
 

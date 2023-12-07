@@ -8,7 +8,7 @@
 #include <cassert>
 #include <sstream>
 
-#include "sensor.h"
+#include "core/sensor.h"
 
 namespace terra
 {
@@ -104,7 +104,7 @@ public:
 
     /// @pre Context is initialized
     /// @throws parse_error
-    static std::optional<Expr> from(const std::string& str);
+    static std::optional<Expr> from(const SensorMap& sensors, const std::string& str);
 
     // implicitly convertible to the internal shared ptr, implement operator->
     // that means you can call methods directly via `expr`, e.g. `e->simplify()`
@@ -127,7 +127,7 @@ private:
 
 // builders
 Expr number(float num);
-Expr variable(const std::string& identifier);
+Expr variable(const SensorMap& sensors, const std::string& identifier);
 Expr operator<(Expr a, Expr b);
 Expr operator|(Expr a, Expr b);
 Expr operator&(Expr a, Expr b);
@@ -147,19 +147,16 @@ private:
 
 struct Var : public ExprBase
 {
-    Var(std::string sensor_name)
-        : sensor_name(std::move(sensor_name)) {}
-
     /// \pre Sensor with \p sensor_name with \p physical_quantity must exists.
-    Var(std::string sensor_name, ValueType value_type)
-        : sensor_name(std::move(sensor_name)), value_type(value_type) {}
+    Var(Sensor& sensor, ValueType value_type)
+        : sensor(sensor), value_type(value_type) {}
 
     bool evaluate() const override { return false; }
     float get_value() const override;
 
 private:
-    std::string sensor_name;
-    ValueType   value_type;
+    Sensor&   sensor;
+    ValueType value_type;
 };
 
 struct LessThan : public ExprBase

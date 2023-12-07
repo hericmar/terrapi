@@ -12,11 +12,13 @@ namespace terra
 {
 using Value = float;
 
+/// Insert new value types at the end of the enum and update the map value_type_to_str.
 enum ValueType
 {
     ValueType_Humidity = 0,
     ValueType_Signal,
     ValueType_Temperature,
+    ValueType_Time,
     ValueType_None,
 };
 
@@ -24,6 +26,7 @@ inline static const std::map<std::string, ValueType> value_type_to_str = {
     { "humidity", ValueType_Humidity },
     { "signal", ValueType_Signal },
     { "temperature", ValueType_Temperature },
+    { "time", ValueType_Time },
 };
 
 class Sensor
@@ -42,6 +45,8 @@ protected:
     int                        gpio = -1;
     std::map<ValueType, Value> values;
 };
+
+using SensorMap = std::map<std::string, std::unique_ptr<Sensor>>;
 
 class DHT11 : public Sensor
 {
@@ -79,18 +84,29 @@ public:
     }
 };
 
-/// Low resolution clock!
-class Clock
+/// Logical clock.
+///
+/// Has time value in seconds, with 0 being the start of the day.
+class Clock : public Sensor
 {
 public:
-    void measure();
+    Clock()
+    {
+        values[ValueType_Time];
+    }
 
-    Time value() const { return m_value; }
+    void measure() override;
 
-    void force_value(Time value) { m_value = value; }
+    uint64_t value() const { return m_value; }
+
+    void force_value(uint64_t value)
+    {
+        m_value = value;
+        values[ValueType_Time] = (float) m_value;
+    }
 
 private:
-    Time m_value;
+    uint64_t m_value = 0;
 };
 
 //----------------------------------------------------------------------------//

@@ -22,7 +22,7 @@ Value Sensor::value(ValueType type)
 
 void Sensor::force_value(ValueType type, float value)
 {
-    log_message(INFO, "forcing value");
+    log_message(INFO, "forcing value to " + std::to_string(value));
     values[type] = value;
 }
 
@@ -119,5 +119,6 @@ void Clock::measure()
     std::tm* now = std::localtime(&t);
 
     m_value = to_seconds(*now);
+    values[ValueType_Time] = (float) m_value;
 }
 }

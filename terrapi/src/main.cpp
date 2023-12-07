@@ -1,24 +1,6 @@
-#include "config.h"
-#include "context.h"
-#include "logger.h"
-
-using namespace terra;
+#include "terra.h"
 
 int main(int argc, char** argv)
 {
-    std::string config_path = DEFAULT_CONFIG_PATH;
-    if (argc >= 2) {
-        config_path = argv[1];
-    }
-
-    const auto maybe_config = Config::from_file(config_path.c_str());
-    if (!maybe_config) {
-        log_message(FATAL, "unable to load config from" + config_path);
-        return 1;
-    }
-
-    auto* ctx = Context::create(*maybe_config);
-    ctx->run();
-
-    return 0;
+    return terra::init(argc, argv);
 }

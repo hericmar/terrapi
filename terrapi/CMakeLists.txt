@@ -14,14 +14,18 @@ find_package(CURL REQUIRED)
 ################################################################################
 
 set(TERRAPI_SOURCE
+		src/core/bus.cpp
+		src/core/context.cpp
+		src/core/core.cpp
+        src/core/sensor.cpp
+        src/core/timer.cpp
         src/config.cpp
-        src/context.cpp
         src/datetime.cpp
         src/expr.cpp
-        src/http.cpp
+        # src/http.cpp
         src/logger.cpp
-        src/sensor.cpp
-        src/switch.cpp)
+        src/switch.cpp
+        src/terra.cpp)
 
 add_executable(terrapi ${TERRAPI_SOURCE} src/main.cpp)
 

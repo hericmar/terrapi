@@ -7,7 +7,7 @@
 #include "datetime.h"
 #include "expr.h"
 
-const auto DEFAULT_CONFIG_PATH = "/etc/terrapi/config.toml";
+inline const char* DEFAULT_CONFIG_PATH = "/etc/terrapi/config.toml";
 
 namespace terra
 {

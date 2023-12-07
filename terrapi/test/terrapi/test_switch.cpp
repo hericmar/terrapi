@@ -3,7 +3,7 @@
 
 #include "doctest/doctest.h"
 
-#include "context.h"
+#include "core/core.h"
 #include "switch.h"
 
 #include "common.h"
@@ -21,7 +21,7 @@ std::size_t now_ms()
 std::size_t tick()
 {
     auto t1 = now_ms();
-    curr_ctx().tick();
+    core().tick();
     auto t2 = now_ms();
 
     return t2 - t1;
@@ -31,12 +31,12 @@ TEST_CASE("Test switch oscillation")
 {
     using namespace std::chrono_literals;
 
-    Context::create(create_test_config());
+    Core::create(create_test_config());
 
-    auto* sensor_dht11 = (DummySensor*) curr_ctx().get_sensor("dht11");
+    auto* sensor_dht11 = (DummySensor*) core().context().get_sensor("dht11");
     REQUIRE(sensor_dht11);
 
-    auto* sensor_water = (DummySensor*) curr_ctx().get_sensor("water");
+    auto* sensor_water = (DummySensor*) core().context().get_sensor("water");
     REQUIRE(sensor_water);
 
     // make humidifier switch active
@@ -44,7 +44,7 @@ TEST_CASE("Test switch oscillation")
     sensor_dht11->force_value(ValueType_Temperature, 20.0f);
     sensor_water->force_value(ValueType_Signal, 1.0f);
 
-    auto* humidifier = curr_ctx().get_switch("humidifier");
+    auto* humidifier = core().context().get_switch("humidifier");
 
     // at create_test_config
     auto high_ms = 1000;
@@ -72,7 +72,7 @@ TEST_CASE("Test switch oscillation")
         REQUIRE(!humidifier->is_on_high());
     }
     {
-        std::this_thread::sleep_for(1500ms);
+        std::this_thread::sleep_for(1000ms);
 
         tick();
         REQUIRE(humidifier->is_on());

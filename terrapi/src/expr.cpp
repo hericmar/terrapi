@@ -4,11 +4,12 @@
 #include <ios>
 #include <stack>
 
-#include "context.h"
+#include "core/context.h"
+#include "core/sensor.h"
 #include "datetime.h"
 #include "logger.h"
-#include "sensor.h"
 #include "utils.h"
+#include "core/core.h"
 
 namespace terra
 {
@@ -109,7 +110,7 @@ static void create_operator(std::vector<Expr>& expr_queue, Token token);
 //----------------------------------------------------------------------------//
 
 /// @throws parse_error
-Expr expr_from_impl(const std::string& str)
+Expr expr_from_impl(const SensorMap& sensors, const std::string& str)
 {
     Tokenizer t{str};
 
@@ -130,7 +131,7 @@ Expr expr_from_impl(const std::string& str)
             break;
         }
         case TokenID::Identifier: {
-            exprs_queue.push_back(variable(token.identifier));
+            exprs_queue.push_back(variable(sensors, token.identifier));
             break;
         }
         case TokenID::LParen: {
@@ -193,10 +194,10 @@ Expr expr_from_impl(const std::string& str)
     throw parse_error("! parse error ");
 }
 
-std::optional<Expr> Expr::from(const std::string& str)
+std::optional<Expr> Expr::from(const SensorMap& sensors, const std::string& str)
 {
     try {
-        return expr_from_impl(str);
+        return expr_from_impl(sensors, str);
     } catch (std::exception& ex) {
         log_message(ERR, ex.what());
 
@@ -209,14 +210,14 @@ Expr number(float num)
     return std::make_shared<Num>(num);
 }
 
-Expr variable(const std::string& identifier)
+Expr variable(const SensorMap& sensors, const std::string& identifier)
 {
-    if (identifier == "time") {
-        // value handled inside
-        return std::make_shared<Var>(identifier);
-    }
+    auto& ctx = core().context();
 
-    const auto name_pq_pair = split(identifier, ".");
+    auto name_pq_pair = split(identifier, ".");
+    if (identifier == "time") {
+        name_pq_pair = { "time", "time" };
+    }
 
     if (name_pq_pair.size() != 2) {
         throw parse_error("invalid format: expected sensor_name.physical_quantity");
@@ -230,17 +231,17 @@ Expr variable(const std::string& identifier)
 
     const auto value_type = value_type_to_str.at(name_pq_pair[1]);
 
-    const auto* sensor = curr_ctx().get_sensor(sensor_name);
-
-    if (sensor == nullptr) {
+    if (sensors.count(sensor_name) == 0) {
         throw parse_error("no such sensor");
     }
 
-    if (!sensor->measures_value(value_type)) {
+    auto& sensor = *sensors.at(sensor_name);
+
+    if (!sensor.measures_value(value_type)) {
         throw parse_error("invalid config: invalid rule");
     }
 
-    return std::make_shared<Var>(sensor_name, value_type);
+    return std::make_shared<Var>(sensor, value_type);
 }
 
 Expr operator<(Expr a, Expr b)
@@ -267,11 +268,7 @@ Expr operator==(Expr a, Expr b)
 
 float Var::get_value() const
 {
-    if (sensor_name == "time") {
-        return curr_ctx().clock().value();
-    }
-
-    return curr_ctx().get_sensor(sensor_name)->value(value_type);
+    return sensor.value(value_type);
 }
 
 //------------------------------------------------------------------------------

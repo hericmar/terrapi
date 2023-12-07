@@ -3,84 +3,46 @@
 #include <chrono>
 #include <thread>
 
+#include "core/core.h"
+#include "core/timer.h"
 #include "http.h"
 #include "logger.h"
-#include "record.h"
 #include "sensor.h"
 #include "switch.h"
 
-#define TICK_STEP_MS 100
-
 namespace terra
 {
-/// Singleton instance of the context.
-static Context* context = nullptr;
-
-class ContextData
+std::unique_ptr<Context> Context::create(const Config& config)
 {
-public:
+    auto ctx = std::make_unique<Context>();
 
+    ctx->sensors["time"] = std::make_unique<Clock>();
+    ctx->clock = (Clock*) ctx->sensors["time"].get();
 
-    Clock clock{};
-
-    std::map<std::string, std::unique_ptr<Sensor>> sensors;
-    std::map<std::string, Switch> switches;
-
-    std::vector<MeasurementData> measurements;
-    std::vector<EventData>       events;
-};
-
-Context::~Context()
-{
-    delete data;
-}
-
-Context* Context::create(const Config& config)
-{
-    if (context != nullptr) {
-        log_message(WARN, "recreating context");
-        delete context;
-    }
-
-    context = new Context();
-    context->config = config;
-
-    auto* self = new ContextData();
-    context->data = self;
-
-    for (const auto &sensor_config: context->config.sensors) {
-        self->sensors.insert({
+    for (const auto &sensor_config: config.sensors) {
+        ctx->sensors.insert({
             sensor_config.name,
             sensor_factory.at(sensor_config.sensor_type)(sensor_config.gpio)
         });
     }
 
-    for (const auto& switch_config : context->config.switches) {
-        const auto maybe_expr = Expr::from(switch_config.rule);
+    for (const auto& switch_config : config.switches) {
+        const auto maybe_expr = Expr::from(ctx->sensors, switch_config.rule);
         if (!maybe_expr) {
             log_message(ERR, "invalid rule for switch " + switch_config.name);
             continue;
         }
 
-        self->switches.insert({
+        ctx->switches.insert({
             switch_config.name,
             Switch((SwitchConfig*) &switch_config, *maybe_expr)
         });
     }
 
-    return context;
+    return ctx;
 }
 
-void Context::reset()
-{
-    const auto time_start = std::chrono::system_clock::now();
-    const auto time_start_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_start.time_since_epoch())
-            .count();
-
-    next_measure_time = time_start_ms;
-    next_publish_time = time_start_ms;
-}
-
+/*
 void Context::run()
 {
     HttpClient client(config.broker);
@@ -92,7 +54,9 @@ void Context::run()
         tick();
     }
 }
+ */
 
+/*
 void Context::tick()
 {
     data->clock.measure();
@@ -102,10 +66,13 @@ void Context::tick()
     const auto time_start = std::chrono::system_clock::now();
     const auto time_start_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_start.time_since_epoch()).count();
 
+    //
     if (time_start_ms >= next_measure_time) {
         measure(now, time_start_ms);
         next_measure_time += config.environment.measure_step;
     }
+    //
+    timer_measure.tick(now);
 
     update(now, time_start_ms);
 
@@ -126,50 +93,23 @@ void Context::tick()
         log_message(WARN, "tick step takes " + std::to_string(ms_elapsed));
     }
 }
-
-Clock& Context::clock() const
-{
-    return data->clock;
-}
+*/
 
 Sensor* Context::get_sensor(const std::string& name) const
 {
-    if (data->sensors.count(name) == 0) {
-        return nullptr;
-    }
+    assert(sensors.count(name));
 
-    return data->sensors.at(name).get();
+    return sensors.at(name).get();
 }
 
 Switch* Context::get_switch(const std::string& name) const
 {
-    if (data->switches.count(name) == 0) {
-        return nullptr;
-    }
+    assert(switches.count(name));
 
-    return &data->switches.at(name);
+    return (Switch*) &switches.at(name);
 }
 
-void Context::measure(Time now, uint64_t timestamp)
-{
-    const bool should_publish = now >= next_publish_time;
-
-    for (const auto& [name, sensor] : data->sensors) {
-        sensor->measure();
-
-        if (should_publish) {
-            for (const auto& [type, value] : sensor->measured_values()) {
-                data->measurements.push_back(MeasurementData{
-                    name.c_str(),
-                    value,
-                    (unsigned) type,
-                    timestamp / 1000
-                });
-            }
-        }
-    }
-}
-
+/*
 void Context::update(Time now, uint64_t timestamp)
 {
     for (auto& [name, s] : data->switches) {
@@ -186,7 +126,9 @@ void Context::update(Time now, uint64_t timestamp)
         }
     }
 }
+ */
 
+/*
 void Context::post_records()
 {
     HttpClient client(config.broker);
@@ -195,11 +137,5 @@ void Context::post_records()
     data->measurements.clear();
     data->events.clear();
 }
-
-Context& curr_ctx()
-{
-    assert(context != nullptr);
-
-    return *context;
-}
+ */
 }
