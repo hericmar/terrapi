@@ -27,7 +27,7 @@ std::unique_ptr<Context> Context::create(const Config& config)
     for (const auto& switch_config : config.switches) {
         const auto maybe_expr = Expr::from(ctx->sensors, switch_config.rule);
         if (!maybe_expr) {
-            log_message(ERR, "invalid rule for switch " + switch_config.name);
+            LOG(ERR, "invalid rule for switch '{}'", switch_config.name);
             continue;
         }
 

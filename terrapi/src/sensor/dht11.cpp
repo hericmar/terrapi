@@ -71,12 +71,12 @@ void DHT11::measure()
         values[TEMPERATURE] = c;
         values[HUMIDITY]    = h;
 
-        log_message(TRACE, "temperature: " + std::to_string(c));
-        log_message(TRACE, "humidity: " + std::to_string(h));
+        LOG(TRACE, "DHT11: temperature: {}", c);
+        LOG(TRACE, "DHT11: humidity: {}", h);
     }
     else
     {
-        log_message(ERR, "DHT11: data not good, skip.");
+        LOG(ERR, "DHT11: data not good, skip.");
     }
 }
 }

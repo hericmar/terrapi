@@ -13,13 +13,13 @@ int init(int argc, char** argv)
 
     auto maybe_config = Config::from_file(config_path);
     if (!maybe_config) {
-        log_message(FATAL, "unable to load config from" + std::string(config_path));
+        LOG(FATAL, "unable to load config from {}", config_path);
         return 1;
     }
 
     auto* core = Core::create(std::move(*maybe_config));
     if (!core) {
-        log_message(FATAL, "unable to create core");
+        LOG(FATAL, "unable to create core");
         return 1;
     }
 

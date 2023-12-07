@@ -12,6 +12,6 @@ void Signal::measure()
     // printf("GPIO#%d %d\n", gpio, liquid_level);
     values[SIGNAL] = liquid_level;
 
-    log_message(TRACE, "signal: " + std::to_string(liquid_level));
+    LOG(TRACE, "signal: {}", liquid_level);
 }
 }

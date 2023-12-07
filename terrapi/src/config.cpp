@@ -6,7 +6,7 @@
 #include "logger.h"
 #include "utils.h"
 
-#define RETURN_EMPTY(message) log_message(FATAL, message); return std::nullopt
+#define RETURN_EMPTY(message) LOG(FATAL, message); return std::nullopt
 
 namespace terra
 {
@@ -124,8 +124,8 @@ std::optional<SwitchConfig> parse_switch_config(std::string name, const toml::ta
         auto maybe_low = table["oscillation_low"].value<int>();
 
         if (!maybe_high.has_value() || !maybe_low.has_value()) {
-            config.oscillation_high = *maybe_high;
-            config.oscillation_low = *maybe_low;
+            config.oscillation_high_ms = *maybe_high;
+            config.oscillation_low_ms = *maybe_low;
         }
     }
 
@@ -163,11 +163,11 @@ std::optional<Config> parse_config(const toml::table& table)
             if (auto maybe_sensor = parse_sensor_config(name, *value.as_table())) {
                 config.sensors.push_back(*maybe_sensor);
             } else {
-                log_message(ERR, "unable to process sensor config");
+                LOG(ERR, "unable to process sensor config");
             }
         }
     } else {
-        log_message(WARN, "no sensors specified");
+        LOG(WARN, "no sensors specified");
     }
 
     if (const toml::table* switches = table["switch"].as_table()) {
@@ -176,11 +176,11 @@ std::optional<Config> parse_config(const toml::table& table)
             if (auto maybe_switch = parse_switch_config(name, *value.as_table())) {
                 config.switches.push_back(*maybe_switch);
             } else {
-                log_message(ERR, "unable to process switch config");
+                LOG(ERR, "unable to process switch config");
             }
         }
     } else {
-        log_message(WARN, "no switches specified");
+        LOG(WARN, "no switches specified");
     }
 
     return config;

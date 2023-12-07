@@ -34,7 +34,7 @@ Core::Core(Config config)
 Core *Core::create(Config config)
 {
     if (ker != nullptr) {
-        log_message(WARN, "recreating current context");
+        LOG(WARN, "recreating current context");
         delete ker;
         ker = nullptr;
     }
@@ -71,31 +71,30 @@ void Core::tick()
     }
 
     if (elapsed < TICK_STEP_MS) {
-        log_message(TRACE, "tick step takes " + std::to_string(elapsed) + " ms");
+        LOG(DEBUG, "tick step takes {} ms", std::to_string(elapsed));
         std::this_thread::sleep_for(std::chrono::milliseconds(TICK_STEP_MS - elapsed));
     }
 }
 
 //
 
-void measure()
+void measure(uint64_t now)
 {
-    log_message(TRACE, "measure");
+    LOG(TRACE, "measure");
 
     auto& ctx = core().context();
 
     for (auto& [name, sensor] : ctx.sensors) {
-        log_message(TRACE, "measuring " + name);
+        LOG(TRACE, "measuring '{}'", name);
         sensor->measure();
     }
 }
 
-void update()
+void update(uint64_t now_ms)
 {
-    log_message(TRACE, "update");
+    LOG(TRACE, "update");
 
     auto& ctx = core().context();
-    const auto now_ms = ctx.clock->value();
 
     for (auto& [name, s] : ctx.switches) {
         s.update(now_ms);
@@ -108,6 +107,27 @@ void Core::reset()
 
     timers.emplace_back(config.environment.measure_step, measure);
     timers.emplace_back(TICK_STEP_MS, update);
+    timers.emplace_back(config.environment.publish_step, [&](uint64_t now) {
+        LOG(TRACE, "publish");
+
+        for (const auto& [name, sensor] : ctx->sensors) {
+            // skip clock
+            if (sensor->measured_values().count(TIME)) {
+                continue;
+            }
+
+            for (const auto& [type, value] : sensor->measured_values()) {
+                bus.record(MeasurementRecord{
+                        name.c_str(),
+                        now,
+                        value,
+                        type,
+                });
+            }
+        }
+
+        // bus.publish();
+    });
 }
 
 void Core::record_event(EventType event)

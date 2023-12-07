@@ -68,9 +68,8 @@ public:
         values[TIME];
     }
 
+    /// Measure current time in seconds, based on the system TZ.
     void measure() override;
-
-    uint64_t value() const { return m_value; }
 
     void force_value(uint64_t value)
     {

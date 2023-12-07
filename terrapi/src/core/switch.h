@@ -19,7 +19,7 @@ public:
     Switch(SwitchConfig* config, const Expr& expr);
 
     /// called each tick
-    void update(uint64_t time);
+    void update(uint64_t now_ms);
 
     ///
     bool is_on() const;
@@ -44,6 +44,6 @@ private:
 
     bool oscillate   = false;
     bool is_high     = false;
-    uint64_t next_toggle = -1;
+    uint64_t next_toggle_ms = -1;
 };
 }

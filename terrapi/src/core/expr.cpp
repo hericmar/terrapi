@@ -8,7 +8,6 @@
 #include "core/sensor.h"
 #include "logger.h"
 #include "utils.h"
-#include "core/core.h"
 
 namespace terra
 {
@@ -198,7 +197,7 @@ std::optional<Expr> Expr::from(const SensorMap& sensors, const std::string& str)
     try {
         return expr_from_impl(sensors, str);
     } catch (std::exception& ex) {
-        log_message(ERR, ex.what());
+        LOG(ERR, ex.what());
 
         return std::nullopt;
     }

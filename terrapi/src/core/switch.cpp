@@ -14,14 +14,14 @@ Switch::Switch(SwitchConfig* config, const Expr& expr)
     pinMode(config->gpio, OUTPUT);
     write_off();
 
-    if (config->oscillation_high == -1 || config->oscillation_low == -1) {
+    if (config->oscillation_high_ms == -1 || config->oscillation_low_ms == -1) {
         oscillate = false;
     } else {
         oscillate = true;
     }
 }
 
-void Switch::update(uint64_t time)
+void Switch::update(uint64_t now_ms)
 {
     const auto previous_state = state;
     // Test if the switch should be on or off.
@@ -30,7 +30,7 @@ void Switch::update(uint64_t time)
     if (new_state) {
         // first switch
         if (state == SWITCH_OFF && oscillate) {
-            next_toggle = time + config->oscillation_low;
+            next_toggle_ms = now_ms + config->oscillation_low_ms;
         }
 
         switch_on();
@@ -40,20 +40,20 @@ void Switch::update(uint64_t time)
 
     if (state == SWITCH_ON && oscillate) {
         // Is already on, check if it's time to toggle.
-        if (time >= next_toggle) {
+        if (now_ms >= next_toggle_ms) {
             // toggle
             if (is_high) {
                 write_off();
-                next_toggle = next_toggle + config->oscillation_low;
+                next_toggle_ms = next_toggle_ms + config->oscillation_low_ms;
             } else {
                 write_on();
-                next_toggle = next_toggle + config->oscillation_high;
+                next_toggle_ms = next_toggle_ms + config->oscillation_high_ms;
             }
         }
     }
 
     if (previous_state != new_state) {
-        core().record_event(EventSwitch{ config->name.c_str(), time, new_state });
+        core().record_event(EventRecord{config->name.c_str(), now_ms, new_state });
     }
 }
 
@@ -70,7 +70,7 @@ bool Switch::is_on_high() const
 void Switch::switch_on()
 {
     if (state == SWITCH_OFF) {
-        log_message(TRACE, "switching ON switch " + config->name);
+        LOG(TRACE, "switching '{}' ON", config->name);
 
         write_on();
         state = SWITCH_ON;
@@ -80,7 +80,7 @@ void Switch::switch_on()
 void Switch::switch_off()
 {
     if (state == SWITCH_ON) {
-        log_message(TRACE, "switching OFF switch " + config->name);
+        LOG(TRACE, "switching '{}' OFF", config->name);
 
         write_off();
         state = SWITCH_OFF;
@@ -89,7 +89,7 @@ void Switch::switch_off()
 
 void Switch::write_on()
 {
-    log_message(TRACE, "switching switch " + config->name + " to HIGH");
+    LOG(TRACE, "switching '{}' to HIGH", config->name);
 
     digitalWrite(config->gpio, HIGH);
     is_high = true;
@@ -97,7 +97,7 @@ void Switch::write_on()
 
 void Switch::write_off()
 {
-    log_message(TRACE, "switching switch " + config->name + " to LOW");
+    LOG(TRACE, "switching '{}' to LOW", config->name);
 
     digitalWrite(config->gpio, LOW);
     is_high = false;

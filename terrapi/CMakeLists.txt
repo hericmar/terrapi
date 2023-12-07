@@ -1,15 +1,18 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(terrapi VERSION 0.2.0)
+project(terrapi VERSION 1.0.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17 REQUIRED)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/target/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/target/bin)
 
+include_directories(lib/fmt/include)
 include_directories(lib/toml++)
 include_directories(lib/wiringPi/include)
 
 find_package(CURL REQUIRED)
+add_subdirectory(lib/fmt)
+link_libraries(fmt)
 
 ################################################################################
 
@@ -24,7 +27,7 @@ set(TERRAPI_SOURCE
         src/sensor/dht11.cpp
         src/sensor/signal.cpp
         src/config.cpp
-        # src/http.cpp
+        src/http.cpp
         src/logger.cpp
         src/terra.cpp
         src/utils.cpp)

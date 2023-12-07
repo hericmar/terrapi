@@ -5,7 +5,8 @@
 
 namespace terra
 {
-using CallbackFn = void (*)();
+/// Now is a parameter to callback functions.
+using CallbackFn = std::function<void(uint64_t)>;
 
 class Timer
 {
@@ -19,6 +20,6 @@ public:
 private:
     uint64_t   interval_ms  = 0;
     uint64_t   last_tick_ms = 0;
-    CallbackFn callback     = nullptr;
+    CallbackFn callback;
 };
 }

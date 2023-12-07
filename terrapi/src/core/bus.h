@@ -1,32 +1,13 @@
 #pragma once
 
-#include <stdint.h>
-#include <variant>
+#include <vector>
 
-#include "core/sensor.h"
-#include "switch.h"
+#include "core/record.h"
+
+#define MAX_PENDING_RECORDS (8 * 1024)
 
 namespace terra
 {
-struct Event
-{
-    const char* src;
-    uint64_t    timestamp;
-};
-
-struct EventMeasurement : Event
-{
-    float     value;
-    ValueType physical_quantity;
-};
-
-struct EventSwitch : Event
-{
-    SwitchState state;
-};
-
-using EventType = std::variant<EventMeasurement, EventSwitch>;
-
 /// Bus is a message bus.
 class Bus
 {

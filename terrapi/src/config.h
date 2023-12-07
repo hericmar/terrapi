@@ -37,10 +37,10 @@ struct SwitchConfig
     std::string name;
     int         gpio;
     std::string rule;
-    /// in seconds, not set by default
-    int         oscillation_high = -1;
-    /// in seconds, not set by default
-    int         oscillation_low = -1;
+    /// in milliseconds, not set by default
+    int         oscillation_high_ms = -1;
+    /// in milliseconds, not set by default
+    int         oscillation_low_ms = -1;
 };
 
 struct Config

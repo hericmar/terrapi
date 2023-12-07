@@ -6,6 +6,9 @@ terra::Config create_test_config()
 
     Config config{};
 
+    config.environment.measure_step = 1000;
+    config.environment.publish_step = 10000;
+
     std::vector<SensorConfig> sensors = {
         SensorConfig{"dht11", 1, "Dummy"},
         SensorConfig{"water", 2, "Dummy"},
@@ -17,8 +20,8 @@ terra::Config create_test_config()
             "humidifier",
             1,
             "(dht11.humidity < 60) & (dht11.temperature < 25) & (water.signal = 1)",
-            1000 / 1000,
-            2000 / 1000
+            1000,
+            2000,
         },
         SwitchConfig{"lights", 1, "09:00 < time & time < 20:12"}
     };

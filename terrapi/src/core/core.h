@@ -39,7 +39,9 @@ private:
     std::unique_ptr<Context> ctx = nullptr;
     Bus                      bus;
     std::vector<Timer>       timers;
-    Config                   config;
+
+public:
+    const Config config;
 };
 
 Core& core();

@@ -4,9 +4,11 @@
 day_from = "09:00:00"
 day_to = "17:00:00"
 # How ofter perform measurements, default each 10 seconds.
-measure_step = 10000
+#measure_step = 10000
+measure_step = 1000
 # How to agregate data, default each 10 minutes.
-publish_step = 600000
+#publish_step = 600000
+publish_step = 6000
 
 [broker]
 address = "http://localhost:8091"
@@ -35,6 +37,6 @@ rule = "dht11.temperature < 22"
 
 [switch."humidifier"]
 gpio = 3
-oscillation_high = 2000
-oscillation_low = 8000
+oscillation_high_ms = 2000
+oscillation_low_ms = 8000
 rule = "(dht11.humidity < 60) & (water.signal = 1)"

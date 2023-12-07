@@ -10,7 +10,7 @@ namespace terra
 Value Sensor::value(ValueType type)
 {
     if (values.count(type) == 0) {
-        log_message(ERR, "invalid value");
+        LOG(ERR, "invalid value");
 
         return 0;
     }
@@ -20,7 +20,7 @@ Value Sensor::value(ValueType type)
 
 void Sensor::force_value(ValueType type, float value)
 {
-    log_message(INFO, "forcing value to " + std::to_string(value));
+    LOG(INFO, "forcing value to " + std::to_string(value));
     values[type] = value;
 }
 
