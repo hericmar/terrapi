@@ -2,7 +2,6 @@
 
 #include "toml.hpp"
 
-#include "sensor/factory.h"
 #include "logger.h"
 #include "utils.h"
 
@@ -83,7 +82,7 @@ std::optional<SensorConfig> parse_sensor_config(std::string name, const toml::ta
 
     config.name = name;
 
-    if (auto missing_key = missing_values(table, { "type", "gpio" })) {
+    if (auto missing_key = missing_values(table, { "type" })) {
         RETURN_EMPTY("missing key " + missing_key.value());
     }
 

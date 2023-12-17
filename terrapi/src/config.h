@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 inline const char* DEFAULT_CONFIG_PATH = "/etc/terrapi/config.toml";
@@ -54,5 +55,7 @@ struct Config
 
     static std::optional<Config> from_file(const char* path);
     static std::optional<Config> from_str(const char* str);
+
+    std::unordered_set<int> used_gpios;
 };
 }

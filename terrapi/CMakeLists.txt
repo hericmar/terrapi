@@ -16,21 +16,8 @@ link_libraries(fmt)
 
 ################################################################################
 
-set(TERRAPI_SOURCE
-		src/core/bus.cpp
-		src/core/context.cpp
-		src/core/core.cpp
-		src/core/expr.cpp
-        src/core/sensor.cpp
-		src/core/switch.cpp
-        src/core/timer.cpp
-        src/sensor/dht11.cpp
-        src/sensor/signal.cpp
-        src/config.cpp
-        src/http.cpp
-        src/logger.cpp
-        src/terra.cpp
-        src/utils.cpp)
+file(GLOB_RECURSE TERRAPI_SOURCE "src/*.cpp")
+list(REMOVE_ITEM TERRAPI_SOURCE "${CMAKE_SOURCE_DIR}/src/main.cpp")
 
 add_executable(terrapi ${TERRAPI_SOURCE} src/main.cpp)
 
