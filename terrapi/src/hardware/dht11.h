@@ -8,12 +8,15 @@ class DHT11 : public Sensor
 {
 public:
     explicit DHT11(int gpio)
+        : gpio(gpio)
     {
-        this->gpio = gpio;
         values[HUMIDITY];
         values[TEMPERATURE];
     }
 
     void measure() override;
+
+private:
+    int gpio = 0;
 };
 }

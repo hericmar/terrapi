@@ -2,6 +2,7 @@
 
 #include "toml.hpp"
 
+#include "hardware/config.h"
 #include "logger.h"
 #include "utils.h"
 
@@ -87,14 +88,16 @@ std::optional<SensorConfig> parse_sensor_config(std::string name, const toml::ta
     }
 
     config.sensor_type = table["type"].ref<std::string>();
-    if (sensor_factory.count(config.sensor_type) == 0) {
+    if (KNOWN_GPIO_SENSORS.count(config.sensor_type) == 0 && KNOWN_I2C_SENSORS.count(config.sensor_type) == 0) {
         RETURN_EMPTY("unknown sensor type " + config.sensor_type);
     }
 
-    if (auto maybe_value = table["gpio"].value<int>()) {
-        config.gpio = *maybe_value;
-    } else {
-        RETURN_EMPTY("invalid value for gpio");
+    if (KNOWN_GPIO_SENSORS.count(config.sensor_type)) {
+        if (auto maybe_value = table["gpio"].value<int>()) {
+            config.gpio = *maybe_value;
+        } else {
+            RETURN_EMPTY("invalid value for gpio");
+        }
     }
 
     return config;

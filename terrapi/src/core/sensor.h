@@ -40,7 +40,6 @@ public:
     const std::map<ValueType, Value>& measured_values() { return values; }
 
 protected:
-    int                        gpio = -1;
     std::map<ValueType, Value> values;
 };
 

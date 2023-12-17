@@ -1,7 +1,9 @@
 #include <chrono>
 #include <thread>
-#include "core/core.h"
 
+#include "wiringPi.h"
+
+#include "core/core.h"
 #include "core/context.h"
 #include "config.h"
 #include "logger.h"
@@ -33,6 +35,11 @@ Core::Core(Config config)
 
 Core *Core::create(Config config)
 {
+    if (wiringPiSetup() != 0) {
+        LOG(FATAL, "cannot setup Wiring PI");
+        return nullptr;
+    }
+
     if (ker != nullptr) {
         LOG(WARN, "recreating current context");
         delete ker;
@@ -44,6 +51,7 @@ Core *Core::create(Config config)
 
     ker->ctx = Context::create(ker->config);
     ker->reset();
+
 
     return ker;
 }

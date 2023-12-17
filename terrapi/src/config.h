@@ -28,9 +28,11 @@ struct BrokerConfig
 
 struct SensorConfig
 {
-    std::string name;
-    int         gpio;
-    std::string sensor_type;
+    std::string        name;
+
+    /// Valid only for GPIO sensors, not I2C.
+    std::optional<int> gpio;
+    std::string        sensor_type;
 };
 
 struct SwitchConfig
