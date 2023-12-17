@@ -1,4 +1,4 @@
-#include "sensor/signal.h"
+#include "hardware/signal.h"
 
 #include "wiringPi.h"
 

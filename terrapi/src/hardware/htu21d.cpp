@@ -1,4 +1,4 @@
-#include "sensor/htu21d.h"
+#include "hardware/htu21d.h"
 
 #include <unistd.h>
 

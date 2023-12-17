@@ -1,4 +1,4 @@
-#include "sensor/dht11.h"
+#include "hardware/dht11.h"
 
 #include "wiringPi.h"
 

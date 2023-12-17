@@ -3,7 +3,7 @@
 #include <thread>
 
 #include "core/core.h"
-#include "sensor/factory.h"
+#include "hardware/factory.h"
 #include "logger.h"
 #include "sensor.h"
 #include "switch.h"
