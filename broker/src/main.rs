@@ -5,6 +5,10 @@ mod repo;
 mod rest;
 mod schema;
 
+mod app;
+mod db;
+mod prelude;
+
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -16,6 +20,7 @@ use actix_web::middleware::Logger;
 use clap::Parser;
 use dotenv;
 use serde::Deserialize;
+use crate::app::Config;
 use crate::cache::Cache;
 use crate::repo::create_conn_pool;
 use crate::rest::Context;
@@ -27,17 +32,6 @@ struct Args {
     env_file: Option<String>
 }
 
-/// Deserialized from environment variables using `envy` crate.
-#[derive(Clone, Deserialize, Debug)]
-pub struct Config {
-    pub admin_password: String,
-    pub token_expiration: u64,
-    pub port: u16,
-    pub base_url: String,
-    pub static_root: String,
-    pub database_url: String,
-}
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "debug");
@@ -46,33 +40,16 @@ async fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
     if let Some(env_file) = args.env_file {
-        match dotenv::from_filename(&env_file) {
-            Ok(_) => {}
-            Err(_) => panic!("cannot read config from: {}", env_file)
-        };
+        dotenv::from_filename(&env_file)
+            .expect(&format!("cannot read env file {}", &env_file));
     }
 
-    let config = match envy::from_env::<Config>() {
+    let config = match envy::prefixed("TERRA_").from_env::<Config>() {
         Ok(config) => { config }
-        Err(err) => { panic!("cannot read config: {}", err); }
+        Err(err) => { panic!("cannot parse config: {}", err); }
     };
 
-    {
-        // set API URL
-        let index = Path::new(&config.static_root.clone()).join("index.html");
-        let contents = fs::read_to_string(&index)?;
-        let new = contents.replace(
-            "const API_URL = 'http://localhost:8091'",
-            &format!("const API_URL = '{}'", &config.base_url)
-        );
-
-        let mut file = OpenOptions::new().write(true).truncate(true).open(&index)?;
-        file.write(new.as_bytes())?;
-    }
-
-    let listen_port = config.port;
-    let cache = Arc::new(Mutex::new(Cache::new()));
-
+    /*
     let conn_pool = create_conn_pool(&config.database_url);
     match repo::run_migrations(&conn_pool) {
         Err(err) => {
@@ -80,7 +57,11 @@ async fn main() -> std::io::Result<()> {
         }
         Ok(_) => {}
     }
+     */
 
+    app::start(&config).await
+
+    /*
     // create web server
     HttpServer::new(move || {
         let context = Context{
@@ -90,12 +71,10 @@ async fn main() -> std::io::Result<()> {
         };
 
         // replaced by Cors::permissive()
-        /*
-        let cors = Cors::default()
-            // todo -> move this origin to config
-            .allowed_origin("http://127.0.0.1:3000")
-            .allowed_origin(&config.base_url.clone());
-         */
+        // let cors = Cors::default()
+        //     // todo -> move this origin to config
+        //     .allowed_origin("http://127.0.0.1:3000")
+        //     .allowed_origin(&config.base_url.clone());
 
         App::new()
             .app_data(web::Data::new(context))
@@ -153,4 +132,5 @@ async fn main() -> std::io::Result<()> {
         .bind(("localhost", listen_port))?
         .run()
         .await
+     */
 }

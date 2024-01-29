@@ -370,11 +370,14 @@ pub async fn login(
     if ctx.config.admin_password != payload.password {
         return Ok(HttpResponse::new(StatusCode::UNAUTHORIZED))
     }
-    let (token, expiration) = (&mut *ctx.cache.lock()?).create_token(ctx.config.token_expiration);
+    // let (token, expiration) = (&mut *ctx.cache.lock()?).create_token(ctx.config.token_expiration);
 
+    /*
     Ok(HttpResponse::Ok().json(LoginResponse{
         token, expiration
     }))
+     */
+    Ok(HttpResponse::new(StatusCode::OK))
 }
 
 /// POST /api/v1/login
