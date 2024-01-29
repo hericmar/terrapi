@@ -1,5 +1,6 @@
 // Composables
-import { createRouter, createWebHistory } from 'vue-router'
+import {createRouter, createWebHistory, RouteLocationNormalized} from 'vue-router'
+import Vue from 'vue'
 
 const routes = [
   {
@@ -14,6 +15,11 @@ const routes = [
         // which is lazy-loaded when the route is visited.
         component: () => import(/* webpackChunkName: "home" */ '@/views/Home.vue'),
       },
+      {
+        path: '/environment/:clientId/:date?',
+        name: 'Environment',
+        component: () => import('@/views/Environment.vue')
+      }
     ],
   },
 ]
@@ -21,6 +27,21 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
+  strict: true
+})
+
+export const getTitle = (route: RouteLocationNormalized, more?: string): string => {
+  const baseTitle = 'TerraPi'
+  const title = `${baseTitle} - ${<string>route.name || 'Home'}`
+  if (more) {
+    return `${title} - ${more}`
+  }
+
+  return title
+}
+
+router.afterEach((to, from) => {
+  document.title = getTitle(to)
 })
 
 export default router

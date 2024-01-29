@@ -234,7 +234,7 @@ Expr variable(const SensorMap& sensors, const std::string& identifier)
     auto& sensor = *sensors.at(sensor_name);
 
     if (!sensor.measures_value(value_type)) {
-        throw parse_error("invalid config: invalid rule");
+        throw parse_error("invalid rule: sensor does not measure given physical quantity");
     }
 
     return std::make_shared<Var>(sensor, value_type);

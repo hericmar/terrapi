@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include "utils.h"
 
 inline const char* DEFAULT_CONFIG_PATH = "/etc/terrapi/config.toml";
 
@@ -11,16 +12,17 @@ namespace terra
 {
 struct EnvironmentConfig
 {
-    uint64_t day_from;
-    uint64_t day_to;
+    uint64_t day_from = parse_time_from_str("09:00").value();
+    uint64_t day_to   = parse_time_from_str("17:00").value();
     /// in milliseconds
-    unsigned measure_step;
+    unsigned measure_step = 10000;
     /// in milliseconds
-    unsigned publish_step;
+    unsigned publish_step = 60000;
 };
 
 struct BrokerConfig
 {
+    bool        enabled = true;
     std::string address;
     std::string client_id;
     std::string password;
@@ -40,6 +42,7 @@ struct SwitchConfig
     std::string name;
     int         gpio;
     std::string rule;
+    float       power = 0.0f;
     /// in milliseconds, not set by default
     int         oscillation_high_ms = -1;
     /// in milliseconds, not set by default

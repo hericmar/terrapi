@@ -6,6 +6,7 @@
 
 #include "hardware/dht11.h"
 #include "hardware/htu21d.h"
+#include "hardware/signal.h"
 
 namespace terra
 {
@@ -29,7 +30,7 @@ UPtr<T> create_i2c_sensor()
 
 static inline const std::unordered_map<std::string, std::function<UPtr<Sensor>(int)>> KNOWN_GPIO_SENSORS = {
         { "DHT11", detail::create_sensor<DHT11> },
-        { "Signal", detail::create_sensor<DHT11> },
+        { "Signal", detail::create_sensor<Signal> },
 };
 
 static inline const std::unordered_map<std::string, std::function<UPtr<Sensor>()>> KNOWN_I2C_SENSORS = {

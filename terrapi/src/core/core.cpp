@@ -8,6 +8,7 @@
 #include "config.h"
 #include "logger.h"
 #include "switch.h"
+#include "http.h"
 
 #define TICK_STEP_MS 100
 
@@ -30,6 +31,7 @@ uint64_t get_now_ms()
 Core::Core(Config config)
     : config(std::move(config))
 {
+    bus = std::make_unique<Bus>(this->config.broker);
     assert(ker == nullptr);
 }
 
@@ -52,12 +54,17 @@ Core *Core::create(Config config)
     ker->ctx = Context::create(ker->config);
     ker->reset();
 
-
     return ker;
 }
 
 void Core::run()
 {
+    if (config.broker.enabled)
+    {
+        auto http_client = HttpClient(config.broker);
+        http_client.put_client_hello(config.raw);
+    }
+
     while (true) {
         /// @todo interrupt handling
         tick();
@@ -125,7 +132,7 @@ void Core::reset()
             }
 
             for (const auto& [type, value] : sensor->measured_values()) {
-                bus.record(MeasurementRecord{
+                bus->record(Record{
                         name.c_str(),
                         now,
                         value,
@@ -134,13 +141,21 @@ void Core::reset()
             }
         }
 
-        // bus.publish();
+        bus->publish();
     });
 }
 
-void Core::record_event(EventType event)
+void Core::shutdown()
 {
-    bus.record(event);
+    for (auto& [_, s] : ctx->switches) {
+        s.switch_off();
+    }
+    bus->publish();
+}
+
+void Core::record_event(Record record)
+{
+    bus->record(record);
 }
 
 Context& Core::context()

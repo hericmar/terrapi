@@ -1,3 +1,4 @@
+// This is old client detail card.
 <template>
   <v-card
     :loading="loading"
@@ -141,7 +142,7 @@ export default {
         return item.client_id === props.clientId
       })
       if (!found) {
-        found = { client_id: "", password: "", name: ""}
+        found = { client_id: "", token: "", name: ""}
       }
       return found
     })

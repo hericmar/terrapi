@@ -31,13 +31,13 @@ public:
 
     void shutdown();
 
-    void record_event(EventType event);
+    void record_event(Record record);
 
     Context& context();
 
 private:
     std::unique_ptr<Context> ctx = nullptr;
-    Bus                      bus;
+    std::unique_ptr<Bus>     bus;
     std::vector<Timer>       timers;
 
 public:

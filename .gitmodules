@@ -8,3 +8,6 @@
 [submodule "terrapi/lib/doctest"]
 	path = terrapi/lib/doctest
 	url = https://github.com/doctest/doctest.git
+[submodule "terrapi/lib/WiringPi"]
+	path = terrapi/lib/WiringPi
+	url = https://github.com/WiringPi/WiringPi.git

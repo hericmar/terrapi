@@ -25,18 +25,16 @@ HttpClient::HttpClient(const BrokerConfig& config)
 {
 }
 
-bool HttpClient::put_config(const std::string& config_body)
+constexpr const char* TEMPLATE_CLIENT_HELLO = R"({{ "client_id": "{}", "config": "{}" }})";
+
+bool HttpClient::put_client_hello(const std::string& config_body)
 {
     auto sanitized_config_body = string_replace(config_body, "\"", "\\\"");
     sanitized_config_body = string_replace(sanitized_config_body, "\n", "\\n");
 
-    std::string request_body =
-        "{"
-        "  \"client_id\": \"" + config.client_id + "\","
-        "  \"config\": \"" + sanitized_config_body + "\""
-        "}";
+    const auto request_body = fmt::format(TEMPLATE_CLIENT_HELLO, config.client_id, sanitized_config_body);
 
-    return make_request("PUT", config.address + "api/v1/config", request_body);
+    return make_request("PUT", "/api/v1/client/hello", request_body);
 }
 
 /// Allows to resize the response read buffer.
@@ -120,54 +118,34 @@ overloaded(Ts...) -> overloaded<Ts...>;
 //
 
 constexpr const char* TEMPLATE_MEASUREMENT =
-        R"({{"src": "{}", "value": {}, "physical_quantity": {}, "timestamp": {}}})";
-
-constexpr const char* TEMPLATE_EVENT =
-        R"({{"src": "{}", "state": {}, "timestamp": {}}})";
+        R"({{"src": "{}", "value": {}, "quantity": {}, "timestamp": {}}})";
 
 constexpr const char* TEMPLATE_RECORD =
-        R"({{"client_id": "{}", "measurements": [{}], "events": [{}]}})";
+        R"({{"client_id": "{}", "records": [{}]}})";
 
-std::string serialize(const char* client_id, const std::vector<EventType>& records)
+std::string serialize(const char* client_id, const std::vector<Record>& records)
 {
-    std::string measurements_str;
-    std::string events_str;
+    std::string records_str;
 
     for (const auto& record : records) {
-        std::visit(detail::overloaded{
-                [&](const MeasurementRecord& measurement) {
-                    if (!measurements_str.empty()) {
-                        measurements_str += ",";
-                    }
+        if (!records_str.empty()) {
+            records_str += ",";
+        }
 
-                    measurements_str += fmt::format(
-                        TEMPLATE_MEASUREMENT,
-                        measurement.src,
-                        measurement.value,
-                        (int) measurement.physical_quantity,
-                        measurement.timestamp);
-                },
-                [&](const EventRecord& event) {
-                    if (!events_str.empty()) {
-                        events_str += ",";
-                    }
-
-                    events_str += fmt::format(
-                        TEMPLATE_EVENT,
-                        event.src,
-                        event.state ? "true" : "false",
-                        event.timestamp);
-                },
-        }, record);
+        records_str += fmt::format(
+            TEMPLATE_MEASUREMENT,
+            record.src,
+            record.value,
+            (int) record.physical_quantity,
+            record.timestamp);
     }
 
     auto result = fmt::format(
-        TEMPLATE_RECORD,
-        client_id,
-        measurements_str,
-        events_str);
+            TEMPLATE_RECORD,
+            client_id,
+            records_str);
 
-    LOG(TRACE, "serialized: " + result);
+    // LOG(TRACE, "serialized: " + result);
 
     return result;
 }

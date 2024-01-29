@@ -8,22 +8,29 @@ namespace terra
 {
 void Bus::publish()
 {
-    const auto& config = core().config;
-    HttpClient client(config.broker);
+    if (!broker_config.enabled) {
+        return;
+    }
 
-    const auto request_body = serialize(config.broker.client_id.c_str(), events);
+    HttpClient client(broker_config);
 
-    if (client.make_request("POST", "api/v1/record", request_body)) {
-        events.clear();
+    const auto request_body = serialize(broker_config.client_id.c_str(), records);
+
+    if (client.make_request("POST", "/api/v1/record", request_body)) {
+        records.clear();
     }
 }
 
-void Bus::record(EventType event)
+void Bus::record(Record record)
 {
-    if (events.size() < MAX_PENDING_RECORDS) {
-        events.push_back(event);
+    if (!broker_config.enabled) {
+        return;
+    }
+
+    if (records.size() < MAX_PENDING_RECORDS) {
+        records.push_back(record);
     } else {
-        LOG(WARN, "too many pending records");
+        LOG(ERR, "too many pending records");
     }
 }
 }

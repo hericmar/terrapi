@@ -53,7 +53,7 @@ void Switch::update(uint64_t now_ms)
     }
 
     if (previous_state != new_state) {
-        core().record_event(EventRecord{config->name.c_str(), now_ms, new_state });
+        core().record_event(Record{config->name.c_str(), now_ms, (float) new_state, SIGNAL });
     }
 }
 

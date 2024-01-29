@@ -1,5 +1,3 @@
-#include "wiringPi.h"
-
 int wiringPiSetup() { return 0; }
 void pinMode(int pin, int mode) {}
 int digitalRead(int pin) { return 0; }

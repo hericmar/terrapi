@@ -1,31 +1,44 @@
+#include <cassert>
 #include "common.h"
+
+constexpr const char* CONFIG_TOML = R"(
+[environment]
+measure_step = 1000
+publish_step = 5000
+
+[broker]
+enabled = true
+address = "http://192.168.12.241:8091"
+client_id = "BuLOGvzA"
+password = "UPmfkMotkRHARhzqRNVgGHTNCgqpYpFLyfdZSZuukpaieeuCEaapvpTWZdxWtmPe"
+
+[sensor."dht11"]
+gpio = 1
+type = "DHT11"
+
+[sensor."water"]
+gpio = 2
+type = "Signal"
+
+[switch."humidifier"]
+gpio = 1
+rule = " (dht11.humidity < 60) & (dht11.temperature < 25) & (water.signal = 1) "
+power = 20.1
+oscillation_high_ms = 1000
+oscillation_low_ms = 2000
+
+[switch."lights"]
+gpio = 1
+power = 50
+rule = "09:00 < time & time < 20:12"
+)";
 
 terra::Config create_test_config()
 {
     using namespace terra;
 
-    Config config{};
+    auto maybe_config = Config::from_str(CONFIG_TOML);
+    assert(maybe_config.has_value());
 
-    config.environment.measure_step = 1000;
-    config.environment.publish_step = 10000;
-
-    std::vector<SensorConfig> sensors = {
-        SensorConfig{"dht11", 1, "Dummy"},
-        SensorConfig{"water", 2, "Dummy"},
-    };
-    config.sensors = sensors;
-
-    std::vector<SwitchConfig> switches = {
-        SwitchConfig{
-            "humidifier",
-            1,
-            "(dht11.humidity < 60) & (dht11.temperature < 25) & (water.signal = 1)",
-            1000,
-            2000,
-        },
-        SwitchConfig{"lights", 1, "09:00 < time & time < 20:12"}
-    };
-    config.switches = switches;
-
-    return config;
+    return *maybe_config;
 }

@@ -1,9 +1,19 @@
+#include <csignal>
 #include "core/core.h"
 #include "config.h"
 #include "logger.h"
 
 namespace terra
 {
+void handle_termination(int signal)
+{
+    LOG(INFO, "received termination signal {}", signal);
+
+    core().shutdown();
+
+    exit(0);
+}
+
 int init(int argc, char** argv)
 {
     const char* config_path = DEFAULT_CONFIG_PATH;
@@ -22,6 +32,10 @@ int init(int argc, char** argv)
         LOG(FATAL, "unable to create core");
         return 1;
     }
+
+    signal(SIGABRT, handle_termination);
+    signal(SIGINT, handle_termination);
+    signal(SIGTERM, handle_termination);
 
     core->run();
     delete core;

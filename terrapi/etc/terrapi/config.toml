@@ -1,16 +1,19 @@
 ### GENERAL ###
 
 [environment]
-day_from = "09:00:00"
-day_to = "17:00:00"
+# day_from = "09:00:00"
+
+# day_to = "17:00:00"
+
 # How ofter perform measurements, default each 10 seconds.
-#measure_step = 10000
-measure_step = 1000
+# measure_step = 10000
+
 # How to agregate data, default each 10 minutes.
-#publish_step = 600000
-publish_step = 6000
+# publish_step = 60000
 
 [broker]
+# When disabled, no data will be published to the broker.
+enabled = true
 address = "http://localhost:8091"
 client_id = "yFBgI2YP"
 password = "okaUbDf4apVzyKII0YdbODi4YwnM9GYU"
@@ -30,13 +33,16 @@ gpio = 25
 [switch."lights"]
 gpio = 0
 rule = "(10:59 < time) & (time < 21:57)"
+power = 60.0
 
 [switch."heater"]
 gpio = 2
 rule = "dht11.temperature < 22"
+power = 50.0
 
 [switch."humidifier"]
 gpio = 3
 oscillation_high_ms = 2000
 oscillation_low_ms = 8000
 rule = "(dht11.humidity < 60) & (water.signal = 1)"
+power = 20.0

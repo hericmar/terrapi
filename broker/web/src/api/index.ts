@@ -2,87 +2,90 @@ import {useMainStore} from "@/store";
 
 let apiPassword = ""
 
+const doRequest = async (url: string, method: string, body?: any): Promise<Response> => {
+  const headers = new Headers({
+    "Content-Type": "application/json",
+  })
+  if (apiPassword) {
+    headers.append("Authorization", `Basic ${apiPassword}`)
+  }
+
+  return new Promise((resolve, reject) => {
+    fetch(url, {
+      method: method,
+      mode: "cors",
+      headers,
+      referrerPolicy: "origin-when-cross-origin",
+      body: body ? JSON.stringify(body) : undefined
+    })
+      .then(async (response) => {
+        if (response.status === 401) {
+          // Unauthorized
+          useMainStore().removeToken()
+        }
+        resolve(response)
+      })
+      .catch((error) => {
+        useMainStore().snackbarMessage = "Failed to fetch data from server. You may be offline."
+        // Stop propagation
+        // reject(result)
+    })
+  })
+}
+
 const api = {
   getApiUrl: () => {
-    // @ts-ignore
-    return API_URL
+    if (import.meta.env.DEV) {
+      return "http://localhost:8091"
+    }
+    return ""
   },
   setToken(token: string) {
     apiPassword = token
   },
-  async login(password: String) {
-    const response = await fetch(`${api.getApiUrl()}/api/v1/login`, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      referrerPolicy: "origin-when-cross-origin",
-      body: JSON.stringify({
+  auth: {
+    async login(password: String) {
+      return await doRequest(`${api.getApiUrl()}/api/v1/auth/login`, "POST", {
         password: password
       })
-    })
-
-    return response.json()
+    },
+    async logout() {
+      return doRequest(`${api.getApiUrl()}/api/v1/auth/logout`, "POST")
+    }
   },
-  // client
-  async createClient(name: String) {
-    return fetch(`${api.getApiUrl()}/api/v1/client`, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Authorization": `Basic ${apiPassword}`,
-        "Content-Type": "application/json",
-      },
-      referrerPolicy: "origin-when-cross-origin",
-      body: JSON.stringify({
-        name: name
+  client: {
+    async create(name: string) {
+      return doRequest(`${api.getApiUrl()}/api/v1/client`, "POST", {
+        name
       })
-    })
-  },
-  renameClient(clientId: String, newName: String) {
-    return fetch(`${api.getApiUrl()}/api/v1/client/${clientId}/name`, {
-      method: "PUT",
-      mode: "cors",
-      headers: {
-        "Authorization": `Basic ${apiPassword}`,
-        "Content-Type": "application/json",
-      },
-      referrerPolicy: "origin-when-cross-origin",
-      body: JSON.stringify({
+    },
+    async list() {
+      return await doRequest(`${api.getApiUrl()}/api/v1/client/preview`, "GET")
+    },
+    async rename(clientId: string, newName: string) {
+      return doRequest(`${api.getApiUrl()}/api/v1/client/${clientId}`, "PATCH", {
         name: newName
       })
-    })
+    },
+    async delete(clientId: string) {
+      return doRequest(`${api.getApiUrl()}/api/v1/client/${clientId}`, "DELETE")
+    }
   },
-  deleteClient(clientId: string) {
-    return fetch(`${api.getApiUrl()}/api/v1/client/${clientId}`, {
-      method: "DELETE",
-      mode: "cors",
-      headers: {
-        "Authorization": `Basic ${apiPassword}`,
-        "Content-Type": "application/json",
-      },
-      referrerPolicy: "origin-when-cross-origin"
-    })
+  record: {
+    async listForClient(clientId: string, from: Date, to: Date) {
+      const fromUnix = Math.floor(from.getTime())
+      const toUnix = Math.floor(to.getTime())
+
+      const url = `${api.getApiUrl()}/api/v1/record/?client_id=${clientId}&from=${fromUnix}&to=${toUnix}`
+      const response = await fetch(encodeURI(url));
+      return response.json()
+    },
   },
-  listClientPreview: async () => {
-    const response = await fetch(`${api.getApiUrl()}/api/v1/client/preview`);
-    return response.json()
+  config: {
+    async get(clientId: string) {
+      return doRequest(`${api.getApiUrl()}/api/v1/config/${clientId}`, "GET")
+    }
   },
-  // record
-  async listRecordsForClient(clientId: string, from: Date, to: Date) {
-    const url = `${api.getApiUrl()}/api/v1/record/${clientId}?from=${from.toISOString()}&to=${to.toISOString()}`
-    const response = await fetch(encodeURI(url));
-    return response.json()
-  },
-  // config
-  async fetchConfig(clientId: string) {
-    return await fetch(`${api.getApiUrl()}/api/v1/config/${clientId}`, {
-      headers: {
-        "Authorization": `Basic ${apiPassword}`
-      }
-    })
-  }
 }
 
 export default { ...api }

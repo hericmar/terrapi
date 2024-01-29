@@ -1,3 +1,4 @@
+#include <set>
 #include "config.h"
 
 #include "toml.hpp"
@@ -10,7 +11,7 @@
 
 namespace terra
 {
-/// @returns missing key
+/// @returns missing config key
 std::optional<std::string> missing_values(const toml::table& table, const std::vector<const char*>& expected_keys)
 {
     for (const char* key : expected_keys) {
@@ -26,32 +27,36 @@ std::optional<EnvironmentConfig> parse_environment_config(const toml::table& tab
 {
     EnvironmentConfig config{};
 
-    if (auto missing_key = missing_values(table, { "day_from", "day_to", "measure_step", "publish_step" })) {
-        RETURN_EMPTY("missing key " + missing_key.value());
+    if (table.contains("day_from")) {
+        if (auto maybe_value = parse_time_from_str(table["day_from"].ref<std::string>())) {
+            config.day_from = *maybe_value;
+        } else {
+            RETURN_EMPTY("invalid value for day_from");
+        }
     }
 
-    if (auto maybe_value = parse_time_from_str(table["day_from"].ref<std::string>())) {
-        config.day_from = *maybe_value;
-    } else {
-        RETURN_EMPTY("invalid value for day_from");
+    if (table.contains("day_to")) {
+        if (auto maybe_value = parse_time_from_str(table["day_to"].ref<std::string>())) {
+            config.day_to = *maybe_value;
+        } else {
+            RETURN_EMPTY("invalid value for day_to");
+        }
     }
 
-    if (auto maybe_value = parse_time_from_str(table["day_to"].ref<std::string>())) {
-        config.day_to = *maybe_value;
-    } else {
-        RETURN_EMPTY("invalid value for day_to");
+    if (table.contains("measure_step")) {
+        if (auto maybe_value = table["measure_step"].value<int>()) {
+            config.measure_step = *maybe_value;
+        } else {
+            RETURN_EMPTY("invalid value for measure_step");
+        }
     }
 
-    if (auto maybe_value = table["measure_step"].value<int>()) {
-        config.measure_step = *maybe_value;
-    } else {
-        RETURN_EMPTY("invalid value for measure_step");
-    }
-
-    if (auto maybe_value = table["publish_step"].value<int>()) {
-        config.publish_step = *maybe_value;
-    } else {
-        RETURN_EMPTY("invalid value for publish_step");
+    if (table.contains("publish_step")) {
+        if (auto maybe_value = table["publish_step"].value<int>()) {
+            config.publish_step = *maybe_value;
+        } else {
+            RETURN_EMPTY("invalid value for publish_step");
+        }
     }
 
     return config;
@@ -61,14 +66,23 @@ std::optional<BrokerConfig> parse_broker_config(const toml::table& table)
 {
     BrokerConfig config{};
 
+    if (table.contains("enabled") && table["enabled"].is<bool>()) {
+        config.enabled = *table["enabled"].value<bool>();
+    }
+
+    if (!config.enabled) {
+        // broker is disabled, no need to parse further
+        return config;
+    }
+
     if (auto missing_key = missing_values(table, { "address", "client_id", "password" })) {
-        RETURN_EMPTY("missing key " + missing_key.value());
+        RETURN_EMPTY("missing config key " + missing_key.value());
     }
 
     /// @todo Validate inet address before use.
     config.address = table["address"].ref<std::string>();
-    if (config.address.back() != '/') {
-        config.address.push_back('/');
+    if (config.address.back() == '/') {
+        config.address.pop_back();
     }
 
     config.client_id = table["client_id"].ref<std::string>();
@@ -84,7 +98,7 @@ std::optional<SensorConfig> parse_sensor_config(std::string name, const toml::ta
     config.name = name;
 
     if (auto missing_key = missing_values(table, { "type" })) {
-        RETURN_EMPTY("missing key " + missing_key.value());
+        RETURN_EMPTY("missing config key " + missing_key.value());
     }
 
     config.sensor_type = table["type"].ref<std::string>();
@@ -110,7 +124,7 @@ std::optional<SwitchConfig> parse_switch_config(std::string name, const toml::ta
     config.name = name;
 
     if (auto missing_key = missing_values(table, { "gpio", "rule" })) {
-        RETURN_EMPTY("missing key " + missing_key.value());
+        RETURN_EMPTY("missing config key " + missing_key.value());
     }
 
     if (auto maybe_value = table["gpio"].value<int>()) {
@@ -120,6 +134,16 @@ std::optional<SwitchConfig> parse_switch_config(std::string name, const toml::ta
     }
 
     config.rule = table["rule"].ref<std::string>();
+    // trim spaces
+    config.rule.erase(std::remove_if(config.rule.begin(), config.rule.end(), isspace), config.rule.end());
+
+    if (table.contains("power")) {
+        if (auto maybe_value = table["power"].value<float>()) {
+            config.power = *maybe_value;
+        } else {
+            RETURN_EMPTY("invalid value for power");
+        }
+    }
 
     if (table.contains("oscillation_high") && table.contains("oscillation_low")) {
         auto maybe_high = table["oscillation_high"].value<int>();
@@ -139,7 +163,7 @@ std::optional<Config> parse_config(const toml::table& table)
     Config config{};
 
     if (auto missing_key = missing_values(table, { "environment" })) {
-        RETURN_EMPTY("missing key " + *missing_key);
+        RETURN_EMPTY("missing config key " + *missing_key);
     }
 
     if (const toml::table* environment = table["environment"].as_table()) {
@@ -159,11 +183,13 @@ std::optional<Config> parse_config(const toml::table& table)
         }
     }
 
+    std::set<std::string> sensor_names;
     if (const toml::table* sensors = table["sensor"].as_table()) {
         for (const auto& [key, value] : *sensors) {
             std::string name(key.begin(), key.end());
             if (auto maybe_sensor = parse_sensor_config(name, *value.as_table())) {
                 config.sensors.push_back(*maybe_sensor);
+                sensor_names.insert(name);
             } else {
                 LOG(ERR, "unable to process sensor config");
             }
@@ -175,6 +201,11 @@ std::optional<Config> parse_config(const toml::table& table)
     if (const toml::table* switches = table["switch"].as_table()) {
         for (const auto& [key, value] : *switches) {
             std::string name(key.begin(), key.end());
+            if (sensor_names.count(name)) {
+                LOG(ERR, "switch name " + name + " is already used by a sensor");
+                continue;
+            }
+
             if (auto maybe_switch = parse_switch_config(name, *value.as_table())) {
                 config.switches.push_back(*maybe_switch);
             } else {

@@ -12,18 +12,7 @@ struct Record
 {
     const char* src;
     uint64_t    timestamp;
+    float       value;
+    ValueType   physical_quantity;
 };
-
-struct MeasurementRecord : Record
-{
-    float     value;
-    ValueType physical_quantity;
-};
-
-struct EventRecord : Record
-{
-    SwitchState state;
-};
-
-using EventType = std::variant<MeasurementRecord, EventRecord>;
 }
