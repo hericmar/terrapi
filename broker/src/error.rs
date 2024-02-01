@@ -1,12 +1,10 @@
 use std::fmt::{Display, Formatter};
-use std::sync::{MutexGuard, PoisonError};
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use actix_web::body::BoxBody;
 use serde_json::json;
-use crate::cache::Cache;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ErrorType {
     DatabaseError,
     InternalError,
@@ -15,7 +13,7 @@ pub enum ErrorType {
     Unauthorized
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Error {
     what: String,
     err_type: ErrorType,
@@ -62,11 +60,5 @@ impl ResponseError for Error {
 impl From<r2d2::Error> for Error {
     fn from(value: r2d2::Error) -> Self {
         Error::new(&value.to_string(), ErrorType::DatabaseError)
-    }
-}
-
-impl From<PoisonError<MutexGuard<'_, Cache>>> for Error {
-    fn from(value: PoisonError<MutexGuard<'_, Cache>>) -> Self {
-        Error::new(&value.to_string(), ErrorType::InternalError)
     }
 }

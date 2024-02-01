@@ -55,20 +55,20 @@ const api = {
   },
   client: {
     async create(name: string) {
-      return doRequest(`${api.getApiUrl()}/api/v1/client`, "POST", {
+      return doRequest(`${api.getApiUrl()}/api/v1/publisher`, "POST", {
         name
       })
     },
     async list() {
-      return await doRequest(`${api.getApiUrl()}/api/v1/client/preview`, "GET")
+      return await doRequest(`${api.getApiUrl()}/api/v1/publisher`, "GET")
     },
     async rename(clientId: string, newName: string) {
-      return doRequest(`${api.getApiUrl()}/api/v1/client/${clientId}`, "PATCH", {
+      return doRequest(`${api.getApiUrl()}/api/v1/publisher/${clientId}`, "PATCH", {
         name: newName
       })
     },
     async delete(clientId: string) {
-      return doRequest(`${api.getApiUrl()}/api/v1/client/${clientId}`, "DELETE")
+      return doRequest(`${api.getApiUrl()}/api/v1/publisher/${clientId}`, "DELETE")
     }
   },
   record: {

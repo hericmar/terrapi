@@ -34,7 +34,7 @@ bool HttpClient::put_client_hello(const std::string& config_body)
 
     const auto request_body = fmt::format(TEMPLATE_CLIENT_HELLO, config.client_id, sanitized_config_body);
 
-    return make_request("PUT", "/api/v1/client/hello", request_body);
+    return make_request("PUT", "/api/v1/hello", request_body);
 }
 
 /// Allows to resize the response read buffer.

@@ -16,12 +16,8 @@ Install diesel cli
 cargo install diesel_cli --no-default-features --features postgres,sqlite
 
 diesel setup
-```
-
-```shell
-DATABASE_URL=postgres://terrapi:password@localhost/terrapi diesel migration generate create_measurements
-DATABASE_URL=postgres://terrapi:password@localhost/terrapi diesel migration generate create_events
+diesel migration generate create_posts
 
 # Will create schema for tables.
-DATABASE_URL=postgres://terrapi:password@localhost/terrapi diesel migration run
+diesel migration run
 ```

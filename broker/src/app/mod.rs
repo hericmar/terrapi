@@ -1,9 +1,12 @@
+pub mod publisher;
+pub mod hello;
+
 use actix_web::{App, HttpRequest, HttpServer, web};
 use actix_web::dev::Server;
-use actix_web::web::Data;
+use actix_web::web::{Data, service};
 use serde::Deserialize;
+use crate::db;
 use crate::db::DbPool;
-use crate::repo::create_conn_pool;
 
 /// Deserialized from environment variables using `envy` crate.
 #[derive(Clone, Deserialize, Debug)]
@@ -24,11 +27,22 @@ async fn index(_ctx: Data<AppState>, _req: HttpRequest) -> &'static str {
 
 fn routes(app: &mut web::ServiceConfig) {
     app
-        .route("/", web::get().to(index));
+        .route("/", web::get().to(index))
+        .service(
+            web::scope("/api/v1")
+                .service(
+                    web::scope("/publishers")
+                        .route("", web::post().to(publisher::create))
+                        .route("", web::get().to(publisher::read_all))
+                        .route("/{client_id}", web::patch().to(publisher::update))
+                        .route("/{client_id}", web::delete().to(publisher::delete))
+                )
+        );
 }
 
 pub fn start(config: &Config) -> Server {
-    let db_pool = create_conn_pool(&config.database_url);
+    let db_pool = db::new_pool(&config.database_url)
+        .expect("cannot create database pool");
 
     HttpServer::new(move || {
         let state = AppState {
