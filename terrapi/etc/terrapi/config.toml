@@ -28,19 +28,19 @@ gpio = 7
 type = "Signal"
 gpio = 25
 
-### SWITCHES AND THEIR RULES ###
+### DEVICES AND THEIR RULES ###
 
-[switch."lights"]
+[device."lights"]
 gpio = 0
 rule = "(10:59 < time) & (time < 21:57)"
 power = 60.0
 
-[switch."heater"]
+[device."heater"]
 gpio = 2
 rule = "dht11.temperature < 22"
 power = 50.0
 
-[switch."humidifier"]
+[device."humidifier"]
 gpio = 3
 oscillation_high_ms = 2000
 oscillation_low_ms = 8000

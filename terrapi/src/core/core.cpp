@@ -59,10 +59,12 @@ Core *Core::create(Config config)
 
 void Core::run()
 {
-    if (config.broker.enabled)
-    {
+    if (config.broker.enabled) {
         auto http_client = HttpClient(config.broker);
-        http_client.put_client_hello(config.raw);
+        if (!http_client.put_client_hello(config.raw)) {
+            LOG(FATAL, "cannot send hello to the broker");
+            return;
+        }
     }
 
     while (true) {

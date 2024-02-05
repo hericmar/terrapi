@@ -31,7 +31,7 @@ std::unique_ptr<Context> Context::create(const Config& config)
         }
     }
 
-    for (const auto& switch_config : config.switches) {
+    for (const auto& switch_config : config.devices) {
         const auto maybe_expr = Expr::from(ctx->sensors, switch_config.rule);
         if (!maybe_expr) {
             LOG(ERR, "invalid rule for switch '{}'", switch_config.name);
@@ -40,7 +40,7 @@ std::unique_ptr<Context> Context::create(const Config& config)
 
         ctx->switches.insert({
             switch_config.name,
-            Switch((SwitchConfig*) &switch_config, *maybe_expr)
+            Switch((DeviceConfig*) &switch_config, *maybe_expr)
         });
     }
 

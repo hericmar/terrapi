@@ -3,6 +3,7 @@ pub mod hello;
 
 use actix_web::{App, HttpRequest, HttpServer, web};
 use actix_web::dev::Server;
+use actix_web::middleware::Logger;
 use actix_web::web::{Data, service};
 use serde::Deserialize;
 use crate::db;
@@ -37,6 +38,9 @@ fn routes(app: &mut web::ServiceConfig) {
                         .route("/{client_id}", web::patch().to(publisher::update))
                         .route("/{client_id}", web::delete().to(publisher::delete))
                 )
+                .service(
+                    web::scope("/hello")
+                        .route("", web::put().to(hello::hello)))
         );
 }
 
@@ -50,6 +54,7 @@ pub fn start(config: &Config) -> Server {
         };
         App::new()
             .app_data(Data::new(state))
+            .wrap(Logger::default())
             .configure(routes)
     })
     .bind(&config.bind_address)

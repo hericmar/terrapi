@@ -4,7 +4,7 @@
 
 namespace terra
 {
-struct SwitchConfig;
+struct DeviceConfig;
 
 enum SwitchState
 {
@@ -16,7 +16,7 @@ class Switch final
 {
 public:
     /// @pre \p gpio is empty
-    Switch(SwitchConfig* config, const Expr& expr);
+    Switch(DeviceConfig* config, const Expr& expr);
 
     /// called each tick
     void update(uint64_t now_ms);
@@ -36,7 +36,7 @@ private:
     /// Write the GPIO pin to low.
     void write_off();
 
-    SwitchConfig* config;
+    DeviceConfig* config;
 
     Expr rule;
 

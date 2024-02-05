@@ -1,5 +1,6 @@
 pub mod publisher;
-mod hello;
+pub mod device;
+mod record;
 
 use diesel::PgConnection;
 use diesel::result::DatabaseErrorKind;
@@ -16,16 +17,26 @@ impl From<DieselError> for Error {
     fn from(error: DieselError) -> Self {
         match error {
             DieselError::DatabaseError(kind, info) => {
-                if let DatabaseErrorKind::UniqueViolation = kind {
-                    let message = info.details().unwrap_or_else(|| info.message()).to_string();
-                    return Error::new(&message, ErrorType::BadRequest);
+                let message = info.details().unwrap_or_else(|| info.message()).to_string();
+
+                return match kind {
+                    DatabaseErrorKind::UniqueViolation |
+                    DatabaseErrorKind::ForeignKeyViolation |
+                    DatabaseErrorKind::CheckViolation |
+                    DatabaseErrorKind::NotNullViolation => {
+                        Error::new(&message, ErrorType::BadRequest)
+                    }
+                    _ => {
+                        Error::new(&message, ErrorType::InternalError)
+                    }
                 }
-                Error::new("Internal server error", ErrorType::InternalError)
             }
             DieselError::NotFound => {
                 Error::new("Not found", ErrorType::NotFound)
             }
-            _ => Error::new("Internal server error", ErrorType::InternalError),
+            _ => {
+                Error::new(&error.to_string(), ErrorType::InternalError)
+            },
         }
     }
 }

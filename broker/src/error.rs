@@ -3,6 +3,8 @@ use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use actix_web::body::BoxBody;
 use serde_json::json;
+use log::log;
+use validator::ValidationErrors;
 
 #[derive(Debug, Clone)]
 pub enum ErrorType {
@@ -16,7 +18,7 @@ pub enum ErrorType {
 #[derive(Debug, Clone)]
 pub struct Error {
     what: String,
-    err_type: ErrorType,
+    pub err_type: ErrorType,
 }
 
 impl Error {
@@ -48,7 +50,11 @@ impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         let status = self.status_code();
         let message = match status {
-            StatusCode::INTERNAL_SERVER_ERROR => "Internal Server Error".to_string(),
+            StatusCode::INTERNAL_SERVER_ERROR => {
+                log::error!("{}: {}", status, self.what);
+
+                "Internal Server Error".to_string()
+            },
             _ => self.what.clone()
         };
 
@@ -60,5 +66,29 @@ impl ResponseError for Error {
 impl From<r2d2::Error> for Error {
     fn from(value: r2d2::Error) -> Self {
         Error::new(&value.to_string(), ErrorType::DatabaseError)
+    }
+}
+
+impl From<ValidationErrors> for Error {
+    fn from(errors: ValidationErrors) -> Self {
+        use serde_json::{Map as JsonMap, Value as JsonValue};
+
+        let mut err_map = JsonMap::new();
+
+        // transforms errors into objects that err_map can take
+        for (field, errors) in errors.field_errors().iter() {
+            let errors: Vec<JsonValue> = errors
+                .iter()
+                .map(|error| {
+                    // dbg!(error) // <- Uncomment this if you want to see what error looks like
+                    json!(error.message)
+                })
+                .collect();
+            err_map.insert(field.to_string(), json!(errors));
+        }
+
+        let err: String = err_map.iter().map(|(k, v)| format!("{}: {}", k, v)).collect();
+
+        Error::new(&err, ErrorType::BadRequest)
     }
 }

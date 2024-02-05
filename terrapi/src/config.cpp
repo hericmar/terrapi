@@ -117,9 +117,9 @@ std::optional<SensorConfig> parse_sensor_config(std::string name, const toml::ta
     return config;
 }
 
-std::optional<SwitchConfig> parse_switch_config(std::string name, const toml::table& table)
+std::optional<DeviceConfig> parse_device_config(std::string name, const toml::table& table)
 {
-    SwitchConfig config{};
+    DeviceConfig config{};
 
     config.name = name;
 
@@ -198,22 +198,22 @@ std::optional<Config> parse_config(const toml::table& table)
         LOG(WARN, "no sensors specified");
     }
 
-    if (const toml::table* switches = table["switch"].as_table()) {
-        for (const auto& [key, value] : *switches) {
+    if (const toml::table* devices = table["device"].as_table()) {
+        for (const auto& [key, value] : *devices) {
             std::string name(key.begin(), key.end());
             if (sensor_names.count(name)) {
-                LOG(ERR, "switch name " + name + " is already used by a sensor");
+                LOG(ERR, "device name " + name + " is already used by a sensor");
                 continue;
             }
 
-            if (auto maybe_switch = parse_switch_config(name, *value.as_table())) {
-                config.switches.push_back(*maybe_switch);
+            if (auto maybe_device = parse_device_config(name, *value.as_table())) {
+                config.devices.push_back(*maybe_device);
             } else {
-                LOG(ERR, "unable to process switch config");
+                LOG(ERR, "unable to process device config");
             }
         }
     } else {
-        LOG(WARN, "no switches specified");
+        LOG(WARN, "no devices specified");
     }
 
     return config;

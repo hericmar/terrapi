@@ -9,5 +9,5 @@ TEST_CASE("Test example config")
 
     const auto config = std::move(result.value());
     REQUIRE_EQ(config.sensors.size(), 2);
-    REQUIRE_EQ(config.switches.size(), 3);
+    REQUIRE_EQ(config.devices.size(), 3);
 }

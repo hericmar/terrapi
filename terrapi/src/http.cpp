@@ -64,6 +64,7 @@ bool HttpClient::make_request(const char* method, const std::string& path, const
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &read_buffer);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
 
     // headers
     struct curl_slist* headers = nullptr;

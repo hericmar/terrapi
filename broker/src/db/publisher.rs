@@ -20,6 +20,7 @@ pub fn create(conn: &mut DbPooledConnection, publisher: &CreatePublisher) -> Res
         client_secret: utils::random_string(CLIENT_SECRET_LENGTH),
         name: publisher.name.clone(),
         config: "".to_string(),
+        created_at: None,
     };
 
     Ok(diesel::insert_into(schema::publishers::table)
@@ -39,17 +40,21 @@ pub fn read_all(conn: &mut DbPooledConnection) -> Result<Vec<Publisher>> {
         .load(conn)?)
 }
 
-pub struct UpdatePublisher {
-    pub name: Option<String>,
-    pub config: Option<String>,
+#[derive(AsChangeset)]
+#[diesel(table_name = schema::publishers)]
+pub struct UpdatePublisher<'a> {
+    pub name: Option<&'a String>,
+    pub config: Option<&'a String>,
 }
 
-pub fn update(conn: &mut DbPooledConnection, client_id: &str, payload: &UpdatePublisher) -> Result<Publisher> {
-    Ok(diesel::update(schema::publishers::table
+pub fn update<'a>(conn: &mut DbPooledConnection, client_id: &str, payload: &UpdatePublisher<'a>) -> Result<Publisher> {
+    let updated = diesel::update(schema::publishers::table
         .filter(schema::publishers::client_id.eq(client_id)))
         .set(payload)
         .returning(Publisher::as_returning())
-        .get_result(conn)?)
+        .get_result(conn)?;
+
+    Ok(updated)
 }
 
 pub fn delete(conn: &mut DbPooledConnection, client_id: &str) -> Result<Publisher> {

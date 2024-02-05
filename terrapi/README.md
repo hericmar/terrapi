@@ -13,3 +13,6 @@ This is because the main loop is a single thread and all hardware access is bloc
 Specifically, sensor reads can be time-consuming.
 
 All values in the configuration file are in **milliseconds**.
+
+## Development
+

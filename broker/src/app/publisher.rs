@@ -11,7 +11,7 @@ pub struct CreatePublisher {
     pub name: String,
 }
 
-type UpdatePublisher = CreatePublisher;
+type UpdatePublisherRequest = CreatePublisher;
 
 #[derive(Serialize)]
 struct PublisherResponse {
@@ -22,7 +22,7 @@ struct PublisherResponse {
 type PublisherDetailResponse = Publisher;
 
 #[derive(Deserialize)]
-struct PublisherPath {
+pub struct PublisherPath {
     client_id: String,
 }
 
@@ -46,10 +46,10 @@ pub async fn read_all(
 pub async fn update(
     ctx: web::Data<AppState>,
     path: web::Path<PublisherPath>,
-    payload: web::Json<UpdatePublisher>
+    payload: web::Json<UpdatePublisherRequest>
 ) -> Result<HttpResponse> {
     let data = &db::publisher::UpdatePublisher{
-        name: Some(payload.name.clone()),
+        name: Some(&payload.name),
         config: None,
     };
     let result = db::publisher::update(&mut ctx.db.get()?, &path.client_id, data)?;

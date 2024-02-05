@@ -8,4 +8,5 @@ pub struct Publisher {
     pub client_secret: String,
     pub name: String,
     pub config: String,
+    pub created_at: Option<chrono::NaiveDateTime>,
 }

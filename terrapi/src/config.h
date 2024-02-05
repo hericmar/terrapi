@@ -37,7 +37,7 @@ struct SensorConfig
     std::string        sensor_type;
 };
 
-struct SwitchConfig
+struct DeviceConfig
 {
     std::string name;
     int         gpio;
@@ -54,7 +54,7 @@ struct Config
     EnvironmentConfig         environment;
     BrokerConfig              broker;
     std::vector<SensorConfig> sensors;
-    std::vector<SwitchConfig> switches;
+    std::vector<DeviceConfig> devices;
 
     std::string raw;
 

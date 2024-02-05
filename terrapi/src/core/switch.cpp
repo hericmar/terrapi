@@ -8,7 +8,7 @@
 
 namespace terra
 {
-Switch::Switch(SwitchConfig* config, const Expr& expr)
+Switch::Switch(DeviceConfig* config, const Expr& expr)
     : config(config), rule(expr)
 {
     pinMode(config->gpio, OUTPUT);
