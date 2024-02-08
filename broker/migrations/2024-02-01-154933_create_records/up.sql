@@ -4,7 +4,7 @@ ALTER TABLE publishers ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 CREATE TABLE devices (
     id SERIAL PRIMARY KEY,
     client_id CHAR(8) NOT NULL,
-    device_id CHAR(12) NOT NULL,
+    device_id VARCHAR(12) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     power REAL,
     UNIQUE (client_id, device_id, created_at)
@@ -25,9 +25,10 @@ CREATE TABLE measurements (
     id SERIAL PRIMARY KEY,
     timestamp TIMESTAMP NOT NULL,
     client_id CHAR(8) NOT NULL,
-    sensor_id CHAR(12) NOT NULL,
+    source VARCHAR(12) NOT NULL,
     value REAL NOT NULL,
-    UNIQUE (timestamp, client_id, sensor_id),
+    quantity INT NOT NULL,
+    UNIQUE (timestamp, client_id, source, quantity),
     FOREIGN KEY (client_id) REFERENCES publishers(client_id) ON DELETE SET DEFAULT
 );
 

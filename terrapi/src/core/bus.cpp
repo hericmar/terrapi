@@ -16,7 +16,7 @@ void Bus::publish()
 
     const auto request_body = serialize(broker_config.client_id.c_str(), records);
 
-    if (client.make_request("POST", "/api/v1/record", request_body)) {
+    if (client.make_request("POST", "/api/v1/records", request_body)) {
         records.clear();
     }
 }

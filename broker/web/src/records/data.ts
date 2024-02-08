@@ -1,4 +1,4 @@
-import {Record} from "@/models";
+import {Measurement, Records} from "@/models";
 import api from "@/api";
 
 export const CODE_TO_NAME = new Map<number, string>([
@@ -7,28 +7,36 @@ export const CODE_TO_NAME = new Map<number, string>([
   [2, 'Temperature'],
 ])
 
+export type DataSets = {
+  // number is quantity
+  measurements: Map<number, Array<Measurement>>,
+}
+
 /**
  * @param records
  * @returns Map<number, Array<Record>> - key is quantity, value is array of records with this quantity
  */
-export const processRecords = (records: Array<Record>): Map<number, Array<Record>> => {
+export function processRecords(records: Records): DataSets {
   // grouped by quantity
-  const data = new Map<number, Array<Record>>()
+  const measurements = new Map<number, Array<Measurement>>()
 
-  records.forEach((record) => {
+  records.measurements.forEach((record) => {
     record.quantity = Math.round(record.quantity)
 
-    if (data.has(record.quantity)) {
-      data.get(record.quantity)?.push(record)
+    // group by quantity
+    if (measurements.has(record.quantity)) {
+      measurements.get(record.quantity)?.push(record)
     } else {
-      data.set(record.quantity, [record])
+      measurements.set(record.quantity, [record])
     }
   })
 
-  return data
+  return {
+    measurements
+  }
 }
 
-export const fetchRecords = async (clientId: string, now: Date): Promise<Array<Record>> => {
+export const fetchRecords = async (clientId: string, now: Date): Promise<Records> => {
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 
   // Set the time to one minute before midnight (23:59:59) for the current date

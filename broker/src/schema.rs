@@ -6,7 +6,7 @@ diesel::table! {
         #[max_length = 8]
         client_id -> Bpchar,
         #[max_length = 12]
-        device_id -> Bpchar,
+        device_id -> Varchar,
         created_at -> Timestamp,
         power -> Nullable<Float4>,
     }
@@ -30,8 +30,9 @@ diesel::table! {
         #[max_length = 8]
         client_id -> Bpchar,
         #[max_length = 12]
-        sensor_id -> Bpchar,
+        source -> Varchar,
         value -> Float4,
+        quantity -> Int4,
     }
 }
 

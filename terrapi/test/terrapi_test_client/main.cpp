@@ -25,10 +25,10 @@ int main()
     const auto thread = std::thread([&]() {
         while (running) {
             const auto now = std::chrono::system_clock::now();
-            const auto now_seconds = std::chrono::time_point_cast<std::chrono::seconds>(now).time_since_epoch();
+            const auto now_minutes = std::chrono::time_point_cast<std::chrono::minutes>(now).time_since_epoch();
 
-            const auto rads = now_seconds.count() * (M_PI / 180);
-            const auto value = (float) sin(rads);
+            const auto rads = now_minutes.count() * (M_PI / 180);
+            const auto value = 60 * (float) abs(sin(rads));
 
             sensor_dht11->force_value(HUMIDITY, value);
             std::cout << "set humidity to " << value << std::endl;

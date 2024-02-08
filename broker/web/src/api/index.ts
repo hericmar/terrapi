@@ -55,28 +55,28 @@ const api = {
   },
   client: {
     async create(name: string) {
-      return doRequest(`${api.getApiUrl()}/api/v1/publisher`, "POST", {
+      return doRequest(`${api.getApiUrl()}/api/v1/publishers`, "POST", {
         name
       })
     },
     async list() {
-      return await doRequest(`${api.getApiUrl()}/api/v1/publisher`, "GET")
+      return await doRequest(`${api.getApiUrl()}/api/v1/publishers`, "GET")
     },
     async rename(clientId: string, newName: string) {
-      return doRequest(`${api.getApiUrl()}/api/v1/publisher/${clientId}`, "PATCH", {
+      return doRequest(`${api.getApiUrl()}/api/v1/publishers/${clientId}`, "PATCH", {
         name: newName
       })
     },
     async delete(clientId: string) {
-      return doRequest(`${api.getApiUrl()}/api/v1/publisher/${clientId}`, "DELETE")
+      return doRequest(`${api.getApiUrl()}/api/v1/publishers/${clientId}`, "DELETE")
     }
   },
   record: {
     async listForClient(clientId: string, from: Date, to: Date) {
-      const fromUnix = Math.floor(from.getTime())
-      const toUnix = Math.floor(to.getTime())
+      const fromUnix = Math.floor(from.getTime() / 1000)
+      const toUnix = Math.floor(to.getTime() / 1000)
 
-      const url = `${api.getApiUrl()}/api/v1/record/?client_id=${clientId}&from=${fromUnix}&to=${toUnix}`
+      const url = `${api.getApiUrl()}/api/v1/records?client_id=${clientId}&from=${fromUnix}&to=${toUnix}`
       const response = await fetch(encodeURI(url));
       return response.json()
     },

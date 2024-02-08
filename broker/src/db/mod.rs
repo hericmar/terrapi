@@ -1,6 +1,6 @@
 pub mod publisher;
 pub mod device;
-mod record;
+pub(crate) mod record;
 
 use diesel::PgConnection;
 use diesel::result::DatabaseErrorKind;

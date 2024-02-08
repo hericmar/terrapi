@@ -134,7 +134,7 @@ void Core::reset()
             }
 
             for (const auto& [type, value] : sensor->measured_values()) {
-                bus->record(Record{
+                bus->record(Measurement{
                         name.c_str(),
                         now,
                         value,

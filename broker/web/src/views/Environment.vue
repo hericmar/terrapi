@@ -71,7 +71,7 @@
 <script lang="ts" setup>
 import {computed, defineProps, nextTick, onBeforeUpdate, onMounted, onUnmounted, PropType, ref, watch} from "vue";
 import {Client} from "@/models";
-import {CODE_TO_NAME, fetchRecords, processRecords} from "@/records/data";
+import {CODE_TO_NAME, DataSets, fetchRecords, processRecords} from "@/records/data";
 import {createChart, updateChart} from "@/records/chart";
 import {onBeforeRouteUpdate, useRoute, useRouter} from "vue-router";
 import {useMainStore} from "@/store";
@@ -137,17 +137,17 @@ const getData = () => {
   chartTypes.value.splice(0, chartTypes.value.length)
 
   fetchRecords(clientId, now.value).then((records) => {
-    const groupedRecords = processRecords(records)
+    const groupedRecords: DataSets = processRecords(records)
 
     // This will trigger a re-render and create charts.
-    chartTypes.value.push(...groupedRecords.keys())
+    chartTypes.value.push(...groupedRecords.measurements.keys())
 
     nextTick(() => {
       // Required, because the chart canvas is not yet rendered.
       chartTypes.value.forEach((type) => {
         const chart = createChart(clientId, type as number)
 
-        const records = groupedRecords.get(type as number)
+        const records = groupedRecords.measurements.get(type as number)
         if (!records) {
           return
         }

@@ -8,11 +8,23 @@
 
 namespace terra
 {
-struct Record
+struct BaseRecord
 {
     const char* src;
+    /// In milliseconds, converted to seconds when sent to the server.
     uint64_t    timestamp;
-    float       value;
-    ValueType   physical_quantity;
 };
+
+struct Event : public BaseRecord
+{
+    int state;
+};
+
+struct Measurement : public BaseRecord
+{
+    float     value;
+    ValueType physical_quantity;
+};
+
+using Record = std::variant<Event, Measurement>;
 }

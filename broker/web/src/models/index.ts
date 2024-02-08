@@ -9,5 +9,22 @@ export type Record = {
   src: string,
   value: number
   quantity: number
-  client_id: string
+}
+
+export type Event = {
+  timestamp: number,
+  device_id: number,
+  state: number,
+}
+
+export type Measurement = {
+  timestamp: number
+  source: string,
+  quantity: number,
+  value: number,
+}
+
+export type Records = {
+  events: Array<Event>,
+  measurements: Array<Measurement>
 }

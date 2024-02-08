@@ -1,5 +1,5 @@
 import {Chart, ChartItem} from "chart.js";
-import {Record} from "@/models";
+import {Measurement, Record} from "@/models";
 
 /**
  * `chart-${clientId}-${quantity}` must exists in document!
@@ -40,7 +40,7 @@ export const createChart = (clientId: string, quantity: number): Chart => {
           type: 'time',
           time: {
             parser: 'X',
-            round: 'minute',
+            round: 'second',
             unit: 'second',
             tooltipFormat: 'HH:mm:ss',
           },
@@ -59,24 +59,16 @@ export const createChart = (clientId: string, quantity: number): Chart => {
   });
 }
 
-export const updateChart = (chart: Chart, records: Array<Record>, start: Date, end: Date) => {
+export const updateChart = (chart: Chart, records: Array<Measurement>, start: Date, end: Date) => {
   const datasets = []
 
   // Group records by src value and physical quantity
-  const map = new Map<string, Array<Record>>();
-  records.forEach((item: Record) => {
-    /*
+  const map = new Map<string, Array<Measurement>>();
+  records.forEach((item: Measurement) => {
     // we have to multiply unix timestamp by 1000, JS uses milliseconds.
-    (value as Array<any>).forEach((item: any) => {
-      item.timestamp *= 1000;
-    });
-     */
+    item.timestamp *= 1000;
 
-    let key = `${item.src}`;
-    if (item.src.includes("#")) {
-      key = item.src.split("#")[0]
-    }
-
+    const key = `${item.source}`;
     const collection = map.get(key);
     if (!collection) {
       map.set(key, [item]);

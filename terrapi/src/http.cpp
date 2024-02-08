@@ -118,34 +118,49 @@ overloaded(Ts...) -> overloaded<Ts...>;
 
 //
 
+constexpr const char* TEMPLATE_EVENT =
+        R"({{"source": "{}", "state": {}, "timestamp": {}}})";
+
 constexpr const char* TEMPLATE_MEASUREMENT =
-        R"({{"src": "{}", "value": {}, "quantity": {}, "timestamp": {}}})";
+        R"({{"source": "{}", "value": {}, "quantity": {}, "timestamp": {}}})";
 
 constexpr const char* TEMPLATE_RECORD =
-        R"({{"client_id": "{}", "records": [{}]}})";
+        R"({{"client_id": "{}", "events": [{}], "measurements": [{}]}})";
 
 std::string serialize(const char* client_id, const std::vector<Record>& records)
 {
     std::string records_str;
 
-    for (const auto& record : records) {
-        if (!records_str.empty()) {
-            records_str += ",";
-        }
+    std::vector<std::string> events_str;
+    std::vector<std::string> measurements_str;
 
-        records_str += fmt::format(
-            TEMPLATE_MEASUREMENT,
-            record.src,
-            record.value,
-            (int) record.physical_quantity,
-            record.timestamp);
+    for (const auto& record : records) {
+        std::visit(detail::overloaded{
+                [&](const Event& e) {
+                    events_str.push_back(fmt::format(
+                            TEMPLATE_EVENT,
+                            e.src,
+                            e.state,
+                            e.timestamp / 1000));
+                },
+                [&](const Measurement& m) {
+                    measurements_str.push_back(fmt::format(
+                            TEMPLATE_MEASUREMENT,
+                            m.src,
+                            m.value,
+                            (int) m.physical_quantity,
+                            m.timestamp / 1000));
+                }
+        }, record);
     }
 
     auto result = fmt::format(
             TEMPLATE_RECORD,
             client_id,
-            records_str);
+            fmt::join(events_str, ","),
+            fmt::join(measurements_str, ","));
 
+    // throws error?
     // LOG(TRACE, "serialized: " + result);
 
     return result;
