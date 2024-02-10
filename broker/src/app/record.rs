@@ -1,8 +1,8 @@
 
 use std::collections::HashMap;
-use actix_web::{HttpResponse, web};
+use actix_web::{HttpRequest, HttpResponse, web};
 use serde::{Deserialize, Serialize};
-use crate::app::AppState;
+use crate::app::{AppState, authorize_publisher};
 use crate::db;
 use crate::db::record::ReadQuery;
 use crate::error::{Error, ErrorType};
@@ -36,9 +36,12 @@ pub struct CreateRecords {
 }
 
 pub async fn create(
-    ctx: web::Data<AppState>, payload: web::Json<CreateRecords>
+    ctx: web::Data<AppState>, req: HttpRequest, payload: web::Json<CreateRecords>
 ) -> Result<HttpResponse> {
     let mut conn = ctx.db.get()?;
+
+    authorize_publisher(&mut conn, &req, &payload.client_id)?;
+
     let devices = db::device::read_by_client_id(&mut conn, &payload.client_id)?;
 
     let devices_map: HashMap<&str, i32> = devices.iter().map(|device| {

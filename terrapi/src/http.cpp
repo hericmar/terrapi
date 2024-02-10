@@ -72,7 +72,7 @@ bool HttpClient::make_request(const char* method, const std::string& path, const
     // Remove a header curl would otherwise add by itself
     headers = curl_slist_append(headers, "Accept:");
 
-    headers = curl_slist_append(headers, ("Authorization: Basic " + config.password).c_str());
+    headers = curl_slist_append(headers, ("Authorization: Bearer " + config.password).c_str());
     headers = curl_slist_append(headers, "Content-Type: application/json");
 
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);

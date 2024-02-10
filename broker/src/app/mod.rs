@@ -10,7 +10,9 @@ use actix_web::middleware::Logger;
 use actix_web::web::{Data, service};
 use serde::Deserialize;
 use crate::db;
-use crate::db::DbPool;
+use crate::db::{DbPool, DbPooledConnection};
+use crate::error::{Error, ErrorType};
+use crate::prelude::*;
 
 /// Deserialized from environment variables using `envy` crate.
 #[derive(Clone, Deserialize, Debug)]
@@ -74,4 +76,23 @@ pub fn start(config: &Config) -> Server {
     .bind(&config.bind_address)
     .unwrap_or_else(|_| panic!("Could not bind server to address {}", &config.bind_address))
     .run()
+}
+
+pub fn authorize_publisher(
+    conn: &mut DbPooledConnection, req: &HttpRequest, client_id: &str
+) -> Result<()> {
+    let auth_header = req.headers().get(AUTHORIZATION)
+        .ok_or(Error::new("Missing token", ErrorType::Unauthorized))?;
+    let client_secret = auth_header
+        .to_str()
+        .map_err(|_| Error::new("Invalid header", ErrorType::Unauthorized))?
+        .strip_prefix("Bearer ")
+        .ok_or(Error::new("Invalid token", ErrorType::Unauthorized))?;
+
+    let client = db::publisher::read(conn, client_id)?;
+    if client.client_secret != client_secret {
+        return Err(Error::new("Invalid token", ErrorType::Unauthorized));
+    }
+
+    Ok(())
 }

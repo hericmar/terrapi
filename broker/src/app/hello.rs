@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use actix_web::{HttpResponse, web};
+use actix_web::{HttpRequest, HttpResponse, web};
 use actix_web::http::StatusCode;
 use diesel::Connection;
 use serde::Deserialize;
 use validator::Validate;
-use crate::app::AppState;
+use crate::app::{AppState, authorize_publisher};
 use crate::db;
 use crate::error::{Error, ErrorType};
 use crate::prelude::*;
@@ -36,9 +36,12 @@ impl From<toml::de::Error> for Error {
 
 /// PUT /api/v1/hello
 pub async fn hello(
-    ctx: web::Data<AppState>, payload: web::Json<Hello>
+    ctx: web::Data<AppState>, req: HttpRequest, payload: web::Json<Hello>
 ) -> Result<HttpResponse> {
     let conn = &mut ctx.db.get()?;
+
+    authorize_publisher(conn, &req, &payload.client_id)?;
+
     conn.transaction(|conn| {
         process_hello(conn, &payload)
     })?;
