@@ -5,7 +5,7 @@ build:
 	@echo "Building WiringPi..."
 	cd lib/WiringPi && ./build && cd ../..
 	@echo "Building terrapi..."
-	mkdir -p build && cd build && cmake .. && make terrapi
+	cmake -B build && make --file=build/Makefile terrapi
 
 install:
 	@echo "Installing terrapi..."

@@ -5,7 +5,7 @@
 
 namespace terra
 {
-static auto log_level = TRACE;
+static auto log_level = INFO;
 static const char* LOG_LEVEL_STR[] = {
     "debug",
     "trace",

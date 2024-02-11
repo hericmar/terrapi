@@ -20,7 +20,6 @@ use crate::prelude::*;
 pub struct Config {
     pub admin_password: String,
     pub bind_address: String,
-    pub base_url: String,
     pub database_url: String,
     #[serde(default = "default_static_root")]
     pub static_root: String,
@@ -51,13 +50,14 @@ fn routes(app: &mut web::ServiceConfig) {
                     web::scope("/records")
                         .route("", web::post().to(record::create))
                         .route("", web::get().to(record::read)))
-        )
-        .service(Files::new("/", "./static/").index_file("index.html"));
+        );
 }
 
 pub fn start(config: &Config) -> Server {
     let db_pool = db::new_pool(&config.database_url)
         .expect("cannot create database pool");
+
+    let static_root = config.static_root.clone();
 
     HttpServer::new(move || {
         let state = AppState {
@@ -75,6 +75,7 @@ pub fn start(config: &Config) -> Server {
             .wrap(cors)
             .wrap(Logger::default())
             .configure(routes)
+            .service(Files::new("/", static_root.clone()).index_file("index.html"))
     })
     .bind(&config.bind_address)
     .unwrap_or_else(|_| panic!("Could not bind server to address {}", &config.bind_address))
