@@ -9,7 +9,7 @@ build:
 
 install:
 	@echo "Installing terrapi..."
-	scripts/install.sh
+	./install.sh
 
 clean:
 	@echo "Cleaning terrapi..."

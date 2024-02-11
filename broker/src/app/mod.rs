@@ -3,6 +3,7 @@ pub mod hello;
 mod record;
 
 use actix_cors::Cors;
+use actix_files::Files;
 use actix_web::{App, http, HttpRequest, HttpServer, web};
 use actix_web::dev::Server;
 use actix_web::http::header::{AUTHORIZATION, CONTENT_TYPE};
@@ -21,19 +22,20 @@ pub struct Config {
     pub bind_address: String,
     pub base_url: String,
     pub database_url: String,
+    #[serde(default = "default_static_root")]
+    pub static_root: String,
+}
+
+fn default_static_root() -> String {
+    "./static".to_string()
 }
 
 pub struct AppState {
     pub db: DbPool,
 }
 
-async fn index(_ctx: Data<AppState>, _req: HttpRequest) -> &'static str {
-    "Hello world!"
-}
-
 fn routes(app: &mut web::ServiceConfig) {
     app
-        .route("/", web::get().to(index))
         .service(
             web::scope("/api/v1")
                 .service(
@@ -49,7 +51,8 @@ fn routes(app: &mut web::ServiceConfig) {
                     web::scope("/records")
                         .route("", web::post().to(record::create))
                         .route("", web::get().to(record::read)))
-        );
+        )
+        .service(Files::new("/", "./static/").index_file("index.html"));
 }
 
 pub fn start(config: &Config) -> Server {

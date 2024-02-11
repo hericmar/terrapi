@@ -16,12 +16,19 @@ if [ ! -f "target/release/terrapi-broker" ]; then
     exit 1
 fi
 
+# Create user if not exists.
+if ! getent passwd $TERRAPI_BROKER_USER > /dev/null; then
+    adduser -D -H -s /sbin/nologin $TERRAPI_BROKER_USER
+fi
+
 if [ ! -e "/etc/terrapi-broker/config" ]; then
-    mkdir -p "/etc/terrapi-broker"
-    cp "etc/terrapi-broker/config" "/etc/terrapi-broker/config"
-    chown -R root:$TERRAPI_BROKER_USER "/etc/terrapi-broker"
-    chmod 550 "/etc/terrapi-broker"
-    chmod 640 "/etc/terrapi-broker/config"
+    mkdir -p /etc/terrapi-broker
+    cp .env.example /etc/terrapi-broker/config
+    chown -R root:$TERRAPI_BROKER_USER /etc/terrapi-broker
+    chmod 550 /etc/terrapi-broker
+    chmod 640 /etc/terrapi-broker/config
+else
+    cp .env.example /etc/terrapi-broker/config.new
 fi
 
 cp -R "web/dist/." "${STATIC_ROOT}"
