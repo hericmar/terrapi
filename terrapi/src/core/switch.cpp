@@ -74,7 +74,7 @@ bool Switch::is_on_high() const
 void Switch::switch_on()
 {
     if (state == SWITCH_OFF) {
-        LOG(TRACE, "switching '{}' ON", config->name);
+        LOG(INFO, "switching '{}' ON", config->name);
 
         write_on();
         state = SWITCH_ON;
@@ -84,7 +84,7 @@ void Switch::switch_on()
 void Switch::switch_off()
 {
     if (state == SWITCH_ON) {
-        LOG(TRACE, "switching '{}' OFF", config->name);
+        LOG(INFO, "switching '{}' OFF", config->name);
 
         write_off();
         state = SWITCH_OFF;

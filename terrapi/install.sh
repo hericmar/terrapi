@@ -10,13 +10,6 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-# Create user and group if they don't exist.
-if ! getent group terrapi >/dev/null; then
-  echo "Creating group terrapi."
-  groupadd terrapi
-  usermod -aG terrapi terrapi
-fi
-
 cp target/bin/terrapi /usr/bin/terrapi
 
 mkdir -p /etc/terrapi
@@ -26,7 +19,6 @@ else
   echo "Creating default config."
   cp etc/terrapi/config.toml /etc/terrapi/config.toml
 fi
-chown -R root:terrapi /etc/terrapi
 chmod -R 750 /etc/terrapi
 
 echo "Copying systemd terrapi.service configuration file."

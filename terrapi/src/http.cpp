@@ -7,6 +7,7 @@
 
 #include <curl/curl.h>
 #include "fmt/format.h"
+#include "fmt/ranges.h"
 
 namespace terra
 {
