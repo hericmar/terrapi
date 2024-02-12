@@ -102,14 +102,12 @@ export const useMainStore = defineStore({
       let result: Client = {
         name: name,
         client_id: "",
-        token: ""
+        client_secret: ""
       }
-      await api.client.create(name)
-        .then(async response => {
-          result = await response.json()
-          this.clients.push(result)
-          this.sortClients()
-        })
+      const response = await api.client.create(name)
+      result = await response.json()
+      this.clients.push(result)
+      this.sortClients()
 
       return result
     },

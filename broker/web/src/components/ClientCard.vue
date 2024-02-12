@@ -114,6 +114,7 @@ const props = defineProps({
 })
 
 const store = useMainStore()
+const router = useRouter()
 
 // Local reference to the client object in the store.
 const client = ref(undefined as Client | undefined)
@@ -132,11 +133,13 @@ const populateForm = (data: Client | undefined) => {
     client.value = data
 
     formTitle.value = "Edit client"
+
+    // create a copy of string values to avoid reactivity issues
     name.value = (' ' + client.value.name).slice(1)
     clientId.value = (' ' + client.value.client_id).slice(1)
-
-    // TODO: Token is not visible in the edit dialog.
-    // token.value = (' ' + props.client.token).slice(1)
+    if (client.value.client_secret) {
+      token.value = (' ' + client.value.client_secret).slice(1)
+    }
   }
 }
 
@@ -162,25 +165,22 @@ const onCreate = async () => {
   await store.createClient(name.value)
     .then(newClient => {
       populateForm(newClient)
-      // router.push({name: 'Environment', params: {clientId: newClient.client_id}})
+      newClient.client_secret = ""
+      router.push({name: 'Environment', params: {clientId: newClient.client_id}})
     })
     .catch(err => {
       console.log(err)
     });
-
-  props.onClose()
 }
 
 const onUpdate = async () => {
   if (client.value) {
     await store.renameClient(client.value.client_id, name.value)
-    props.onClose()
+    props.onClose(client.value)
   }
 }
 
 // Delete
-
-const router = useRouter()
 
 const deleteClientDialog = ref(false)
 
@@ -191,11 +191,12 @@ const onDelete = () => {
 
   store.deleteClient(client.value.client_id)
     .then(_ => {
-      props.onClose()
+      props.onClose(client.value)
+
       router.push({name: 'Home'})
     })
     .catch(_ => {
-      props.onClose()
+      props.onClose(client.value)
     })
 }
 

@@ -1,6 +1,6 @@
 export type Client = {
   client_id: string,
-  token: string,
+  client_secret: string,
   name: string
 }
 

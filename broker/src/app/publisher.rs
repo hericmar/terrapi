@@ -43,7 +43,11 @@ pub async fn create(
 pub async fn read_all(
     ctx: web::Data<AppState>
 ) -> Result<HttpResponse> {
-    let result = db::publisher::read_all(&mut ctx.db.get()?)?;
+    let result_private = db::publisher::read_all(&mut ctx.db.get()?)?;
+    let result = result_private.into_iter().map(|p| PublisherResponse{
+        client_id: p.client_id,
+        name: p.name,
+    }).collect::<Vec<PublisherResponse>>();
     Ok(HttpResponse::Ok().json(result))
 }
 

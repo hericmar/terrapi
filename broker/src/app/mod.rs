@@ -102,7 +102,6 @@ pub fn start(config: &Config) -> Server {
             .wrap(IdentityMiddleware::default())
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
-                    // .cookie_domain(Some("localhost:3000".to_owned()))
                     .cookie_name("session".to_owned())
                     .session_lifecycle(PersistentSession::default().session_ttl(Duration::hours(2)))
                     .build()
