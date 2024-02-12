@@ -46,12 +46,12 @@ export const useMainStore = defineStore({
 
   actions: {
     init() {
-      const token = localStorage.getItem("token");
-      if (token) {
-        this.setToken(token)
-      } else {
-        this.logout();
-      }
+      api.auth.user()
+        .then(async (response) => {
+          if (response.status === 200) {
+            this.isLoggedIn = true;
+          }
+        })
 
       return this.fetchClients()
     },
@@ -66,17 +66,6 @@ export const useMainStore = defineStore({
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(this.settings))
     },
 
-    setToken(token: string) {
-      this.isLoggedIn = true;
-      localStorage.setItem("token", token)
-      api.setToken(token)
-    },
-    removeToken() {
-      this.isLoggedIn = false
-      localStorage.removeItem("token");
-      api.setToken("")
-    },
-
     async login(password: string) {
       return await api.auth.login(password)
         .then(async (response) => {
@@ -85,8 +74,7 @@ export const useMainStore = defineStore({
           }
 
           if (response.status === 200) {
-            const data = await response.json()
-            this.setToken(data.token)
+            this.isLoggedIn = true;
 
             return true;
           }
@@ -94,7 +82,7 @@ export const useMainStore = defineStore({
     },
     logout() {
       api.auth.logout().then(() => {
-        this.removeToken();
+        this.isLoggedIn = false
       })
     },
     sortClients() {

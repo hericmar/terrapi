@@ -1,14 +1,26 @@
 pub mod publisher;
 pub mod hello;
 mod record;
+mod auth;
 
 use actix_cors::Cors;
 use actix_files::Files;
-use actix_web::{App, http, HttpRequest, HttpServer, web};
+use actix_identity::IdentityMiddleware;
+use actix_session::config::PersistentSession;
+use actix_session::SessionMiddleware;
+use actix_session::storage::CookieSessionStore;
+use actix_web::{
+    cookie::{time::Duration, Key},
+    App, http, HttpRequest, HttpServer, web
+};
+use actix_web::cookie::SameSite;
 use actix_web::dev::Server;
 use actix_web::http::header::{AUTHORIZATION, CONTENT_TYPE};
 use actix_web::middleware::Logger;
-use actix_web::web::{Data, service};
+use actix_web::web::{
+    Data,
+    service
+};
 use serde::Deserialize;
 use crate::db;
 use crate::db::{DbPool, DbPooledConnection};
@@ -29,14 +41,22 @@ fn default_static_root() -> String {
     "./static".to_string()
 }
 
+#[derive(Clone)]
 pub struct AppState {
     pub db: DbPool,
+    pub admin_password: String,
 }
 
 fn routes(app: &mut web::ServiceConfig) {
     app
         .service(
             web::scope("/api/v1")
+                .service(
+                    web::scope("/auth")
+                        .route("/login", web::post().to(auth::login))
+                        .route("/logout", web::post().to(auth::logout))
+                        .route("/user", web::get().to(auth::user))
+                )
                 .service(
                     web::scope("/hello")
                         .route("", web::put().to(hello::hello)))
@@ -59,10 +79,14 @@ pub fn start(config: &Config) -> Server {
 
     let static_root = config.static_root.clone();
 
+    let state = AppState {
+        db: db_pool.clone(),
+        admin_password: config.admin_password.clone(),
+    };
+
+    let secret_key = Key::generate();
+
     HttpServer::new(move || {
-        let state = AppState {
-            db: db_pool.clone(),
-        };
         /// TODO: Remove `permissive` and configure CORS properly.
         let cors = Cors::permissive()
             // .send_wildcard()
@@ -70,10 +94,19 @@ pub fn start(config: &Config) -> Server {
             // .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
             // .allowed_header(http::header::CONTENT_TYPE)
             .max_age(3600);
+
         App::new()
-            .app_data(Data::new(state))
+            .app_data(Data::new(state.clone()))
             .wrap(cors)
             .wrap(Logger::default())
+            .wrap(IdentityMiddleware::default())
+            .wrap(
+                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+                    // .cookie_domain(Some("localhost:3000".to_owned()))
+                    .cookie_name("session".to_owned())
+                    .session_lifecycle(PersistentSession::default().session_ttl(Duration::hours(2)))
+                    .build()
+            )
             .configure(routes)
             .service(Files::new("/", static_root.clone()).index_file("index.html"))
     })

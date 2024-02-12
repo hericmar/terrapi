@@ -1,3 +1,4 @@
+use actix_identity::Identity;
 use actix_web::{HttpResponse, web};
 use serde::{Deserialize, Serialize};
 use crate::prelude::*;
@@ -28,8 +29,12 @@ pub struct PublisherPath {
 
 /// POST /api/v1/publishers
 pub async fn create(
-    ctx: web::Data<AppState>, payload: web::Json<CreatePublisher>
+    ctx: web::Data<AppState>,
+    user: Option<Identity>,
+    payload: web::Json<CreatePublisher>
 ) -> Result<HttpResponse, Error> {
+    user.ok_or(Error::new("unauthorized", crate::error::ErrorType::Unauthorized))?;
+
     let result = db::publisher::create(&mut ctx.db.get()?, &payload.into_inner())?;
     Ok(HttpResponse::Ok().json(result))
 }
@@ -45,9 +50,12 @@ pub async fn read_all(
 /// PATCH /api/v1/publishers/{client_id}
 pub async fn update(
     ctx: web::Data<AppState>,
+    user: Option<Identity>,
     path: web::Path<PublisherPath>,
     payload: web::Json<UpdatePublisherRequest>
 ) -> Result<HttpResponse> {
+    user.ok_or(Error::new("unauthorized", crate::error::ErrorType::Unauthorized))?;
+
     let data = &db::publisher::UpdatePublisher{
         name: Some(&payload.name),
         config: None,
@@ -59,8 +67,11 @@ pub async fn update(
 /// DELETE /api/v1/publishers/{client_id}
 pub async fn delete(
     ctx: web::Data<AppState>,
+    user: Option<Identity>,
     path: web::Path<PublisherPath>
 ) -> Result<HttpResponse> {
+    user.ok_or(Error::new("unauthorized", crate::error::ErrorType::Unauthorized))?;
+
     let result = db::publisher::delete(&mut ctx.db.get()?, &path.client_id)?;
     Ok(HttpResponse::Ok().json(result))
 }

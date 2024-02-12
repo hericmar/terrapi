@@ -162,7 +162,7 @@ const onCreate = async () => {
   await store.createClient(name.value)
     .then(newClient => {
       populateForm(newClient)
-      router.push({name: 'Environment', params: {clientId: newClient.client_id}})
+      // router.push({name: 'Environment', params: {clientId: newClient.client_id}})
     })
     .catch(err => {
       console.log(err)
