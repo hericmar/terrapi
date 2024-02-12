@@ -13,7 +13,7 @@ export type Record = {
 
 export type Event = {
   timestamp: number,
-  device_id: number,
+  source: string,
   state: number,
 }
 

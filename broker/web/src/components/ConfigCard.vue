@@ -142,7 +142,7 @@ export default {
         return item.client_id === props.clientId
       })
       if (!found) {
-        found = { client_id: "", token: "", name: ""}
+        found = { client_id: "", client_secret: "", name: ""}
       }
       return found
     })

@@ -36,7 +36,7 @@
   </div>
 
   <v-card
-    class="pa-2 my-4"
+    class="pa-4 my-4"
     v-for="(type, i) in chartTypes"
     :key="i"
   >
@@ -45,7 +45,7 @@
         {{ CODE_TO_NAME.get(type as number) }}
       </v-toolbar-title>
     </v-toolbar>
-    <canvas style="max-height: 500px" :id="`chart-${clientId}-${type}`"></canvas>
+    <canvas style="max-height: 400px" :id="`chart-${clientId}-${type}`"></canvas>
   </v-card>
 
   <div
@@ -54,6 +54,20 @@
   >
     No records found.
   </div>
+
+  <!-- Event log -->
+  <v-card class="pa-2 my-4">
+    <v-toolbar color="rgba(0, 0, 0, 0)">
+      <v-toolbar-title class="text-h6">
+        Event Log
+      </v-toolbar-title>
+    </v-toolbar>
+    <v-list>
+      <v-list-item v-for="(event, i) in events" :key="i">
+        {{ event }}
+      </v-list-item>
+    </v-list>
+  </v-card>
 
   <!-- Edit Client Dialog -->
   <v-dialog
@@ -71,7 +85,7 @@
 <script lang="ts" setup>
 import {computed, defineProps, nextTick, onBeforeUpdate, onMounted, onUnmounted, PropType, ref, watch} from "vue";
 import {Client} from "@/models";
-import {CODE_TO_NAME, DataSets, fetchRecords, processRecords} from "@/records/data";
+import {CODE_TO_NAME, DataSets, DEVICE_STATE_TO_NAME, fetchRecords, processRecords} from "@/records/data";
 import {createChart, updateChart} from "@/records/chart";
 import {onBeforeRouteUpdate, useRoute, useRouter} from "vue-router";
 import {useMainStore} from "@/store";
@@ -93,6 +107,8 @@ const clientId: string = route.params.clientId as string
 
 const mainStore = useMainStore();
 const clientName = computed(() => mainStore.clients.find((c) => c.client_id === clientId)?.name)
+
+const events = ref<string[]>([])
 
 // now is by default today
 const now = computed({
@@ -137,6 +153,8 @@ const getData = () => {
   chartTypes.value.splice(0, chartTypes.value.length)
 
   fetchRecords(clientId, now.value).then((records) => {
+    events.value = records.events.map((e) => `${new Date(e.timestamp *= 1000).toLocaleTimeString()}: ${e.source} ${DEVICE_STATE_TO_NAME.get(e.state)}`)
+
     const groupedRecords: DataSets = processRecords(records)
 
     // This will trigger a re-render and create charts.

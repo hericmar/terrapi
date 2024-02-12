@@ -10,6 +10,7 @@ use crate::models::record::{Event, Measurement, ReadEvent, ReadMeasurement};
 use crate::prelude::*;
 
 use chrono::naive::serde::ts_seconds::deserialize as from_ts;
+use crate::models::device::Device;
 
 #[derive(Deserialize)]
 pub struct CreateEvent {
@@ -78,18 +79,44 @@ pub async fn create(
     Ok(HttpResponse::Ok().finish())
 }
 
+use chrono::naive::serde::ts_seconds::serialize as to_ts;
+
+#[derive(Serialize)]
+pub struct EventResponse {
+    #[serde(serialize_with = "to_ts")]
+    pub timestamp: chrono::NaiveDateTime,
+    pub source: String,
+    pub power: i32,
+    pub state: i32,
+}
+
 #[derive(Serialize)]
 pub struct Records {
-    pub events: Vec<ReadEvent>,
+    pub events: Vec<EventResponse>,
     pub measurements: Vec<ReadMeasurement>,
 }
 
 pub async fn read(
     ctx: web::Data<AppState>, query: web::Query<ReadQuery>
 ) -> Result<HttpResponse> {
-    let (events, measurements) = {
-        let mut conn = ctx.db.get()?;
-        db::record::read(&mut conn, &query)?
-    };
-    Ok(HttpResponse::Ok().json(Records { events, measurements }))
+    let mut conn = ctx.db.get()?;
+
+    let (events, measurements) = db::record::read(&mut conn, &query)?;
+
+    let devices_map: HashMap<i32, Device> = db::device::read_by_client_id(&mut conn, &query.client_id)?
+        .into_iter().map(|device| {
+            (device.id, device)
+        }).collect();
+
+    let processed_events = events.into_iter().map(|event| {
+        let device = &devices_map[&event.device_id];
+        EventResponse {
+            timestamp: event.timestamp,
+            source: device.device_id.clone(),
+            power: device.power.unwrap_or(0.0) as i32,
+            state: event.state,
+        }
+    }).collect::<Vec<EventResponse>>();
+
+    Ok(HttpResponse::Ok().json(Records { events: processed_events, measurements }))
 }

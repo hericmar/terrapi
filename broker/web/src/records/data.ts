@@ -7,6 +7,11 @@ export const CODE_TO_NAME = new Map<number, string>([
   [2, 'Temperature'],
 ])
 
+export const DEVICE_STATE_TO_NAME = new Map<number, string>([
+  [0, 'off'],
+  [1, 'on'],
+])
+
 export type DataSets = {
   // number is quantity
   measurements: Map<number, Array<Measurement>>,
