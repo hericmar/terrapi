@@ -6,12 +6,10 @@ const SETTINGS_STORAGE_KEY = "settings"
 export type Settings = {
   // In seconds
   refreshRate: number
-  autoRefresh: boolean
 }
 
 const getDefaultSettings = () => ({
   refreshRate: 60,
-  autoRefresh: false
 })
 
 const getSettings = (): Settings => {

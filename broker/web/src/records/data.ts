@@ -1,11 +1,5 @@
-import {Measurement, Records} from "@/models";
+import {Measurement, Quantity, Records} from "@/models";
 import api from "@/api";
-
-export const CODE_TO_NAME = new Map<number, string>([
-  [0, 'Humidity'],
-  [1, 'Signal'],
-  [2, 'Temperature'],
-])
 
 export const DEVICE_STATE_TO_NAME = new Map<number, string>([
   [0, 'off'],
@@ -13,8 +7,7 @@ export const DEVICE_STATE_TO_NAME = new Map<number, string>([
 ])
 
 export type DataSets = {
-  // number is quantity
-  measurements: Map<number, Array<Measurement>>,
+  measurements: Map<Quantity, Array<Measurement>>,
 }
 
 /**
@@ -27,6 +20,7 @@ export function processRecords(records: Records): DataSets {
 
   records.measurements.forEach((record) => {
     record.quantity = Math.round(record.quantity)
+    record.value = Math.round(record.value * 100) / 100
 
     // group by quantity
     if (measurements.has(record.quantity)) {

@@ -18,29 +18,31 @@
     <v-btn
       class="mr-1"
       icon
-      @click="autoRefresh = !autoRefresh"
     >
-      <v-icon v-if="autoRefresh">mdi-sync</v-icon>
-      <v-icon v-else>mdi-sync-off</v-icon>
+      <v-icon>mdi-sync</v-icon>
       <v-tooltip
         activator="parent"
         location="bottom"
       >
-        Automatic refresh
+        Refresh
       </v-tooltip>
     </v-btn>
 
     <v-select
-      class="mr-1"
+      class="mr-1 text-caption"
       density="compact"
       variant="outlined"
       hide-details
       v-model="refreshRate"
-      style="max-width: 120px;"
+      style="max-width: 150px;"
       :items="[
         {
+          label: 'Refresh Off',
+          value: 0
+        },
+        {
           label: '10 s',
-          value: 1
+          value: 10
         },
         {
           label: '30 s',
@@ -129,15 +131,6 @@ const drawer = computed({
   set: (value) => mainStore.drawer = value
 })
 const isLoggedIn = computed(() => mainStore.isLoggedIn)
-
-const autoRefresh = computed({
-  get: () => mainStore.settings.autoRefresh,
-  set: (value) => {
-    mainStore.updateSettings({
-      autoRefresh: value
-    })
-  }
-})
 
 const display = useDisplay()
 watch(display.name, (value) => {

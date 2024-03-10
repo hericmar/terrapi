@@ -8,7 +8,7 @@ export type Record = {
   timestamp: number,
   src: string,
   value: number
-  quantity: number
+  quantity: Quantity
 }
 
 export type Event = {
@@ -17,10 +17,16 @@ export type Event = {
   state: number,
 }
 
+export enum Quantity {
+  Humidity = 0,
+  Signal = 1,
+  Temperature = 2
+}
+
 export type Measurement = {
   timestamp: number
   source: string,
-  quantity: number,
+  quantity: Quantity,
   value: number,
 }
 

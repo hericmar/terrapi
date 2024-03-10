@@ -1,16 +1,41 @@
 import {Chart, ChartItem} from "chart.js";
-import {Measurement, Record} from "@/models";
+import {Measurement, Quantity} from "@/models";
+
+const CHART_CONFIG = {
+  [Quantity.Humidity]: {
+    min: 0,
+    max: 100,
+    unit: '%'
+  },
+  [Quantity.Signal]: {
+    min: 0,
+    max: 2,
+    unit: ''
+  },
+  [Quantity.Temperature]: {
+    min: 0,
+    max: 60,
+    unit: '°C'
+  },
+  "default": {
+    min: 0,
+    max: 100,
+    unit: ''
+  }
+}
 
 /**
  * `chart-${clientId}-${quantity}` must exists in document!
  * @param clientId
  * @param quantity
  */
-export const createChart = (clientId: string, quantity: number): Chart => {
+export const createChart = (clientId: string, quantity: Quantity): Chart => {
   const ctx = document.getElementById(`chart-${clientId}-${quantity}`);
   if (!ctx) {
     throw new Error(`Element with id chart-${clientId}-${quantity} not found!`)
   }
+
+  const config = CHART_CONFIG[quantity] || CHART_CONFIG["default"]
 
   return new Chart(ctx as ChartItem, {
     type: 'line',
@@ -51,6 +76,15 @@ export const createChart = (clientId: string, quantity: number): Chart => {
               // https://www.youtube.com/watch?v=KBPOgUu882o
               const date = new Date(value);
               return date.toLocaleTimeString()
+            }
+          }
+        },
+        y: {
+          min: config.min,
+          max: config.max,
+          ticks: {
+            callback: (value, index, ticks) => {
+              return `${value}${config.unit}`
             }
           }
         }
@@ -94,5 +128,5 @@ export const updateChart = (chart: Chart, records: Array<Measurement>, start: Da
   // @ts-ignore
   chart.config.options.scales.x.max = end.getTime()
 
-  chart?.update()
+  chart.update()
 }

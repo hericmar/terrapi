@@ -35,6 +35,7 @@
     </span>
   </div>
 
+  <!-- TODO: Create separate chart card -->
   <v-card
     class="pa-4 my-4"
     v-for="(type, i) in chartTypes"
@@ -42,7 +43,7 @@
   >
     <v-toolbar color="rgba(0, 0, 0, 0)">
       <v-toolbar-title class="text-h6">
-        {{ CODE_TO_NAME.get(type as number) }}
+        {{ Quantity[type] }}
       </v-toolbar-title>
     </v-toolbar>
     <canvas style="max-height: 400px" :id="`chart-${clientId}-${type}`"></canvas>
@@ -56,7 +57,7 @@
   </div>
 
   <!-- Event log -->
-  <v-card class="pa-2 my-4">
+  <v-card class="pa-2 my-4" v-if="events.length">
     <v-toolbar color="rgba(0, 0, 0, 0)">
       <v-toolbar-title class="text-h6">
         Event Log
@@ -83,23 +84,15 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, defineProps, nextTick, onBeforeUpdate, onMounted, onUnmounted, PropType, ref, watch} from "vue";
-import {Client} from "@/models";
-import {CODE_TO_NAME, DataSets, DEVICE_STATE_TO_NAME, fetchRecords, processRecords} from "@/records/data";
+import {computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch} from "vue";
+import {Quantity, Records} from "@/models";
+import {DataSets, DEVICE_STATE_TO_NAME, fetchRecords, processRecords} from "@/records/data";
 import {createChart, updateChart} from "@/records/chart";
-import {onBeforeRouteUpdate, useRoute, useRouter} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {useMainStore} from "@/store";
 import ClientCard from "@/components/ClientCard.vue";
 import {getTitle} from "@/router";
-
-/*
-const props = defineProps({
-  client: {
-    type: Object as PropType<Client>,
-    required: true
-  }
-})
- */
+import {Chart} from "chart.js";
 
 const route = useRoute()
 const router = useRouter()
@@ -121,7 +114,8 @@ if (!Number.isNaN(routeDate.valueOf())) {
   now.value = routeDate
 }
 
-const chartTypes = ref<Array<number | string>>([])
+const chartTypes = ref<Array<Quantity>>([])
+const charts: Map<Quantity, Chart> = new Map()
 
 const onPrevClick = () => {
   const date = new Date(now.value.getTime() - 24 * 60 * 60 * 1000)
@@ -150,25 +144,33 @@ const onNextClick = () => {
 }
 
 const getData = () => {
-  chartTypes.value.splice(0, chartTypes.value.length)
-
-  fetchRecords(clientId, now.value).then((records) => {
-    events.value = records.events.map((e) => `${new Date(e.timestamp *= 1000).toLocaleTimeString()}: ${e.source} ${DEVICE_STATE_TO_NAME.get(e.state)}`)
+  fetchRecords(clientId, now.value).then((records: Records) => {
+    events.value = records.events.map((e) => {
+      const datetime = new Date(e.timestamp *= 1000).toLocaleTimeString()
+      return `${datetime}: ${e.source} ${DEVICE_STATE_TO_NAME.get(e.state)}`
+    })
 
     const groupedRecords: DataSets = processRecords(records)
 
     // This will trigger a re-render and create charts.
-    chartTypes.value.push(...groupedRecords.measurements.keys())
+    const quantities = Array.from(groupedRecords.measurements.keys())
+    const newCharts = quantities.filter((quantity) => !chartTypes.value.includes(quantity))
+    chartTypes.value.push(...newCharts)
 
     nextTick(() => {
       // Required, because the chart canvas is not yet rendered.
-      chartTypes.value.forEach((type) => {
-        const chart = createChart(clientId, type as number)
+      newCharts.forEach((quantity) => {
+        const chart = createChart(clientId, quantity)
+        charts.set(quantity, chart)
+      })
 
-        const records = groupedRecords.measurements.get(type as number)
+      chartTypes.value.forEach((quantity) => {
+        const records = groupedRecords.measurements.get(quantity)
         if (!records) {
           return
         }
+
+        const chart = charts.get(quantity)!
 
         const startOfDay = new Date(now.value.getFullYear(), now.value.getMonth(), now.value.getDate(), 0, 0, 0);
         const endOfDay = new Date(now.value.getFullYear(), now.value.getMonth(), now.value.getDate(), 24, 0, 0);
@@ -181,28 +183,18 @@ const getData = () => {
 // autorefresh
 
 let timer: any = undefined;
-if (mainStore.settings.autoRefresh) {
+if (mainStore.settings.refreshRate > 0) {
   timer = setInterval(() => {
     getData()
   }, mainStore.settings.refreshRate * 1000)
 }
 
 watch(() => mainStore.settings.refreshRate, (value) => {
-  if (mainStore.settings.autoRefresh) {
-    clearInterval(timer)
+  clearInterval(timer)
+  if (value > 0) {
     timer = setInterval(() => {
       getData()
     }, value * 1000)
-  }
-})
-
-watch(() => mainStore.settings.autoRefresh, (value) => {
-  if (value) {
-    timer = setInterval(() => {
-      getData()
-    }, mainStore.settings.refreshRate * 1000)
-  } else {
-    clearInterval(timer)
   }
 })
 
