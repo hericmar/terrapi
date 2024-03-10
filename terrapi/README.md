@@ -12,6 +12,7 @@ Note that timeouts are not guaranteed to be exact, but they are guaranteed to be
 This is because the main loop is a single thread and all hardware access is blocking.
 Specifically, sensor reads can be time-consuming.
 
+See [etc/terrapi/config.toml](etc/terrapi/config.toml) for configuration options.
 All values in the configuration file are in **milliseconds**.
 
 ## Development

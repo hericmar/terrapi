@@ -1,5 +1,11 @@
 # TerraPi
 Simple manager of environments such as terrariums, aquariums, or greenhouses.
+Measure temperature, humidity, and other physical quantities, 
+and control devices such as fans, heaters, and lights,
+and collect the data and plot them into graphs.
+
+> **Note**: This is hobby project and is not intended for production use.
+
 The project consists of Raspberry Pi client implementation, 
 a broker server that collects data, 
 and a web interface that plots the data into graphs. 
@@ -10,7 +16,7 @@ and a web interface that plots the data into graphs.
 - Optional: PostgreSQL database server for the broker.
 
 ## Instalation
-TODO
+See [terrapi](./terrapi/README.md) and [broker](./broker/README.md) for installation instructions.
 
 ## Configuration
 ### Supported sensors
