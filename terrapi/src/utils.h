@@ -37,6 +37,7 @@ inline std::vector<std::string> split(const std::string& str, const std::string&
     return result;
 }
 
+/// Returns seconds withing the day!
 std::optional<uint64_t> parse_time_from_str(const std::string& str, const char* format = "%H:%M");
 
 uint64_t to_seconds(const std::tm& tm);

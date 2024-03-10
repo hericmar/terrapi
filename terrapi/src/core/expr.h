@@ -170,7 +170,10 @@ struct LessThan : public ExprBase
             return false;
         }
 
-        return lhs->get_value() < rhs->get_value();
+        const auto lhs_val = lhs->get_value();
+        const auto rhs_val = rhs->get_value();
+
+        return lhs_val < rhs_val;
     }
 
 private:
@@ -212,11 +215,10 @@ struct Equal : public ExprBase
 
     bool evaluate() const override
     {
-        if (m_lhs->get_value() == NONE_VALUE || m_rhs->get_value() == NONE_VALUE) {
-            return false;
-        }
+        const auto lhs_val = m_lhs->get_value();
+        const auto rhs_val = m_rhs->get_value();
 
-        return m_lhs->get_value() == m_rhs->get_value();
+        return std::abs(lhs_val - rhs_val) < 0.0001;
     }
 
 private:

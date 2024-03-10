@@ -59,16 +59,9 @@ Core *Core::create(Config config)
 
 void Core::run()
 {
-    if (config.broker.enabled) {
-        auto http_client = HttpClient(config.broker);
-        if (!http_client.put_client_hello(config.raw)) {
-            LOG(FATAL, "cannot send hello to the broker");
-            return;
-        }
-    }
+    bus->hello();
 
     while (true) {
-        /// @todo interrupt handling
         tick();
     }
 }

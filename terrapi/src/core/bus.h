@@ -17,6 +17,12 @@ class Bus
 public:
     Bus(const BrokerConfig& config) : broker_config(config) {}
 
+    /// Sends a hello message to the server.
+    ///
+    /// If server does not respond, the message will be sent again
+    /// on the next call to publish().
+    void hello();
+
     /// Send all events to the server.
     void publish();
 
@@ -25,6 +31,7 @@ public:
 
 private:
     const BrokerConfig& broker_config;
+    bool                hello_pending = true;
     std::vector<Record> records;
 };
 }

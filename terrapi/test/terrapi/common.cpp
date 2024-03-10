@@ -22,7 +22,7 @@ type = "Signal"
 
 [device."humidifier"]
 gpio = 1
-rule = " (dht11.humidity < 60) & (dht11.temperature < 25) & (water.signal = 1) "
+rule = " ((dht11.humidity < 60) & (dht11.temperature < 25)) & (water.signal = 1) "
 power = 20.1
 oscillation_high_ms = 1000
 oscillation_low_ms = 2000
@@ -30,7 +30,7 @@ oscillation_low_ms = 2000
 [device."lights"]
 gpio = 1
 power = 50
-rule = "09:00 < time & time < 20:12"
+rule = "(09:00 < time) & (time < 20:12) "
 )";
 
 terra::Config create_test_config()

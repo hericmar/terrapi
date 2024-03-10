@@ -16,7 +16,7 @@ TEST_CASE("Can parse given expression")
     Config config{};
 
     std::vector<SensorConfig> sensors = {
-        SensorConfig{"dht11", 1, "Dummy"},
+        SensorConfig{"dht11", 1, "DHT11"},
     };
     config.sensors = sensors;
 
@@ -77,36 +77,46 @@ TEST_CASE("Can update given expression")
     {
         auto* lights = core().context().get_switch("lights");
 
+        auto t = std::time(nullptr);
+        std::tm tm = *std::gmtime(&t);
+        tm.tm_hour = 0;
+        tm.tm_min = 0;
+        tm.tm_sec = 0;
+        auto midnight = (int64_t) std::mktime(&tm);
+
         {
             // inactive time
 
-            auto time = parse_time_from_str("04:00").value();
+            const auto daytime = parse_time_from_str("04:00").value();
+            auto time = midnight + daytime;
             core().context().clock->force_value(time);
 
             // ctx().tick();
-            lights->update(time);
+            lights->update(time * 1000);
 
             REQUIRE(!lights->is_on());
         }
         {
             // active time
 
-            auto time = parse_time_from_str("14:00").value();
-            core().context().clock->force_value(time);
+            const auto daytime = parse_time_from_str("14:00").value();
+            auto time = midnight + daytime;
+            core().context().clock->force_value(daytime);
 
             // ctx().tick();
-            lights->update(time);
+            lights->update(time * 1000);
 
             REQUIRE(lights->is_on());
         }
         {
             // inactive time
 
-            auto time = parse_time_from_str("23:30").value();
-            core().context().clock->force_value(time);
+            const auto daytime = parse_time_from_str("23:30").value();
+            auto time = midnight + daytime;
+            core().context().clock->force_value(daytime);
 
             // ctx().tick();
-            lights->update(time);
+            lights->update(time * 1000);
 
             REQUIRE(!lights->is_on());
         }

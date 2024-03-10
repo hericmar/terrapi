@@ -28,6 +28,8 @@ std::unique_ptr<Context> Context::create(const Config& config)
                                         sensor_config.name,
                                         KNOWN_I2C_SENSORS.at(sensor_config.sensor_type)()
                                 });
+        } else {
+            LOG(ERR, "unknown sensor type '{}'", sensor_config.sensor_type);
         }
     }
 
@@ -60,15 +62,4 @@ Switch* Context::get_switch(const std::string& name) const
 
     return (Switch*) &switches.at(name);
 }
-
-/*
-void Context::post_records()
-{
-    HttpClient client(config.broker);
-    client.post_records(data->measurements, data->events);
-
-    data->measurements.clear();
-    data->events.clear();
-}
- */
 }

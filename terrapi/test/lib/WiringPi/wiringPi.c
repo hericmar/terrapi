@@ -1,6 +1,8 @@
 int wiringPiSetup() { return 0; }
 void pinMode(int pin, int mode) {}
-int digitalRead(int pin) { return 0; }
+
+/// Test mock used by signal sensor.
+int digitalRead(int pin) { return 1; }
 void digitalWrite(int pin, int value) {}
 
 void delay(unsigned int howLong) {}
