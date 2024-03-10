@@ -28,7 +28,7 @@ struct DeviceConfig {
 #[derive(Deserialize)]
 struct Config {
     #[serde(rename(deserialize = "device"))]
-    devices: HashMap<String, DeviceConfig>,
+    devices: Option<HashMap<String, DeviceConfig>>,
 }
 
 impl From<toml::de::Error> for Error {
@@ -57,7 +57,9 @@ fn process_hello(
     payload: &Hello
 ) -> Result<()> {
     let config: Config = toml::from_str(&payload.config)?;
-    for (device_id, device_config) in config.devices.iter() {
+    let devices = config.devices.unwrap_or_default();
+
+    for (device_id, device_config) in devices.iter() {
         let read_result = db::device::read_latest(conn, &payload.client_id, device_id);
         let mut create_new_device = false;
         match read_result {
