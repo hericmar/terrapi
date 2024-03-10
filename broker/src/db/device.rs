@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2020-2024 Martin Herich <martin.herich@phire.cz>
+
 use diesel::{ExpressionMethods, Insertable, QueryDsl, RunQueryDsl, SelectableHelper};
 use validator::Validate;
 use crate::db::DbPooledConnection;

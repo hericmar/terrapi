@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2020-2024 Martin Herich <martin.herich@phire.cz>
+
 #include "core/bus.h"
 
 #include "core/core.h"

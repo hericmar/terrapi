@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2020-2024 Martin Herich <martin.herich@phire.cz>
+
 use std::fmt::{Display, Formatter};
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};

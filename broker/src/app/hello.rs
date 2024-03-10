@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2020-2024 Martin Herich <martin.herich@phire.cz>
+
 use std::collections::HashMap;
 use actix_web::{HttpRequest, HttpResponse, web};
 use actix_web::http::StatusCode;

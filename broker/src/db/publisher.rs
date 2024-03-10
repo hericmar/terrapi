@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2020-2024 Martin Herich <martin.herich@phire.cz>
+
 use diesel::prelude::*;
 use crate::app::publisher::CreatePublisher;
 use crate::db::DbPooledConnection;

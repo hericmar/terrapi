@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2020-2024 Martin Herich <martin.herich@phire.cz>
+
 use actix_identity::error::LoginError;
 use actix_identity::Identity;
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, web};

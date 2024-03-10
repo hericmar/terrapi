@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2020-2024 Martin Herich <martin.herich@phire.cz>
+
 use diesel::{Connection, insert_into, QueryDsl, RunQueryDsl};
 use diesel::prelude::*;
 use serde::Deserialize;
