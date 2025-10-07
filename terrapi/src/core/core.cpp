@@ -6,12 +6,12 @@
 
 #include "wiringPi.h"
 
-#include "core/core.h"
-#include "core/context.h"
 #include "config.h"
+#include "core/context.h"
+#include "core/core.h"
+#include "http.h"
 #include "logger.h"
 #include "switch.h"
-#include "http.h"
 
 #define TICK_STEP_MS 100
 
@@ -25,20 +25,19 @@ uint64_t get_now_ms()
 {
     const auto now_chrono = std::chrono::system_clock::now();
     return std::chrono::time_point_cast<std::chrono::milliseconds>(now_chrono)
-            .time_since_epoch()
-            .count();
+        .time_since_epoch()
+        .count();
 }
 
 //
 
-Core::Core(Config config)
-    : config(std::move(config))
+Core::Core(Config config) : config(std::move(config))
 {
     bus = std::make_unique<Bus>(this->config.broker);
     assert(ker == nullptr);
 }
 
-Core *Core::create(Config config)
+Core* Core::create(Config config)
 {
     if (wiringPiSetup() != 0) {
         LOG(FATAL, "cannot setup Wiring PI");
@@ -72,7 +71,7 @@ void Core::run()
 void Core::tick()
 {
     const auto now_ms = get_now_ms();
-    uint64_t elapsed = 0;
+    uint64_t elapsed  = 0;
 
     for (auto& timer : timers) {
         auto start = get_now_ms();
@@ -131,10 +130,10 @@ void Core::reset()
 
             for (const auto& [type, value] : sensor->measured_values()) {
                 bus->record(Measurement{
-                        name.c_str(),
-                        now,
-                        value,
-                        type,
+                    name.c_str(),
+                    now,
+                    value,
+                    type,
                 });
             }
         }
@@ -166,4 +165,4 @@ Core& core()
     assert(ker != nullptr);
     return *ker;
 }
-}
+}  // namespace terra

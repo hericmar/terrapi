@@ -2,20 +2,23 @@
 // Copyright (c) 2020-2024 Martin Herich <martin.herich@phire.cz>
 
 #include <set>
-#include "config.h"
 
 #include "toml.hpp"
 
+#include "config.h"
 #include "hardware/config.h"
 #include "logger.h"
 #include "utils.h"
 
-#define RETURN_EMPTY(message) LOG(FATAL, message); return std::nullopt
+#define RETURN_EMPTY(message) \
+    LOG(FATAL, message);      \
+    return std::nullopt
 
 namespace terra
 {
 /// @returns missing config key
-std::optional<std::string> missing_values(const toml::table& table, const std::vector<const char*>& expected_keys)
+std::optional<std::string> missing_values(const toml::table& table,
+                                          const std::vector<const char*>& expected_keys)
 {
     for (const char* key : expected_keys) {
         if (!table.contains(key)) {
@@ -78,7 +81,7 @@ std::optional<BrokerConfig> parse_broker_config(const toml::table& table)
         return config;
     }
 
-    if (auto missing_key = missing_values(table, { "address", "client_id", "password" })) {
+    if (auto missing_key = missing_values(table, {"address", "client_id", "password"})) {
         RETURN_EMPTY("missing config key " + missing_key.value());
     }
 
@@ -89,7 +92,7 @@ std::optional<BrokerConfig> parse_broker_config(const toml::table& table)
     }
 
     config.client_id = table["client_id"].ref<std::string>();
-    config.password = table["password"].ref<std::string>();
+    config.password  = table["password"].ref<std::string>();
 
     return config;
 }
@@ -98,14 +101,15 @@ std::optional<SensorConfig> parse_sensor_config(std::string name, const toml::ta
 {
     SensorConfig config{};
 
-    config.name = name;
+    config.name = std::move(name);
 
-    if (auto missing_key = missing_values(table, { "type" })) {
+    if (auto missing_key = missing_values(table, {"type"})) {
         RETURN_EMPTY("missing config key " + missing_key.value());
     }
 
     config.sensor_type = table["type"].ref<std::string>();
-    if (KNOWN_GPIO_SENSORS.count(config.sensor_type) == 0 && KNOWN_I2C_SENSORS.count(config.sensor_type) == 0) {
+    if (KNOWN_GPIO_SENSORS.count(config.sensor_type) == 0 &&
+        KNOWN_I2C_SENSORS.count(config.sensor_type) == 0) {
         RETURN_EMPTY("unknown sensor type " + config.sensor_type);
     }
 
@@ -124,9 +128,9 @@ std::optional<DeviceConfig> parse_device_config(std::string name, const toml::ta
 {
     DeviceConfig config{};
 
-    config.name = name;
+    config.name = std::move(name);
 
-    if (auto missing_key = missing_values(table, { "gpio", "rule" })) {
+    if (auto missing_key = missing_values(table, {"gpio", "rule"})) {
         RETURN_EMPTY("missing config key " + missing_key.value());
     }
 
@@ -138,7 +142,8 @@ std::optional<DeviceConfig> parse_device_config(std::string name, const toml::ta
 
     config.rule = table["rule"].ref<std::string>();
     // trim spaces
-    config.rule.erase(std::remove_if(config.rule.begin(), config.rule.end(), isspace), config.rule.end());
+    config.rule.erase(std::remove_if(config.rule.begin(), config.rule.end(), isspace),
+                      config.rule.end());
 
     if (table.contains("power")) {
         if (auto maybe_value = table["power"].value<float>()) {
@@ -150,11 +155,11 @@ std::optional<DeviceConfig> parse_device_config(std::string name, const toml::ta
 
     if (table.contains("oscillation_high") && table.contains("oscillation_low")) {
         auto maybe_high = table["oscillation_high"].value<int>();
-        auto maybe_low = table["oscillation_low"].value<int>();
+        auto maybe_low  = table["oscillation_low"].value<int>();
 
         if (!maybe_high.has_value() || !maybe_low.has_value()) {
             config.oscillation_high_ms = *maybe_high;
-            config.oscillation_low_ms = *maybe_low;
+            config.oscillation_low_ms  = *maybe_low;
         }
     }
 
@@ -165,7 +170,7 @@ std::optional<Config> parse_config(const toml::table& table)
 {
     Config config{};
 
-    if (auto missing_key = missing_values(table, { "environment" })) {
+    if (auto missing_key = missing_values(table, {"environment"})) {
         RETURN_EMPTY("missing config key " + *missing_key);
     }
 
@@ -229,8 +234,7 @@ std::optional<Config> Config::from_file(const char* path)
         RETURN_EMPTY("cannot open file " + std::string(path));
     }
 
-    std::string str((std::istreambuf_iterator<char>(t)),
-                    std::istreambuf_iterator<char>());
+    std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 
     return from_str(str.c_str());
 }
@@ -242,17 +246,16 @@ std::optional<Config> Config::from_str(const char* str)
 
         if (auto maybe_config = parse_config(table)) {
             auto config = *maybe_config;
-            config.raw = str;
+            config.raw  = str;
 
             return config;
         } else {
             return std::nullopt;
         }
-    }
-    catch (const toml::parse_error& err) {
+    } catch (const toml::parse_error& err) {
         std::stringstream stream;
         stream << err;
         RETURN_EMPTY("config parsing failed: " + stream.str());
     }
 }
-}
+}  // namespace terra

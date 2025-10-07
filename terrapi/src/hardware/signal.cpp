@@ -12,9 +12,8 @@ namespace terra
 void Signal::measure()
 {
     const auto liquid_level = digitalRead(gpio);
-    // printf("GPIO#%d %d\n", gpio, liquid_level);
-    values[SIGNAL] = liquid_level;
+    values[SIGNAL]          = (float) liquid_level;
 
     LOG(TRACE, "signal: {}", liquid_level);
 }
-}
+}  // namespace terra

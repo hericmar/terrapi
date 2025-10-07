@@ -27,14 +27,14 @@ void Sensor::force_value(ValueType type, float value)
     values[type] = value;
 }
 
-//----------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------//
 
 void Clock::measure()
 {
     std::time_t t = std::time(nullptr);
-    std::tm* now = std::localtime(&t);
+    std::tm* now  = std::localtime(&t);
 
-    m_value = to_seconds(*now);
+    m_value      = to_seconds(*now);
     values[TIME] = (float) m_value;
 }
-}
+}  // namespace terra

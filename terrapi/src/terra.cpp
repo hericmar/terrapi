@@ -2,8 +2,8 @@
 // Copyright (c) 2020-2024 Martin Herich <martin.herich@phire.cz>
 
 #include <csignal>
-#include "core/core.h"
 #include "config.h"
+#include "core/core.h"
 #include "logger.h"
 
 namespace terra
@@ -45,4 +45,4 @@ int init(int argc, char** argv)
 
     return 0;
 }
-}
+}  // namespace terra

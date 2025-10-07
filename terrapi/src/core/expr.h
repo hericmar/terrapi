@@ -3,13 +3,13 @@
 
 #pragma once
 
+#include <cassert>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
-#include <cassert>
-#include <sstream>
 
 #include "core/sensor.h"
 
@@ -17,15 +17,15 @@ namespace terra
 {
 enum class TokenID : char
 {
-    Number = '0',
+    Number     = '0',
     Identifier = 'a',
-    LParen = '(',
-    RParen = ')',
-    Equal = '=',
-    LessThan = '<',
-    And = '&',
-    Or = '|',
-    End = 0
+    LParen     = '(',
+    RParen     = ')',
+    Equal      = '=',
+    LessThan   = '<',
+    And        = '&',
+    Or         = '|',
+    End        = 0
 };
 
 #define SYMBOL_TOKENS "<&|=()"
@@ -34,15 +34,14 @@ struct Token
 {
     TokenID id;
 
-    float       number = 0;
+    float number = 0;
     std::string identifier;
 
     Token() = default;
     explicit Token(TokenID id) : id(id) {}
-    Token(TokenID id, float number) : id(id), number(number) {
-        assert(id == TokenID::Number);
-    }
-    Token(TokenID id, std::string ident) : id(id), identifier(std::move(ident)) {
+    Token(TokenID id, float number) : id(id), number(number) { assert(id == TokenID::Number); }
+    Token(TokenID id, std::string ident) : id(id), identifier(std::move(ident))
+    {
         assert(id == TokenID::Identifier);
     }
 
@@ -77,7 +76,11 @@ private:
 
 struct ExprBase
 {
-    virtual bool evaluate() const = 0;
+    virtual ~ExprBase() = default;
+
+    virtual bool evaluate() const         = 0;
+    virtual std::string to_string() const = 0;
+
     virtual float get_value() const { return NONE_VALUE; }
 };
 
@@ -102,8 +105,9 @@ public:
      * This merges the 2 conversions into one, so you may write e.g.
      * `expr e = std::make_shared<Number>(42);`.
      */
-    template <typename T, typename = std::enable_if_t<std::is_convertible<T*, const ExprBase*>::value>>
-    Expr(std::shared_ptr<T> e) : m_ptr(std::static_pointer_cast<const ExprBase>(std::move(e))) {}
+    template <typename T, typename = std::enable_if_t<std::is_convertible_v<T*, const ExprBase*>>>
+    Expr(std::shared_ptr<T> e) : m_ptr(std::static_pointer_cast<const ExprBase>(std::move(e)))
+    {}
 
     /// @pre Context is initialized
     /// @throws parse_error
@@ -111,10 +115,7 @@ public:
 
     // implicitly convertible to the internal shared ptr, implement operator->
     // that means you can call methods directly via `expr`, e.g. `e->simplify()`
-    operator const_pointer const& () const
-    {
-        return m_ptr;
-    }
+    operator const_pointer const&() const { return m_ptr; }
 
     const ExprBase* operator->() const
     {
@@ -126,7 +127,7 @@ private:
     const_pointer m_ptr;
 };
 
-//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------//
 
 // builders
 Expr number(float num);
@@ -135,37 +136,43 @@ Expr operator<(Expr a, Expr b);
 Expr operator|(Expr a, Expr b);
 Expr operator&(Expr a, Expr b);
 
-//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------//
 
 struct Num : public ExprBase
 {
     explicit Num(float value) : m_value(value) {}
 
     bool evaluate() const override { return false; }
+    std::string to_string() const override { return std::to_string(m_value); }
+
     float get_value() const override { return m_value; }
 
 private:
     float m_value;
 };
 
+//------------------------------------------------------------------------------------------------//
+
 struct Var : public ExprBase
 {
-    /// \pre Sensor with \p sensor_name with \p physical_quantity must exists.
-    Var(Sensor& sensor, ValueType value_type)
-        : sensor(sensor), value_type(value_type) {}
+    /// \pre Sensor with \p sensor_name with \p physical_quantity must exist.
+    Var(Sensor& sensor, ValueType value_type) : sensor(sensor), value_type(value_type) {}
 
     bool evaluate() const override { return false; }
+    std::string to_string() const override;
+
     float get_value() const override;
 
 private:
-    Sensor&   sensor;
+    Sensor& sensor;
     ValueType value_type;
 };
 
+//------------------------------------------------------------------------------------------------//
+
 struct LessThan : public ExprBase
 {
-    LessThan(Expr& lhs, Expr& rhs)
-        : lhs(lhs), rhs(rhs) {}
+    LessThan(Expr& lhs, Expr& rhs) : lhs(lhs), rhs(rhs) {}
 
     bool evaluate() const override
     {
@@ -178,43 +185,52 @@ struct LessThan : public ExprBase
 
         return lhs_val < rhs_val;
     }
+    std::string to_string() const override
+    {
+        return "(" + lhs->to_string() + " < " + rhs->to_string() + ")";
+    }
 
 private:
     Expr lhs, rhs;
 };
 
+//------------------------------------------------------------------------------------------------//
+
 struct And : public ExprBase
 {
-    And(Expr& lhs, Expr& rhs)
-        : m_lhs(lhs), m_rhs(rhs) {}
+    And(Expr& lhs, Expr& rhs) : m_lhs(lhs), m_rhs(rhs) {}
 
-    bool evaluate() const override
+    bool evaluate() const override { return m_lhs->evaluate() && m_rhs->evaluate(); }
+    std::string to_string() const override
     {
-        return m_lhs->evaluate() && m_rhs->evaluate();
+        return "(" + m_lhs->to_string() + " & " + m_rhs->to_string() + ")";
     }
 
 private:
     Expr m_lhs, m_rhs;
 };
+
+//------------------------------------------------------------------------------------------------//
 
 struct Or : public ExprBase
 {
-    Or(Expr& lhs, Expr& rhs)
-        : m_lhs(lhs), m_rhs(rhs) {}
+    Or(Expr& lhs, Expr& rhs) : m_lhs(lhs), m_rhs(rhs) {}
 
-    bool evaluate() const override
+    bool evaluate() const override { return m_lhs->evaluate() || m_rhs->evaluate(); }
+    std::string to_string() const override
     {
-        return m_lhs->evaluate() || m_rhs->evaluate();
+        return "(" + m_lhs->to_string() + " | " + m_rhs->to_string() + ")";
     }
 
 private:
     Expr m_lhs, m_rhs;
 };
 
+//------------------------------------------------------------------------------------------------//
+
 struct Equal : public ExprBase
 {
-    Equal(Expr& lhs, Expr& rhs)
-        : m_lhs(lhs), m_rhs(rhs) {}
+    Equal(Expr& lhs, Expr& rhs) : m_lhs(lhs), m_rhs(rhs) {}
 
     bool evaluate() const override
     {
@@ -223,8 +239,12 @@ struct Equal : public ExprBase
 
         return std::abs(lhs_val - rhs_val) < 0.0001;
     }
+    std::string to_string() const override
+    {
+        return "(" + m_lhs->to_string() + " = " + m_rhs->to_string() + ")";
+    }
 
 private:
     Expr m_lhs, m_rhs;
 };
-}
+}  // namespace terra

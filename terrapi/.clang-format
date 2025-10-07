@@ -1,34 +1,31 @@
 Language: Cpp
-BasedOnStyle: LLVM
+BasedOnStyle: Chromium
 AccessModifierOffset: -4
 AlignConsecutiveAssignments: true
 AlignOperands: false
-AllowAllArgumentsOnNextLine: false
+AlignConsecutiveDeclarations: Consecutive
+AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
-AllowShortBlocksOnASingleLine: Always
-AllowShortIfStatementsOnASingleLine: Always
-AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+BinPackArguments: false
 AlwaysBreakTemplateDeclarations: Yes
 BraceWrapping:
-  AfterCaseLabel: true
   AfterClass: true
-  AfterControlStatement: true
   AfterEnum: true
   AfterFunction: true
   AfterNamespace: true
   AfterStruct: true
   AfterUnion: true
-  AfterExternBlock: true
-  BeforeCatch: true
-  BeforeElse: true
   IndentBraces: false
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 BreakBeforeBraces: Custom
 BreakConstructorInitializers: AfterColon
-ColumnLimit: 120
+ColumnLimit: 100
 IncludeCategories:
   - Regex: '^<.*'
     Priority: 1
@@ -41,7 +38,10 @@ IndentWidth: 4
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: Inner
 PointerAlignment: Left
-ReflowComments: false
+CompactNamespaces: true
+ReflowComments: Never
+ContinuationIndentWidth: 4
 SpaceAfterCStyleCast: true
+Cpp11BracedListStyle: true
 SpacesInContainerLiterals: false
 TabWidth: 4

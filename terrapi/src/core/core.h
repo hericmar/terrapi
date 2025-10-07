@@ -6,10 +6,10 @@
 #include <memory>
 #include <vector>
 
+#include "config.h"
 #include "core/bus.h"
 #include "core/context.h"
 #include "core/timer.h"
-#include "config.h"
 
 namespace terra
 {
@@ -48,4 +48,4 @@ public:
 };
 
 Core& core();
-}
+}  // namespace terra

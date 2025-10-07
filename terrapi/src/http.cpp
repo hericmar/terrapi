@@ -3,8 +3,8 @@
 
 #include <algorithm>
 
-#include "core/bus.h"
 #include "config.h"
+#include "core/bus.h"
 #include "http.h"
 #include "logger.h"
 
@@ -19,24 +19,22 @@ static std::string string_replace(std::string str, const std::string& from, cons
     size_t start_pos = 0;
     while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
         str.replace(start_pos, from.length(), to);
-        start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+        start_pos += to.length();  // Handles case where 'to' is a substring of 'from'
     }
     return str;
 }
 
-HttpClient::HttpClient(const BrokerConfig& config)
-    : config(config)
-{
-}
+HttpClient::HttpClient(const BrokerConfig& config) : config(config) {}
 
 constexpr const char* TEMPLATE_CLIENT_HELLO = R"({{ "client_id": "{}", "config": "{}" }})";
 
 bool HttpClient::put_client_hello(const std::string& config_body)
 {
     auto sanitized_config_body = string_replace(config_body, "\"", "\\\"");
-    sanitized_config_body = string_replace(sanitized_config_body, "\n", "\\n");
+    sanitized_config_body      = string_replace(sanitized_config_body, "\n", "\\n");
 
-    const auto request_body = fmt::format(TEMPLATE_CLIENT_HELLO, config.client_id, sanitized_config_body);
+    const auto request_body =
+        fmt::format(TEMPLATE_CLIENT_HELLO, config.client_id, sanitized_config_body);
 
     return make_request("PUT", "/api/v1/hello", request_body);
 }
@@ -110,26 +108,26 @@ bool HttpClient::make_request(const char* method, const std::string& path, const
 
 namespace detail
 {
-template<class... Ts>
-struct overloaded : Ts ... {
-    using Ts::operator()...;
-};
+    template <class... Ts>
+    struct overloaded : Ts...
+    {
+        using Ts::operator()...;
+    };
 
-// explicit deduction guide (not needed as of C++20)
-template<class... Ts>
-overloaded(Ts...) -> overloaded<Ts...>;
-}
+    // explicit deduction guide (not needed as of C++20)
+    template <class... Ts>
+    overloaded(Ts...) -> overloaded<Ts...>;
+}  // namespace detail
 
 //
 
-constexpr const char* TEMPLATE_EVENT =
-        R"({{"source": "{}", "state": {}, "timestamp": {}}})";
+constexpr const char* TEMPLATE_EVENT = R"({{"source": "{}", "state": {}, "timestamp": {}}})";
 
 constexpr const char* TEMPLATE_MEASUREMENT =
-        R"({{"source": "{}", "value": {}, "quantity": {}, "timestamp": {}}})";
+    R"({{"source": "{}", "value": {}, "quantity": {}, "timestamp": {}}})";
 
 constexpr const char* TEMPLATE_RECORD =
-        R"({{"client_id": "{}", "events": [{}], "measurements": [{}]}})";
+    R"({{"client_id": "{}", "events": [{}], "measurements": [{}]}})";
 
 std::string serialize(const char* client_id, const std::vector<Record>& records)
 {
@@ -139,34 +137,27 @@ std::string serialize(const char* client_id, const std::vector<Record>& records)
     std::vector<std::string> measurements_str;
 
     for (const auto& record : records) {
-        std::visit(detail::overloaded{
-                [&](const Event& e) {
-                    events_str.push_back(fmt::format(
-                            TEMPLATE_EVENT,
-                            e.src,
-                            e.state,
-                            e.timestamp / 1000));
-                },
-                [&](const Measurement& m) {
-                    measurements_str.push_back(fmt::format(
-                            TEMPLATE_MEASUREMENT,
-                            m.src,
-                            m.value,
-                            (int) m.physical_quantity,
-                            m.timestamp / 1000));
-                }
-        }, record);
+        std::visit(detail::overloaded{[&](const Event& e) {
+                                          events_str.push_back(fmt::format(
+                                              TEMPLATE_EVENT, e.src, e.state, e.timestamp / 1000));
+                                      },
+                                      [&](const Measurement& m) {
+                                          auto str = fmt::format(TEMPLATE_MEASUREMENT,
+                                                                 m.src,
+                                                                 m.value,
+                                                                 (int) m.physical_quantity,
+                                                                 m.timestamp / 1000);
+                                          measurements_str.push_back(std::move(str));
+                                      }},
+                   record);
     }
 
     auto result = fmt::format(
-            TEMPLATE_RECORD,
-            client_id,
-            fmt::join(events_str, ","),
-            fmt::join(measurements_str, ","));
+        TEMPLATE_RECORD, client_id, fmt::join(events_str, ","), fmt::join(measurements_str, ","));
 
     // throws error?
     // LOG(TRACE, "serialized: " + result);
 
     return result;
 }
-}
+}  // namespace terra

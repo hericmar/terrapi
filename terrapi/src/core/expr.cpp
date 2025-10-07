@@ -16,14 +16,13 @@ namespace terra
 {
 int Token::op_precedence() const
 {
-    switch (id)
-    {
-    case TokenID::LParen:
-        return 0;
-    case TokenID::LessThan:
-        return 2;
-    default:
-        return 1;
+    switch (id) {
+        case TokenID::LParen:
+            return 0;
+        case TokenID::LessThan:
+            return 2;
+        default:
+            return 1;
     }
 }
 
@@ -52,7 +51,7 @@ Token Tokenizer::next()
     bool consume = true;
 
     if (std::isdigit(c)) {
-        float number  = 0;
+        float number = 0;
 
         m_ss >> number;
         {
@@ -65,7 +64,7 @@ Token Tokenizer::next()
                 if (!m_ss.fail()) {
                     std::tm tm{};
                     tm.tm_hour = (int) number;
-                    tm.tm_min = min;
+                    tm.tm_min  = min;
 
                     number = (float) to_seconds(tm);
                 }
@@ -73,9 +72,8 @@ Token Tokenizer::next()
                 m_ss.clear(m_ss.rdstate() & ~std::ios::failbit);
             }
         }
-        result = Token{TokenID::Number, number};
+        result  = Token{TokenID::Number, number};
         consume = false;
-
     } else if (is_str_literal(c)) {
         std::string ident;
         m_ss.ignore();
@@ -88,7 +86,7 @@ Token Tokenizer::next()
         // clearly retarded API (pun intended): clear does not clear the bits,
         // but sets them
         m_ss.clear(m_ss.rdstate() & ~std::ios::failbit);
-        result = Token(TokenID::Identifier, std::move(ident));
+        result  = Token(TokenID::Identifier, std::move(ident));
         consume = false;
     } else {
         if (std::strchr(SYMBOL_TOKENS, c) == nullptr) {
@@ -98,10 +96,12 @@ Token Tokenizer::next()
         }
         result = Token(static_cast<TokenID>(c));
     }
-    if (m_ss.fail())
+    if (m_ss.fail()) {
         throw tokenize_error("failed conversion");
-    if (consume)
+    }
+    if (consume) {
         m_ss.get();
+    }
 
     return result;
 }
@@ -121,76 +121,76 @@ Expr expr_from_impl(const SensorMap& sensors, const std::string& str)
     std::vector<Expr> exprs_queue;
 
     for (const auto& token : tokens) {
-        switch (token.id)
-        {
-        case TokenID::End: {
-            break;
-        }
+        switch (token.id) {
+            case TokenID::End: {
+                break;
+            }
 
-        case TokenID::Number: {
-            exprs_queue.push_back(number(token.number));
-            break;
-        }
-        case TokenID::Identifier: {
-            exprs_queue.push_back(variable(sensors, token.identifier));
-            break;
-        }
-        case TokenID::LParen: {
-            operators.push(token);
-            break;
-        }
-        case TokenID::LessThan:
-        case TokenID::And:
-        case TokenID::Or:
-        case TokenID::Equal: {
-            Token popped_token;
+            case TokenID::Number: {
+                exprs_queue.push_back(number(token.number));
+                break;
+            }
+            case TokenID::Identifier: {
+                exprs_queue.push_back(variable(sensors, token.identifier));
+                break;
+            }
+            case TokenID::LParen: {
+                operators.push(token);
+                break;
+            }
+            case TokenID::LessThan:
+            case TokenID::And:
+            case TokenID::Or:
+            case TokenID::Equal: {
+                Token popped_token;
 
-            while (!operators.empty()) {
-                popped_token = operators.top();
-                if (popped_token.op_precedence() > token.op_precedence()) {
-                    create_operator(exprs_queue, popped_token);
-                    operators.pop();
-                } else {
-                    break;
+                while (!operators.empty()) {
+                    popped_token = operators.top();
+                    if (popped_token.op_precedence() > token.op_precedence()) {
+                        create_operator(exprs_queue, popped_token);
+                        operators.pop();
+                    } else {
+                        break;
+                    }
                 }
+                operators.push(token);
+                break;
             }
-            operators.push(token);
-            break;
-        }
-        case TokenID::RParen: {
-            /** while the operator at the top of the operator stack is not a left parenthesis:
-                pop the operator from the operator stack onto the output queue.
-                If the stack runs out without finding a left parenthesis, then there are mismatched parentheses.
-                if there is a left parenthesis at the top of the operator stack, then:
-                pop the operator from the operator stack and discard it */
-            Token popped_token;
+            case TokenID::RParen: {
+                /** while the operator at the top of the operator stack is not a left parenthesis:
+                        pop the operator from the operator stack onto the output queue.
+                        If the stack runs out without finding a left parenthesis, then there are mismatched parentheses.
+                        if there is a left parenthesis at the top of the operator stack, then:
+                        pop the operator from the operator stack and discard it */
+                Token popped_token;
 
-            while (!operators.empty()) {
-                popped_token = operators.top();
-                operators.pop();
+                while (!operators.empty()) {
+                    popped_token = operators.top();
+                    operators.pop();
 
-                if (popped_token.id == TokenID::LParen)
-                    break;
-                else
-                    create_operator(exprs_queue, popped_token);
+                    if (popped_token.id == TokenID::LParen)
+                        break;
+                    else
+                        create_operator(exprs_queue, popped_token);
+                }
+
+                break;
             }
-
-            break;
-        }
         }
     }
 
-    /** while there are still operator tokens on the stack:
-        If the operator token on the top of the stack is a parenthesis, then there are mismatched parentheses.
-    pop the operator from the operator stack onto the output queue. */
+    // While there are still operator tokens on the stack:
+    // If the operator token on the top of the stack is a parenthesis, then there
+    // are mismatched parentheses. Pop the operator from the operator stack onto the output queue.
     Token popped_token;
     while (!operators.empty()) {
         popped_token = operators.top();
         operators.pop();
         create_operator(exprs_queue, popped_token);
     }
-    if (!exprs_queue.empty())
+    if (!exprs_queue.empty()) {
         return exprs_queue.back();
+    }
 
     throw parse_error("! parse error ");
 }
@@ -215,7 +215,7 @@ Expr variable(const SensorMap& sensors, const std::string& identifier)
 {
     auto name_pq_pair = split(identifier, ".");
     if (identifier == "time") {
-        name_pq_pair = { "time", "time" };
+        name_pq_pair = {"time", "time"};
     }
 
     if (name_pq_pair.size() != 2) {
@@ -263,14 +263,19 @@ Expr operator==(Expr a, Expr b)
     return std::make_shared<Equal>(a, b);
 }
 
-//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------//
+
+std::string Var::to_string() const
+{
+    return "var";
+}
 
 float Var::get_value() const
 {
     return sensor.value(value_type);
 }
 
-//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------//
 
 static void create_operator(std::vector<Expr>& expr_queue, Token token)
 {
@@ -281,32 +286,39 @@ static void create_operator(std::vector<Expr>& expr_queue, Token token)
         throw parse_error("! expr queue is empty ");
 
     switch (token.id) {
-    case TokenID::LessThan: {
-        rhs = expr_queue.back(); expr_queue.pop_back();
-        lhs = expr_queue.back(); expr_queue.pop_back();
-        expr_queue.emplace_back(lhs < rhs);
-        break;
-    }
-    case TokenID::And: {
-        rhs = expr_queue.back(); expr_queue.pop_back();
-        lhs = expr_queue.back(); expr_queue.pop_back();
-        expr_queue.emplace_back(lhs & rhs);
-        break;
-    }
-    case TokenID::Or: {
-        rhs = expr_queue.back(); expr_queue.pop_back();
-        lhs = expr_queue.back(); expr_queue.pop_back();
-        expr_queue.emplace_back(lhs | rhs);
-        break;
-    }
-    case TokenID::Equal: {
-        rhs = expr_queue.back(); expr_queue.pop_back();
-        lhs = expr_queue.back(); expr_queue.pop_back();
-        expr_queue.emplace_back(lhs == rhs);
-    }
-    default:
-        break;
+        case TokenID::LessThan: {
+            rhs = expr_queue.back();
+            expr_queue.pop_back();
+            lhs = expr_queue.back();
+            expr_queue.pop_back();
+            expr_queue.emplace_back(lhs < rhs);
+            break;
+        }
+        case TokenID::And: {
+            rhs = expr_queue.back();
+            expr_queue.pop_back();
+            lhs = expr_queue.back();
+            expr_queue.pop_back();
+            expr_queue.emplace_back(lhs & rhs);
+            break;
+        }
+        case TokenID::Or: {
+            rhs = expr_queue.back();
+            expr_queue.pop_back();
+            lhs = expr_queue.back();
+            expr_queue.pop_back();
+            expr_queue.emplace_back(lhs | rhs);
+            break;
+        }
+        case TokenID::Equal: {
+            rhs = expr_queue.back();
+            expr_queue.pop_back();
+            lhs = expr_queue.back();
+            expr_queue.pop_back();
+            expr_queue.emplace_back(lhs == rhs);
+        }
+        default:
+            break;
     }
 }
-}
-
+}  // namespace terra

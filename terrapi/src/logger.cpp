@@ -9,6 +9,7 @@
 namespace terra
 {
 static auto log_level = INFO;
+// clang-format off
 static const char* LOG_LEVEL_STR[] = {
     "debug",
     "trace",
@@ -17,34 +18,30 @@ static const char* LOG_LEVEL_STR[] = {
     "error",
     "fatal",
 };
+// clang-format on
 
 namespace detail
 {
-std::string iso_now_str()
-{
-    time_t t = time(nullptr);
-    tm*    now  = localtime(&t);
+    std::string iso_now_str()
+    {
+        time_t t = time(nullptr);
+        tm* now  = localtime(&t);
 
-    char datetime_buffer[sizeof "2011-11-11 11:01:01"];
-    sprintf(datetime_buffer, "%04d-%02d-%02d %02d:%02d:%02d",
-            now->tm_year + 1900,
-            now->tm_mon + 1,
-            now->tm_mday,
-            now->tm_hour,
-            now->tm_min,
-            now->tm_sec);
+        char datetime_buffer[sizeof "2011-11-11 11:01:01"];
+        sprintf(datetime_buffer, "%04d-%02d-%02d %02d:%02d:%02d", now->tm_year + 1900,
+                now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
 
-    return std::string(datetime_buffer);
-}
+        return {datetime_buffer};
+    }
 
-const char* level_str(LogLevel level)
-{
-    return LOG_LEVEL_STR[level];
-}
+    const char* level_str(LogLevel level)
+    {
+        return LOG_LEVEL_STR[level];
+    }
 
-bool should_log(LogLevel level)
-{
-    return level >= log_level;
-}
-}
-}
+    bool should_log(LogLevel level)
+    {
+        return level >= log_level;
+    }
+}  // namespace detail
+}  // namespace terra

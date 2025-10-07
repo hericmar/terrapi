@@ -23,14 +23,17 @@ enum ValueType
     NONE,
 };
 
+// clang-format off
 inline static const std::map<std::string, ValueType> value_type_to_str = {
     { "humidity", HUMIDITY },
     { "signal", SIGNAL },
     { "temperature", TEMPERATURE },
     { "time", TIME },
 };
+// clang-format on
 
 class Sensor
+
 {
 public:
     virtual void measure() {}
@@ -65,21 +68,18 @@ public:
 class Clock : public Sensor
 {
 public:
-    Clock()
-    {
-        values[TIME];
-    }
+    Clock() { values[TIME]; }
 
     /// Measure current time in seconds, based on the system TZ.
     void measure() override;
 
     void force_value(uint64_t value)
     {
-        m_value = value;
+        m_value      = value;
         values[TIME] = (float) m_value;
     }
 
 private:
     uint64_t m_value = 0;
 };
-}
+}  // namespace terra
